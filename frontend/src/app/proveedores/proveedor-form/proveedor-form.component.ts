@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -22,7 +22,8 @@ export class ProveedorFormComponent implements OnInit {
     private fb: FormBuilder,
     private proveedorService: ProveedorService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       nombre: ['', [Validators.required, Validators.maxLength(200)]],
@@ -35,6 +36,10 @@ export class ProveedorFormComponent implements OnInit {
     });
   }
 
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -43,6 +48,7 @@ export class ProveedorFormComponent implements OnInit {
       this.loadProveedor(this.proveedorId);
     } else {
       this.loadingData = false;
+      this.detectChanges();
     }
   }
 
@@ -59,9 +65,11 @@ export class ProveedorFormComponent implements OnInit {
           activo: proveedor.activo
         });
         this.loadingData = false;
+        this.detectChanges();
       },
       error: () => {
         this.loadingData = false;
+        this.detectChanges();
         Swal.fire('Error', 'No se pudo cargar el proveedor', 'error');
         this.router.navigate(['/proveedores']);
       }
@@ -77,6 +85,7 @@ export class ProveedorFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const data = this.form.value;
 
     const request = this.isEditing
@@ -86,6 +95,7 @@ export class ProveedorFormComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: this.isEditing ? 'Proveedor actualizado' : 'Proveedor creado',
@@ -96,6 +106,7 @@ export class ProveedorFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo guardar el proveedor', 'error');
       }
     });

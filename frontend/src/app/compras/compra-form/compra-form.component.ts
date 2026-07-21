@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -28,12 +28,17 @@ export class CompraFormComponent implements OnInit {
     private proveedorService: ProveedorService,
     private productoService: ProductoService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       proveedorId: ['', Validators.required],
       items: this.fb.array([])
     });
+  }
+
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
   }
 
   ngOnInit(): void {
@@ -49,6 +54,7 @@ export class CompraFormComponent implements OnInit {
     this.proveedorService.list().subscribe({
       next: (proveedores) => {
         this.proveedores = proveedores.filter(p => p.activo);
+        this.detectChanges();
       }
     });
   }
@@ -58,6 +64,7 @@ export class CompraFormComponent implements OnInit {
       next: (productos) => {
         this.productos = productos;
         this.filteredProductos = [...productos];
+        this.detectChanges();
       }
     });
   }
@@ -102,6 +109,7 @@ export class CompraFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const currentUser = this.authService.getCurrentUser();
     const data = {
       proveedorId: this.form.get('proveedorId')?.value,
@@ -116,6 +124,7 @@ export class CompraFormComponent implements OnInit {
     this.compraService.create(data).subscribe({
       next: (compra) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: 'Compra registrada',
@@ -126,6 +135,7 @@ export class CompraFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo registrar la compra', 'error');
       }
     });

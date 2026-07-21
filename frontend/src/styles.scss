@@ -1,10 +1,44 @@
-/* Bootstrap 5 */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Angular Material Theme — @use MUST be first (Sass module system rule)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@use '@angular/material' as mat;
+
+html {
+  /* Default: light mode */
+  color-scheme: light;
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+      theme-type: color-scheme,   /* uses CSS light-dark() — auto-switches with color-scheme */
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+/* Dark mode — toggle via ThemeService adds .dark-theme on <html> */
+html.dark-theme {
+  color-scheme: dark;
+}
+
+/* ── Body base — no input/select/textarea/button overrides, Material handles them ── */
+body {
+  margin: 0;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Bootstrap
+   ═══════════════════════════════════════════════════════════════════════════ */
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
-/* Angular Material Theme */
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
-
-/* Global Styles */
+/* ═══════════════════════════════════════════════════════════════════════════
+   CSS Custom Properties — light (default) & dark (.dark-theme overrides)
+   ═══════════════════════════════════════════════════════════════════════════ */
 :root {
   --primary: #1565C0;
   --primary-dark: #0D47A1;
@@ -23,7 +57,6 @@
   --hover-bg: #e3f2fd;
 }
 
-/* Dark Theme */
 .dark-theme {
   --bg-light: #1a1a1a;
   --text-dark: #e8e8e8;
@@ -39,263 +72,23 @@
   --hover-bg: #333333;
 }
 
-.dark-theme body,
-.dark-theme {
-  background-color: var(--bg-light);
-  color: var(--text-dark);
-}
-
-.dark-theme .card,
-.dark-theme .metric-card,
-.dark-theme .card-header {
-  background-color: #2a2a2a !important;
-  color: var(--text-dark);
-}
-
-.dark-theme .card-header {
-  border-bottom-color: var(--border-color);
-}
-
-/* === DARK TABLES — WCAG AA === */
-.dark-theme .mat-mdc-table {
-  background-color: #2a2a2a !important;
-}
-
-.dark-theme .mat-mdc-header-cell {
-  background: #3a3a3a !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  border-bottom-color: #404040 !important;
-}
-
-/* Zebra striping — odds más oscuros, evens más claros */
-.dark-theme .mat-mdc-row:nth-child(odd) {
-  background-color: #252525 !important;
-}
-
-.dark-theme .mat-mdc-row:nth-child(even) {
-  background-color: #2d2d2d !important;
-}
-
-.dark-theme .mat-mdc-row:hover {
-  background: #353535 !important;
-}
-
-/* Cell text: minimum #e0e0e0 for readability */
-.dark-theme .mat-mdc-cell {
-  color: #e0e0e0 !important;
-  border-bottom-color: #404040 !important;
-}
-
-/* Action icons: saturated, full opacity */
-.dark-theme .mat-mdc-cell .mat-icon-button {
-  opacity: 1 !important;
-}
-.dark-theme .mat-mdc-cell [color="primary"] mat-icon,
-.dark-theme .mat-mdc-cell .mat-primary.mat-icon-button {
-  color: #64b5f6 !important;
-}
-.dark-theme .mat-mdc-cell [color="warn"] mat-icon,
-.dark-theme .mat-mdc-cell .mat-warn.mat-icon-button {
-  color: #ef5350 !important;
-}
-
-/* Empty state inside tables inherits cell color */
-.dark-theme .mat-mdc-cell .empty-state {
-  color: #b0b0b0;
-}
-
-.dark-theme .page-header h2 {
-  color: var(--text-dark);
-}
-
-.dark-theme .app-header {
-  background-color: #2a2a2a !important;
-  border-bottom-color: var(--border-color);
-}
-
-.dark-theme .app-sidebar {
-  background-color: #2a2a2a !important;
-  border-right-color: var(--border-color);
-}
-
-.dark-theme .app-sidebar .nav-link {
-  color: var(--text-dark);
-}
-
-.dark-theme .app-sidebar .nav-link:hover,
-.dark-theme .app-sidebar .nav-link.active {
-  background-color: #333333;
-  color: var(--primary-light);
-}
-
-.dark-theme .empty-state {
-  color: var(--text-muted);
-}
-
-.dark-theme .empty-state mat-icon {
-  color: #b0b0b0 !important;
-}
-
-.dark-theme .metric-card {
-  background-color: #2a2a2a !important;
-  border: 1px solid var(--border-color);
-}
-
-.dark-theme .mat-mdc-card {
-  background-color: #2a2a2a !important;
-}
-
-.dark-theme .alert-danger {
-  background-color: #4a1515;
-  color: #ff8a80;
-  border-color: #6a1b1b;
-}
-
-.dark-theme .badge-stock-low {
-  background: #4a1515;
-  color: #ff8a80;
-}
-
-.dark-theme .badge-stock-ok {
-  background: #1b5e20;
-  color: #81c784;
-}
-
-.dark-theme .swal2-popup {
-  background-color: #2a2a2a !important;
-  color: var(--text-dark) !important;
-}
-
-.dark-theme .swal2-title,
-.dark-theme .swal2-content {
-  color: var(--text-dark) !important;
-}
-
-.dark-theme .swal2-close {
-  color: var(--text-muted) !important;
-}
-
-.dark-theme .swal2-input,
-.dark-theme .swal2-textarea {
-  background-color: #2a2a2a !important;
-  color: var(--text-dark) !important;
-  border-color: var(--border-color) !important;
-}
-
-.dark-theme .mat-mdc-dialog-container {
-  --mdc-dialog-container-color: #2a2a2a;
-}
-
-.dark-theme .mat-mdc-menu-panel {
-  background-color: #2a2a2a !important;
-}
-
-.dark-theme .mat-mdc-menu-item {
-  color: var(--text-dark) !important;
-}
-
-.dark-theme .mat-mdc-select-panel {
-  background-color: #2a2a2a !important;
-}
-
-.dark-theme .mat-mdc-option {
-  color: var(--text-dark) !important;
-}
-
-.dark-theme .mat-mdc-form-field .mat-mdc-floating-label,
-.dark-theme .mat-mdc-form-field .mdc-floating-label {
-  color: #b0b0b0 !important;
-}
-
-.dark-theme .mat-mdc-input-element {
-  color: #ffffff !important;
-  caret-color: #ffffff !important;
-}
-
-/* Dark search inputs and outlined fields */
-.dark-theme .mdc-text-field--outlined {
-  background-color: #333333 !important;
-  border-radius: 8px !important;
-}
-
-.dark-theme .mdc-text-field--outlined .mat-mdc-form-field-infix {
-  background: transparent !important;
-}
-
-/* Input placeholder text */
-.dark-theme .mat-mdc-input-element::placeholder {
-  color: #9e9e9e !important;
-  opacity: 1 !important;
-}
-
-/* Remove white bg from input inside outlined */
-.dark-theme .mdc-text-field--outlined .mdc-floating-label {
-  color: #9e9e9e !important;
-}
-
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
-  border-color: #505050 !important;
-}
-
-.dark-theme .mat-mdc-select-value {
-  color: var(--text-dark) !important;
-}
-
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline__leading,
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline__notch,
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline__trailing {
-  border-color: #707070 !important;
-}
-
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-notched-outline__leading,
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-notched-outline__notch,
-.dark-theme .mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-notched-outline__trailing {
-  border-color: var(--primary) !important;
-}
-
-/* Search icon inside outlined field */
-.dark-theme .mdc-text-field--outlined .mat-icon {
-  color: #b0b0b0 !important;
-}
-
-.dark-theme .mat-mdc-paginator {
-  background-color: #2a2a2a !important;
-  color: var(--text-dark) !important;
-}
-
-.dark-theme .mat-mdc-tooltip {
-  background-color: #424242 !important;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
-  font-family: 'Inter', 'Roboto', sans-serif;
-  background-color: var(--bg-light);
-  color: var(--text-dark);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Layout */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Layout
+   ═══════════════════════════════════════════════════════════════════════════ */
 .app-layout {
   display: flex;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
+  min-width: 0;
   transition: margin-left 0.3s ease;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .main-content.sidebar-collapsed {
@@ -306,9 +99,37 @@ html, body {
   padding: 24px;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
-/* Bootstrap overrides for contrast */
+/* Mobile sidebar backdrop */
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1049;
+  }
+
+  .content-wrapper {
+    padding: 16px;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Bootstrap overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
 .text-muted {
   color: #555555 !important;
 }
@@ -317,7 +138,9 @@ html, body {
   color: #b0b0b0 !important;
 }
 
-/* Page header */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Page header
+   ═══════════════════════════════════════════════════════════════════════════ */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -332,7 +155,13 @@ html, body {
   font-size: 1.5rem;
 }
 
-/* Cards */
+.dark-theme .page-header h2 {
+  color: var(--text-dark);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Cards
+   ═══════════════════════════════════════════════════════════════════════════ */
 .card {
   border: none;
   border-radius: 12px;
@@ -352,8 +181,16 @@ html, body {
   border-radius: 12px 12px 0 0 !important;
 }
 
+.dark-theme .card,
+.dark-theme .metric-card,
+.dark-theme .card-header {
+  background-color: #2a2a2a !important;
+  color: var(--text-dark);
+}
+
 .dark-theme .card-header {
   background: #2a2a2a !important;
+  border-bottom-color: var(--border-color);
 }
 
 .card-body {
@@ -411,7 +248,169 @@ html, body {
   color: #b0b0b0;
 }
 
-/* Buttons */
+.dark-theme .metric-card {
+  background-color: #2a2a2a !important;
+  border: 1px solid var(--border-color);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark Theme: Custom component overrides (non-Material or Material extras)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* App shell */
+.dark-theme .app-header {
+  background-color: #2a2a2a !important;
+  border-bottom-color: var(--border-color);
+}
+
+.dark-theme .app-sidebar {
+  background-color: #2a2a2a !important;
+  border-right-color: var(--border-color);
+}
+
+.dark-theme .app-sidebar .nav-link {
+  color: var(--text-dark);
+}
+
+.dark-theme .app-sidebar .nav-link:hover,
+.dark-theme .app-sidebar .nav-link.active {
+  background-color: #333333;
+  color: var(--primary-light);
+}
+
+/* Tables */
+.dark-theme .mat-mdc-table {
+  background-color: #2a2a2a !important;
+}
+
+.dark-theme .mat-mdc-header-cell {
+  background: #3a3a3a !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-bottom-color: #404040 !important;
+}
+
+.dark-theme .mat-mdc-row:nth-child(odd) {
+  background-color: #252525 !important;
+}
+
+.dark-theme .mat-mdc-row:nth-child(even) {
+  background-color: #2d2d2d !important;
+}
+
+.dark-theme .mat-mdc-row:hover {
+  background: #353535 !important;
+}
+
+.dark-theme .mat-mdc-cell {
+  color: #e0e0e0 !important;
+  border-bottom-color: #404040 !important;
+}
+
+.dark-theme .mat-mdc-cell .mat-icon-button {
+  opacity: 1 !important;
+}
+
+.dark-theme .mat-mdc-cell [color="primary"] mat-icon,
+.dark-theme .mat-mdc-cell .mat-primary.mat-icon-button {
+  color: #64b5f6 !important;
+}
+
+.dark-theme .mat-mdc-cell [color="warn"] mat-icon,
+.dark-theme .mat-mdc-cell .mat-warn.mat-icon-button {
+  color: #ef5350 !important;
+}
+
+.dark-theme .mat-mdc-cell .empty-state {
+  color: #b0b0b0;
+}
+
+/* Card (Material) */
+.dark-theme .mat-mdc-card {
+  background-color: #2a2a2a !important;
+}
+
+/* Select panel / menu / dialog / tooltip */
+.dark-theme .mat-mdc-select-panel {
+  background-color: #2a2a2a !important;
+}
+
+.dark-theme .mat-mdc-option {
+  color: var(--text-dark) !important;
+}
+
+.dark-theme .mat-mdc-dialog-container {
+  --mdc-dialog-container-color: #2a2a2a;
+}
+
+.dark-theme .mat-mdc-menu-panel {
+  background-color: #2a2a2a !important;
+}
+
+.dark-theme .mat-mdc-menu-item {
+  color: var(--text-dark) !important;
+}
+
+.dark-theme .mat-mdc-paginator {
+  background-color: #2a2a2a !important;
+  color: var(--text-dark) !important;
+}
+
+.dark-theme .mat-mdc-tooltip {
+  background-color: #424242 !important;
+}
+
+/* Alerts & badges */
+.dark-theme .alert-danger {
+  background-color: #4a1515;
+  color: #ff8a80;
+  border-color: #6a1b1b;
+}
+
+.dark-theme .badge-stock-low {
+  background: #4a1515;
+  color: #ff8a80;
+}
+
+.dark-theme .badge-stock-ok {
+  background: #1b5e20;
+  color: #81c784;
+}
+
+/* Empty state */
+.dark-theme .empty-state {
+  color: var(--text-muted);
+}
+
+.dark-theme .empty-state mat-icon {
+  color: #b0b0b0 !important;
+}
+
+/* SweetAlert2 */
+.dark-theme .swal2-popup {
+  background-color: #2a2a2a !important;
+  color: var(--text-dark) !important;
+}
+
+.dark-theme .swal2-title,
+.dark-theme .swal2-content {
+  color: var(--text-dark) !important;
+}
+
+.dark-theme .swal2-close {
+  color: var(--text-muted) !important;
+}
+
+.dark-theme .swal2-input,
+.dark-theme .swal2-textarea {
+  background-color: #2a2a2a !important;
+  color: var(--text-dark) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Buttons — Bootstrap compatibility layer
+   ═══════════════════════════════════════════════════════════════════════════ */
 .btn-primary {
   background-color: var(--primary) !important;
   border-color: var(--primary) !important;
@@ -433,33 +432,9 @@ html, body {
   border-color: var(--accent-dark) !important;
 }
 
-/* Material buttons */
-.mat-mdc-raised-button.mat-primary {
-  background-color: var(--primary) !important;
-  color: #ffffff !important;
-  font-weight: 500;
-}
-
-.mat-mdc-raised-button.mat-accent {
-  background-color: var(--accent) !important;
-  color: #ffffff !important;
-  font-weight: 500;
-}
-
-.dark-theme .mat-mdc-unelevated-button.mat-primary,
-.dark-theme .mat-mdc-flat-button.mat-primary {
-  color: #ffffff !important;
-}
-
-/* Material icon buttons in dark mode — force saturated colors */
-.dark-theme .mat-mdc-icon-button.mat-primary {
-  color: #64b5f6 !important;
-}
-.dark-theme .mat-mdc-icon-button.mat-warn {
-  color: #ef5350 !important;
-}
-
-/* Tables */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tables (light mode)
+   ═══════════════════════════════════════════════════════════════════════════ */
 .table-container {
   overflow-x: auto;
 }
@@ -483,7 +458,9 @@ html, body {
   padding: 12px 16px !important;
 }
 
-/* Form fields */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Form fields — layout only (NO color/border overrides — theme handles those)
+   ═══════════════════════════════════════════════════════════════════════════ */
 .mat-mdc-form-field {
   width: 100%;
 }
@@ -498,7 +475,9 @@ html, body {
   }
 }
 
-/* Alert badges */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Utility / component styles
+   ═══════════════════════════════════════════════════════════════════════════ */
 .badge-stock-low {
   background: #ffebee;
   color: #c62828;
@@ -517,7 +496,6 @@ html, body {
   font-weight: 600;
 }
 
-/* Loading spinner */
 .loading-overlay {
   display: flex;
   justify-content: center;
@@ -525,7 +503,6 @@ html, body {
   padding: 60px 0;
 }
 
-/* Empty state */
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -540,15 +517,7 @@ html, body {
   color: #666666 !important;
 }
 
-.dark-theme .empty-state {
-  color: #b0b0b0;
-}
-
-.dark-theme .empty-state mat-icon {
-  color: #b0b0b0 !important;
-}
-
-/* SweetAlert2 customization */
+/* SweetAlert2 */
 .swal2-popup {
   font-family: 'Inter', 'Roboto', sans-serif;
   border-radius: 12px !important;

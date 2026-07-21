@@ -12,8 +12,9 @@
       <div class="d-flex justify-content-between align-items-center w-100">
         <mat-form-field class="search-field" appearance="outline">
           <mat-label>Buscar productos</mat-label>
-          <input matInput (keyup)="applyFilter($event)" placeholder="Nombre o código...">
+          <input matInput (keyup)="applyFilter($event)">
           <mat-icon matSuffix>search</mat-icon>
+          <mat-hint>Por nombre o código</mat-hint>
         </mat-form-field>
         <span class="text-muted">{{ totalItems }} producto(s)</span>
       </div>

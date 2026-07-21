@@ -14,9 +14,9 @@
     <button mat-icon-button class="theme-toggle" (click)="themeService.toggle()" matTooltip="Cambiar tema">
       <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
     </button>
-    <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-button">
+    <button [matMenuTriggerFor]="userMenu" class="user-button">
       <mat-icon>account_circle</mat-icon>
-      <span class="user-name">{{ authService.getCurrentUser()?.nombre || 'Usuario' }}</span>
+      <span class="user-name hide-mobile">{{ authService.getCurrentUser()?.nombre || 'Usuario' }}</span>
       <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
     </button>
     <mat-menu #userMenu="matMenu" xPosition="before">

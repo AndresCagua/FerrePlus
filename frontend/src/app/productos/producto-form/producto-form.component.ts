@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -26,7 +26,8 @@ export class ProductoFormComponent implements OnInit {
     private productoService: ProductoService,
     private categoriaService: CategoriaService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       codigoBarras: [''],
@@ -44,6 +45,10 @@ export class ProductoFormComponent implements OnInit {
     });
   }
 
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
+  }
+
   ngOnInit(): void {
     this.loadCategorias();
     const id = this.route.snapshot.paramMap.get('id');
@@ -53,6 +58,7 @@ export class ProductoFormComponent implements OnInit {
       this.loadProducto(this.productoId);
     } else {
       this.loadingData = false;
+      this.detectChanges();
     }
   }
 
@@ -60,6 +66,7 @@ export class ProductoFormComponent implements OnInit {
     this.categoriaService.list().subscribe({
       next: (categorias) => {
         this.categorias = categorias;
+        this.detectChanges();
       }
     });
   }
@@ -82,9 +89,11 @@ export class ProductoFormComponent implements OnInit {
           activo: producto.activo
         });
         this.loadingData = false;
+        this.detectChanges();
       },
       error: () => {
         this.loadingData = false;
+        this.detectChanges();
         Swal.fire('Error', 'No se pudo cargar el producto', 'error');
         this.router.navigate(['/productos']);
       }
@@ -100,6 +109,7 @@ export class ProductoFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const formValue = this.form.value;
 
     const data: any = {
@@ -127,6 +137,7 @@ export class ProductoFormComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: this.isEditing ? 'Producto actualizado' : 'Producto creado',
@@ -138,6 +149,7 @@ export class ProductoFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo guardar el producto', 'error');
       }
     });

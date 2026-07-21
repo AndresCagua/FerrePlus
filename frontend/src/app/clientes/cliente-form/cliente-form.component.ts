@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -22,7 +22,8 @@ export class ClienteFormComponent implements OnInit {
     private fb: FormBuilder,
     private clienteService: ClienteService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       nombre: ['', [Validators.required, Validators.maxLength(200)]],
@@ -34,6 +35,10 @@ export class ClienteFormComponent implements OnInit {
     });
   }
 
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -42,6 +47,7 @@ export class ClienteFormComponent implements OnInit {
       this.loadCliente(this.clienteId);
     } else {
       this.loadingData = false;
+      this.detectChanges();
     }
   }
 
@@ -57,9 +63,11 @@ export class ClienteFormComponent implements OnInit {
           activo: cliente.activo
         });
         this.loadingData = false;
+        this.detectChanges();
       },
       error: () => {
         this.loadingData = false;
+        this.detectChanges();
         Swal.fire('Error', 'No se pudo cargar el cliente', 'error');
         this.router.navigate(['/clientes']);
       }
@@ -75,6 +83,7 @@ export class ClienteFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const data = this.form.value;
 
     const request = this.isEditing
@@ -84,6 +93,7 @@ export class ClienteFormComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: this.isEditing ? 'Cliente actualizado' : 'Cliente creado',
@@ -94,6 +104,7 @@ export class ClienteFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo guardar el cliente', 'error');
       }
     });

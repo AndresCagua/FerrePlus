@@ -11,8 +11,9 @@
     <mat-card-header>
       <mat-form-field class="search-field" appearance="outline">
         <mat-label>Buscar clientes</mat-label>
-        <input matInput (keyup)="applyFilter($event)" placeholder="Nombre, documento...">
+        <input matInput (keyup)="applyFilter($event)">
         <mat-icon matSuffix>search</mat-icon>
+        <mat-hint>Por nombre, documento o teléfono</mat-hint>
       </mat-form-field>
     </mat-card-header>
 

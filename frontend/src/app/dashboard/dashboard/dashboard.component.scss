@@ -1,18 +1,24 @@
 .dashboard-container {
   max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
 }
 
+/* === KPI Grid — 6 tarjetas responsive === */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+  width: 100%;
 }
 
+/* === Sección inferior: Ventas por Día + Stock Bajo === */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 24px;
+  width: 100%;
 }
 
 @media (max-width: 992px) {
@@ -25,6 +31,12 @@
   mat-card-header {
     padding-bottom: 16px;
   }
+
+  /* Asegura que el contenido del card no desborde */
+  mat-card-content {
+    width: 100%;
+    overflow: hidden;
+  }
 }
 
 .chart-wrapper {
@@ -32,8 +44,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  position: relative;       /* Necesario para que Chart.js se ajuste al contenedor */
 }
 
+/* Stock bajo card — responsive */
 .stock-card {
   mat-card-header {
     padding-bottom: 16px;
@@ -51,9 +66,53 @@
     width: 20px;
     height: 20px;
   }
+
+  /* Lista interna no desborde */
+  ::ng-deep .mat-mdc-list-item {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .view-all {
   text-align: center;
   padding: 8px 0;
+}
+
+/* === Tablet / small desktop: < 1200px === */
+@media (max-width: 1200px) {
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .dashboard-grid {
+    gap: 16px;
+  }
+
+  .chart-wrapper {
+    height: 260px;
+  }
+}
+
+/* === Mobile: < 768px === */
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-wrapper {
+    height: 220px;
+  }
+
+  .stock-card {
+    mat-card-header mat-card-title {
+      font-size: 1rem;
+    }
+  }
 }

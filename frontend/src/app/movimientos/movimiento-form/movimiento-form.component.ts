@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -25,7 +25,8 @@ export class MovimientoFormComponent implements OnInit {
     private movimientoService: MovimientoService,
     private productoService: ProductoService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       productoId: ['', Validators.required],
@@ -44,6 +45,10 @@ export class MovimientoFormComponent implements OnInit {
     });
   }
 
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
+  }
+
   ngOnInit(): void {
     this.loadProductos();
   }
@@ -52,6 +57,7 @@ export class MovimientoFormComponent implements OnInit {
     this.productoService.list().subscribe({
       next: (productos) => {
         this.productos = productos;
+        this.detectChanges();
       }
     });
   }
@@ -73,6 +79,7 @@ export class MovimientoFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const currentUser = this.authService.getCurrentUser();
     const data = {
       ...this.form.value,
@@ -82,6 +89,7 @@ export class MovimientoFormComponent implements OnInit {
     this.movimientoService.create(data).subscribe({
       next: () => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: 'Movimiento registrado',
@@ -93,6 +101,7 @@ export class MovimientoFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo registrar el movimiento', 'error');
       }
     });

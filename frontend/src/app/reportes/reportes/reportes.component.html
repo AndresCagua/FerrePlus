@@ -1,77 +1,107 @@
-<div class="fade-in">
-  <div class="page-header">
+<div class="reportes-container fade-in">
+  <!-- Header -->
+  <div class="reportes-header">
     <h2>Reportes</h2>
+    <p class="text-muted">Genera y visualiza reportes de ventas, productos y más</p>
   </div>
 
-  <div class="row g-3 mb-4">
-    <div class="col-md-6">
-      <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Fecha Inicio</mat-label>
-        <input matInput [matDatepicker]="pickerFrom" formControlName="fechaInicio">
-        <mat-datepicker-toggle matSuffix [for]="pickerFrom"></mat-datepicker-toggle>
-        <mat-datepicker #pickerFrom></mat-datepicker>
-      </mat-form-field>
-    </div>
-    <div class="col-md-6">
-      <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Fecha Fin</mat-label>
-        <input matInput [matDatepicker]="pickerTo" formControlName="fechaFin">
-        <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
-        <mat-datepicker #pickerTo></mat-datepicker>
-      </mat-form-field>
-    </div>
-  </div>
+  <!-- Filtros -->
+  <mat-card class="filtros-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_alt</mat-icon>
+        Filtros
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="filtros-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha inicio</mat-label>
+          <input matInput [matDatepicker]="pickerFrom" formControlName="fechaInicio">
+          <mat-datepicker-toggle matSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFrom></mat-datepicker>
+        </mat-form-field>
 
-  <div class="d-flex gap-2 mb-4">
-    <button mat-raised-button [color]="reportType === 'ventas' ? 'primary' : ''" (click)="setReportType('ventas')">
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha fin</mat-label>
+          <input matInput [matDatepicker]="pickerTo" formControlName="fechaFin">
+          <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
+          <mat-datepicker #pickerTo></mat-datepicker>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Acciones -->
+  <div class="acciones-row">
+    <button
+      mat-raised-button
+      [color]="reportType === 'ventas' ? 'primary' : 'accent'"
+      (click)="setReportType('ventas')">
       <mat-icon>trending_up</mat-icon>
-      Ventas
+      <span>Ventas por Día</span>
     </button>
-    <button mat-raised-button [color]="reportType === 'top-productos' ? 'primary' : ''" (click)="setReportType('top-productos')">
+    <button
+      mat-raised-button
+      [color]="reportType === 'top-productos' ? 'primary' : 'accent'"
+      (click)="setReportType('top-productos')">
       <mat-icon>star</mat-icon>
-      Top Productos
+      <span>Top Productos</span>
     </button>
-    <button mat-raised-button color="accent" (click)="loadReport()">
+    <button
+      mat-stroked-button
+      color="primary"
+      (click)="loadReport()"
+      [disabled]="loadingReport">
       <mat-icon>refresh</mat-icon>
-      Actualizar
+      <span>Actualizar</span>
     </button>
   </div>
 
+  <!-- Loading -->
   <div class="loading-overlay" *ngIf="loadingReport">
     <mat-spinner diameter="40"></mat-spinner>
   </div>
 
-  <div *ngIf="!loadingReport">
+  <!-- Resultados -->
+  <div class="resultados-area" *ngIf="!loadingReport">
     <!-- Ventas Chart -->
-    <mat-card *ngIf="reportType === 'ventas'" class="mb-4">
-      <mat-card-header>
-        <mat-card-title>Ventas por Día</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="chart-container" *ngIf="ventasChartData.labels?.length">
+    <ng-container *ngIf="reportType === 'ventas'">
+      <div class="resultado-card" *ngIf="ventasChartData.labels?.length; else emptyState">
+        <div class="resultado-header">
+          <h3>
+            <mat-icon>bar_chart</mat-icon>
+            Ventas por Día
+          </h3>
+        </div>
+        <div class="chart-container">
           <canvas baseChart [data]="ventasChartData" [options]="ventasChartOptions" type="bar"></canvas>
         </div>
-        <div class="empty-state" *ngIf="!ventasChartData.labels?.length">
-          <mat-icon>show_chart</mat-icon>
-          <p>No hay datos disponibles para el periodo seleccionado</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </ng-container>
 
     <!-- Top Productos Chart -->
-    <mat-card *ngIf="reportType === 'top-productos'">
-      <mat-card-header>
-        <mat-card-title>Top Productos Más Vendidos</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="chart-container" *ngIf="topProductos.length > 0">
+    <ng-container *ngIf="reportType === 'top-productos'">
+      <div class="resultado-card" *ngIf="topProductos.length > 0; else emptyState">
+        <div class="resultado-header">
+          <h3>
+            <mat-icon>bar_chart</mat-icon>
+            Top Productos Más Vendidos
+          </h3>
+        </div>
+        <div class="chart-container">
           <canvas baseChart [data]="ventasChartData" [options]="ventasChartOptions" type="bar"></canvas>
         </div>
-        <div class="empty-state" *ngIf="topProductos.length === 0">
-          <mat-icon>star_border</mat-icon>
-          <p>No hay datos de productos vendidos</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </ng-container>
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+      <div class="estado-vacio">
+        <mat-icon class="empty-icon">assessment</mat-icon>
+        <p class="empty-text">No hay datos disponibles para el período seleccionado</p>
+        <span class="empty-hint">Ajusta los filtros y selecciona un reporte para generar</span>
+      </div>
+    </ng-template>
   </div>
 </div>

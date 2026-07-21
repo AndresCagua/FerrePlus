@@ -11,8 +11,9 @@
     <mat-card-header>
       <mat-form-field class="search-field" appearance="outline">
         <mat-label>Buscar orden</mat-label>
-        <input matInput (keyup)="applyFilter($event)" placeholder="Número de orden...">
+        <input matInput (keyup)="applyFilter($event)">
         <mat-icon matSuffix>search</mat-icon>
+        <mat-hint>Por número de orden</mat-hint>
       </mat-form-field>
     </mat-card-header>
 

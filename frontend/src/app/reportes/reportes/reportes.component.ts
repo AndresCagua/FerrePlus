@@ -14,7 +14,7 @@ import { ChartConfiguration } from 'chart.js';
 export class ReportesComponent implements OnInit {
   form: FormGroup;
   loading = false;
-  reportType = 'ventas';
+  reportType: 'ventas' | 'top-productos' = 'ventas';
 
   // Charts
   ventasChartData: ChartConfiguration['data'] = {
@@ -24,7 +24,25 @@ export class ReportesComponent implements OnInit {
   ventasChartOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: true } }
+    plugins: {
+      legend: { display: true },
+      tooltip: {
+        callbacks: {
+          label: (context) => `$${context.parsed.y?.toFixed(2) ?? '0.00'}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value) => `$${value}`
+        }
+      }
+    }
   };
 
   topProductos: any[] = [];
@@ -32,7 +50,8 @@ export class ReportesComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       fechaInicio: [''],
@@ -45,8 +64,14 @@ export class ReportesComponent implements OnInit {
     this.loadReport();
   }
 
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch(e) { /* noop */ }
+  }
+
   loadReport(): void {
     this.loadingReport = true;
+    this.detectChanges();
+
     const apiUrl = environment.apiUrl;
     const params = this.form.value;
 
@@ -56,8 +81,12 @@ export class ReportesComponent implements OnInit {
           next: (data) => {
             this.buildVentasChart(data);
             this.loadingReport = false;
+            this.detectChanges();
           },
-          error: () => this.loadingReport = false
+          error: () => {
+            this.loadingReport = false;
+            this.detectChanges();
+          }
         });
         break;
 
@@ -67,13 +96,18 @@ export class ReportesComponent implements OnInit {
             this.topProductos = data;
             this.buildTopProductosChart(data);
             this.loadingReport = false;
+            this.detectChanges();
           },
-          error: () => this.loadingReport = false
+          error: () => {
+            this.loadingReport = false;
+            this.detectChanges();
+          }
         });
         break;
 
       default:
         this.loadingReport = false;
+        this.detectChanges();
     }
   }
 
@@ -86,7 +120,7 @@ export class ReportesComponent implements OnInit {
       }),
       datasets: [
         {
-          label: 'Ventas',
+          label: 'Ventas ($)',
           data: ventas.map((v: any) => v.total),
           backgroundColor: '#42A5F5',
           borderRadius: 6
@@ -109,7 +143,7 @@ export class ReportesComponent implements OnInit {
     };
   }
 
-  setReportType(type: string): void {
+  setReportType(type: 'ventas' | 'top-productos'): void {
     this.reportType = type;
     this.loadReport();
   }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -29,7 +29,8 @@ export class GastoFormComponent implements OnInit {
     private gastoService: GastoService,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       descripcion: ['', [Validators.required, Validators.maxLength(255)]],
@@ -41,6 +42,10 @@ export class GastoFormComponent implements OnInit {
     });
   }
 
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -49,6 +54,7 @@ export class GastoFormComponent implements OnInit {
       this.loadGasto(this.gastoId);
     } else {
       this.loadingData = false;
+      this.detectChanges();
     }
   }
 
@@ -64,9 +70,11 @@ export class GastoFormComponent implements OnInit {
           observaciones: gasto.observaciones
         });
         this.loadingData = false;
+        this.detectChanges();
       },
       error: () => {
         this.loadingData = false;
+        this.detectChanges();
         Swal.fire('Error', 'No se pudo cargar el gasto', 'error');
         this.router.navigate(['/gastos']);
       }
@@ -82,6 +90,7 @@ export class GastoFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const currentUser = this.authService.getCurrentUser();
     const data = {
       ...this.form.value,
@@ -95,6 +104,7 @@ export class GastoFormComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: this.isEditing ? 'Gasto actualizado' : 'Gasto registrado',
@@ -105,6 +115,7 @@ export class GastoFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo guardar el gasto', 'error');
       }
     });

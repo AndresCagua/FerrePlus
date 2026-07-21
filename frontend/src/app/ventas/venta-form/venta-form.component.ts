@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
 import { VentaService } from '../venta.service';
 import { ProductoService } from '../../productos/producto.service';
@@ -26,17 +26,23 @@ export class VentaFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private ventaService: VentaService,
     private productoService: ProductoService,
     private clienteService: ClienteService,
+    private ventaService: VentaService,
+    private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
-    private router: Router
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       clienteId: [null],
       metodoPago: ['EFECTIVO', Validators.required],
       items: this.fb.array([])
     });
+  }
+
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
   }
 
   ngOnInit(): void {
@@ -53,6 +59,7 @@ export class VentaFormComponent implements OnInit {
       next: (productos) => {
         this.productos = productos.filter(p => p.activo && p.stockActual > 0);
         this.filteredProductos = [...this.productos];
+        this.detectChanges();
       }
     });
   }
@@ -61,6 +68,7 @@ export class VentaFormComponent implements OnInit {
     this.clienteService.list().subscribe({
       next: (clientes) => {
         this.clientes = clientes.filter(c => c.activo);
+        this.detectChanges();
       }
     });
   }
@@ -169,6 +177,7 @@ export class VentaFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const currentUser = this.authService.getCurrentUser();
     const ventaData: any = {
       clienteId: this.form.get('clienteId')?.value || null,
@@ -186,6 +195,7 @@ export class VentaFormComponent implements OnInit {
     this.ventaService.create(ventaData).subscribe({
       next: (venta) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: 'Venta registrada',
@@ -197,6 +207,7 @@ export class VentaFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo registrar la venta', 'error');
       }
     });

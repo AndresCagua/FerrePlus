@@ -1,4 +1,11 @@
 <div class="app-layout">
+  <!-- Mobile sidebar backdrop -->
+  <div
+    class="sidebar-backdrop"
+    *ngIf="isLoggedIn && !sidebarCollapsed"
+    (click)="toggleSidebar()">
+  </div>
+
   <!-- Sidebar -->
   <app-sidebar
     *ngIf="isLoggedIn"

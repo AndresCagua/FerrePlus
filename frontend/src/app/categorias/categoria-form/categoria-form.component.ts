@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -23,12 +23,17 @@ export class CategoriaFormComponent implements OnInit {
     private fb: FormBuilder,
     private categoriaService: CategoriaService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       nombre: ['', [Validators.required, Validators.maxLength(100)]],
       descripcion: ['', Validators.maxLength(255)]
     });
+  }
+
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
   }
 
   ngOnInit(): void {
@@ -39,6 +44,7 @@ export class CategoriaFormComponent implements OnInit {
       this.loadCategoria(this.categoriaId);
     } else {
       this.loadingData = false;
+      this.detectChanges();
     }
   }
 
@@ -50,9 +56,11 @@ export class CategoriaFormComponent implements OnInit {
           descripcion: categoria.descripcion
         });
         this.loadingData = false;
+        this.detectChanges();
       },
       error: () => {
         this.loadingData = false;
+        this.detectChanges();
         Swal.fire('Error', 'No se pudo cargar la categoría', 'error');
         this.router.navigate(['/categorias']);
       }
@@ -68,6 +76,7 @@ export class CategoriaFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const data = this.form.value;
 
     const request = this.isEditing
@@ -77,6 +86,7 @@ export class CategoriaFormComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: this.isEditing ? 'Categoría actualizada' : 'Categoría creada',
@@ -87,6 +97,7 @@ export class CategoriaFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo guardar la categoría', 'error');
       }
     });

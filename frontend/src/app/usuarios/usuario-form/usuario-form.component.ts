@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -24,7 +24,8 @@ export class UsuarioFormComponent implements OnInit {
     private fb: FormBuilder,
     private usuarioService: UsuarioService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       nombre: ['', [Validators.required, Validators.maxLength(100)]],
@@ -34,6 +35,10 @@ export class UsuarioFormComponent implements OnInit {
       password: [''],
       activo: [true]
     });
+  }
+
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
   }
 
   ngOnInit(): void {
@@ -50,6 +55,7 @@ export class UsuarioFormComponent implements OnInit {
       this.form.get('password')?.setValidators([Validators.required, Validators.minLength(4)]);
       this.form.get('password')?.updateValueAndValidity();
       this.loadingData = false;
+      this.detectChanges();
     }
   }
 
@@ -64,9 +70,11 @@ export class UsuarioFormComponent implements OnInit {
           activo: usuario.activo
         });
         this.loadingData = false;
+        this.detectChanges();
       },
       error: () => {
         this.loadingData = false;
+        this.detectChanges();
         Swal.fire('Error', 'No se pudo cargar el usuario', 'error');
         this.router.navigate(['/usuarios']);
       }
@@ -82,6 +90,7 @@ export class UsuarioFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.detectChanges();
     const formValue = this.form.value;
     const data: any = {
       nombre: formValue.nombre,
@@ -102,6 +111,7 @@ export class UsuarioFormComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire({
           icon: 'success',
           title: this.isEditing ? 'Usuario actualizado' : 'Usuario creado',
@@ -112,6 +122,7 @@ export class UsuarioFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', err.error?.message || 'No se pudo guardar el usuario', 'error');
       }
     });

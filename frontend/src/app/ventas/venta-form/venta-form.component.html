@@ -14,8 +14,9 @@
         <mat-card-title>Productos</mat-card-title>
         <mat-form-field appearance="outline" class="product-search">
           <mat-label>Buscar producto</mat-label>
-          <input matInput [(ngModel)]="productoSearchTerm" (input)="filterProductos($event)" placeholder="Código o nombre...">
+          <input matInput [(ngModel)]="productoSearchTerm" (input)="filterProductos($event)">
           <mat-icon matSuffix>search</mat-icon>
+          <mat-hint>Por código o nombre</mat-hint>
         </mat-form-field>
       </mat-card-header>
 
