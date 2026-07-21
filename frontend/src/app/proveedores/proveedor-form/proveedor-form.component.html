@@ -1,0 +1,86 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h2>{{ isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor' }}</h2>
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+      Volver
+    </button>
+  </div>
+
+  <div class="loading-overlay" *ngIf="loadingData">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-card *ngIf="!loadingData">
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre / Razón Social</mat-label>
+              <input matInput formControlName="nombre" placeholder="Nombre del proveedor">
+              <mat-error *ngIf="form.get('nombre')?.hasError('required')">Requerido</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="col-md-6">
+            <mat-form-field appearance="outline">
+              <mat-label>RUC</mat-label>
+              <input matInput formControlName="ruc" placeholder="1234567890001">
+              <mat-error *ngIf="form.get('ruc')?.hasError('required')">Requerido</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="col-md-6">
+            <mat-form-field appearance="outline">
+              <mat-label>Persona de Contacto</mat-label>
+              <input matInput formControlName="contacto" placeholder="Nombre del contacto">
+              <mat-error *ngIf="form.get('contacto')?.hasError('required')">Requerido</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="col-md-6">
+            <mat-form-field appearance="outline">
+              <mat-label>Teléfono</mat-label>
+              <input matInput formControlName="telefono" placeholder="0999999999">
+              <mat-error *ngIf="form.get('telefono')?.hasError('required')">Requerido</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="col-md-6">
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="contacto@proveedor.com">
+              <mat-error *ngIf="form.get('email')?.hasError('required')">Requerido</mat-error>
+              <mat-error *ngIf="form.get('email')?.hasError('email')">Email inválido</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="col-md-6">
+            <mat-form-field appearance="outline">
+              <mat-label>Dirección</mat-label>
+              <input matInput formControlName="direccion" placeholder="Dirección">
+            </mat-form-field>
+          </div>
+
+          <div class="col-12">
+            <mat-slide-toggle formControlName="activo" color="primary">
+              Proveedor Activo
+            </mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mt-4">
+          <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+            <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+            <span *ngIf="!loading">
+              <mat-icon>save</mat-icon>
+              {{ isEditing ? 'Guardar Cambios' : 'Crear Proveedor' }}
+            </span>
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,13 @@
+mat-card-header {
+  padding-bottom: 8px;
+}
+
+:host ::ng-deep {
+  .mat-mdc-header-cell {
+    font-size: 0.85rem;
+  }
+
+  .mat-mdc-cell {
+    font-size: 0.875rem;
+  }
+}

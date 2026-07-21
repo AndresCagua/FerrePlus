@@ -1,0 +1,19 @@
+# Angular
+/dist/
+/tmp/
+/out-tsc/
+/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+*.local.ts
+environment.local.ts

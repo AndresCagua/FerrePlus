@@ -1,0 +1,81 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h2>Gastos</h2>
+    <button mat-raised-button color="primary" (click)="navigateToNew()">
+      <mat-icon>add</mat-icon>
+      Nuevo Gasto
+    </button>
+  </div>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-label>Buscar gastos</mat-label>
+        <input matInput (keyup)="applyFilter($event)" placeholder="Descripción...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="loading-overlay" *ngIf="loading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <div class="table-container" *ngIf="!loading">
+        <table mat-table [dataSource]="dataSource" matSort class="w-100">
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+            <td mat-cell *matCellDef="let g">{{ g.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="descripcion">
+            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+            <td mat-cell *matCellDef="let g" class="fw-medium">{{ g.descripcion }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="monto">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
+            <td mat-cell *matCellDef="let g" class="fw-bold">{{ formatCurrency(g.monto) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="categoria">
+            <th mat-header-cell *matHeaderCellDef>Categoría</th>
+            <td mat-cell *matCellDef="let g">
+              <span class="badge-stock-ok">{{ g.categoria }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="metodoPago">
+            <th mat-header-cell *matHeaderCellDef>Pago</th>
+            <td mat-cell *matCellDef="let g">{{ g.metodoPago }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="usuario">
+            <th mat-header-cell *matHeaderCellDef>Registrado por</th>
+            <td mat-cell *matCellDef="let g">{{ g.usuario?.nombre || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef class="text-end">Acciones</th>
+            <td mat-cell *matCellDef="let g" class="text-end">
+              <button mat-icon-button color="primary" matTooltip="Editar" (click)="navigateToEdit(g.id)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="deleteGasto(g)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div class="empty-state" *ngIf="dataSource.filteredData.length === 0 && !loading">
+          <mat-icon>money_off</mat-icon>
+          <p>No se encontraron gastos</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

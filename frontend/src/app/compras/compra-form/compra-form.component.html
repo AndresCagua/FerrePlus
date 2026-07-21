@@ -1,0 +1,112 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h2>Nueva Compra</h2>
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+      Volver
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <mat-form-field appearance="outline">
+          <mat-label>Proveedor</mat-label>
+          <mat-select formControlName="proveedorId">
+            <mat-option *ngFor="let p of proveedores" [value]="p.id">
+              {{ p.nombre }} - {{ p.ruc }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('proveedorId')?.hasError('required')">
+            Selecciona un proveedor
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Items de la Compra</mat-card-title>
+        <button mat-stroked-button color="accent" type="button" (click)="addItem()">
+          <mat-icon>add</mat-icon>
+          Agregar Producto
+        </button>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div formArrayName="items">
+          <div class="item-row" *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-5">
+                <mat-form-field appearance="outline">
+                  <mat-label>Producto</mat-label>
+                  <mat-select formControlName="productoId">
+                    <mat-option *ngFor="let p of productos" [value]="p.id">
+                      {{ p.codigoBarras }} - {{ p.nombre }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="item.get('productoId')?.hasError('required')">
+                    Requerido
+                  </mat-error>
+                </mat-form-field>
+              </div>
+              <div class="col-md-2">
+                <mat-form-field appearance="outline">
+                  <mat-label>Cantidad</mat-label>
+                  <input matInput type="number" formControlName="cantidad" min="1">
+                </mat-form-field>
+              </div>
+              <div class="col-md-3">
+                <mat-form-field appearance="outline">
+                  <mat-label>Precio Unitario</mat-label>
+                  <input matInput type="number" formControlName="precioUnitario" min="0" step="0.01">
+                  <span matTextPrefix>$</span>
+                </mat-form-field>
+              </div>
+              <div class="col-md-2">
+                <button mat-icon-button color="warn" type="button" (click)="removeItem(i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="items.length === 0">
+          <mat-icon>add_shopping_cart</mat-icon>
+          <p>Agrega productos a la orden de compra</p>
+        </div>
+      </mat-card-content>
+
+      <mat-card-footer *ngIf="items.length > 0">
+        <mat-divider></mat-divider>
+        <div class="totals p-3">
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span>${{ subtotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row">
+            <span>IVA (12%)</span>
+            <span>${{ iva | number:'1.2-2' }}</span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="summary-row total">
+            <span>TOTAL</span>
+            <span>${{ total | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </mat-card-footer>
+    </mat-card>
+
+    <div class="d-flex gap-2 justify-content-end mt-4">
+      <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+        <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+        <span *ngIf="!loading">
+          <mat-icon>save</mat-icon>
+          Registrar Compra
+        </span>
+      </button>
+    </div>
+  </form>
+</div>

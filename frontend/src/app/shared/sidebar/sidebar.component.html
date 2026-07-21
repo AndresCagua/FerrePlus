@@ -1,0 +1,34 @@
+<aside class="sidebar" [class.collapsed]="collapsed">
+  <div class="sidebar-header">
+    <div class="brand">
+      <mat-icon class="brand-icon">hardware</mat-icon>
+      <span class="brand-text" *ngIf="!collapsed">FerrePlus</span>
+    </div>
+    <button class="collapse-btn" (click)="onToggle()" mat-icon-button>
+      <mat-icon>{{ collapsed ? 'menu' : 'chevron_left' }}</mat-icon>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a
+      *ngFor="let item of visibleMenuItems"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      class="nav-item"
+      [matTooltip]="collapsed ? item.label : ''"
+      matTooltipPosition="right">
+      <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+      <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer" *ngIf="!collapsed">
+    <div class="user-info">
+      <mat-icon>account_circle</mat-icon>
+      <div class="user-details">
+        <span class="user-name">{{ authService.getCurrentUser()?.nombre || 'Usuario' }}</span>
+        <span class="user-role">{{ authService.getCurrentUser()?.rol || '' }}</span>
+      </div>
+    </div>
+  </div>
+</aside>

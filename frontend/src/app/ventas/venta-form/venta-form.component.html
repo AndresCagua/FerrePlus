@@ -1,0 +1,155 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h2>Nueva Venta - Punto de Venta</h2>
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+      Volver
+    </button>
+  </div>
+
+  <div class="pos-layout">
+    <!-- Left: Product Selection -->
+    <mat-card class="pos-products-card">
+      <mat-card-header>
+        <mat-card-title>Productos</mat-card-title>
+        <mat-form-field appearance="outline" class="product-search">
+          <mat-label>Buscar producto</mat-label>
+          <input matInput [(ngModel)]="productoSearchTerm" (input)="filterProductos($event)" placeholder="Código o nombre...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </mat-card-header>
+
+      <mat-card-content class="product-list">
+        <div
+          class="product-item"
+          *ngFor="let producto of filteredProductos.slice(0, 50)"
+          (click)="addProductoToCart(producto)"
+           [class.out-of-stock]="producto.stockActual <= 0">
+          <div class="product-info">
+            <span class="product-name">{{ producto.nombre }}</span>
+            <span class="product-code">{{ producto.codigoBarras }}</span>
+          </div>
+          <div class="product-details">
+            <span class="product-price">${{ producto.precioVenta.toFixed(2) }}</span>
+            <span class="product-stock" [class.text-danger]="producto.stockActual <= producto.stockMinimo">
+              Stock: {{ producto.stockActual }}
+            </span>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="filteredProductos.length === 0">
+          <mat-icon>inventory_2</mat-icon>
+          <p>No se encontraron productos</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Right: Cart & Checkout -->
+    <mat-card class="pos-cart-card">
+      <mat-card-header>
+        <mat-card-title>
+          Carrito
+          <span class="text-muted" *ngIf="itemCount > 0">({{ itemCount }} items)</span>
+        </mat-card-title>
+        <button mat-stroked-button color="warn" (click)="clearCart()" *ngIf="items.length > 1">
+          <mat-icon>delete_sweep</mat-icon>
+          Limpiar
+        </button>
+      </mat-card-header>
+
+      <mat-card-content class="cart-items">
+        <div class="cart-item" *ngFor="let item of items.controls; let i = index">
+          <ng-container [formGroup]="$any(item)">
+            <div class="cart-item-header" *ngIf="item.get('productoId')?.value">
+              <span class="cart-item-name">{{ item.get('productoNombre')?.value }}</span>
+              <button mat-icon-button color="warn" (click)="removeItem(i)" matTooltip="Quitar">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <div class="cart-item-details" *ngIf="item.get('productoId')?.value">
+              <div class="qty-controls">
+                <button mat-icon-button (click)="updateQuantity(i, (item.get('cantidad')?.value || 1) - 1)">
+                  <mat-icon>remove_circle_outline</mat-icon>
+                </button>
+                <input
+                  type="number"
+                  formControlName="cantidad"
+                  class="qty-input"
+                  (change)="updateQuantity(i, $any($event.target).value)">
+                <button mat-icon-button (click)="updateQuantity(i, (item.get('cantidad')?.value || 1) + 1)">
+                  <mat-icon>add_circle_outline</mat-icon>
+                </button>
+              </div>
+              <span class="cart-item-subtotal">
+                ${{ (item.get('cantidad')?.value || 0) * (item.get('precioUnitario')?.value || 0) | number:'1.2-2' }}
+              </span>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Placeholder for empty cart -->
+        <div class="empty-cart" *ngIf="items.length === 0 || !itemAt(0)?.get('productoId')?.value">
+          <mat-icon>shopping_cart</mat-icon>
+          <p>Selecciona productos de la lista</p>
+        </div>
+      </mat-card-content>
+
+      <mat-card-footer *ngIf="hasItems()">
+        <mat-divider></mat-divider>
+        <div class="cart-summary">
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span>${{ subtotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row">
+            <span>IVA (12%)</span>
+            <span>${{ iva | number:'1.2-2' }}</span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="summary-row total">
+            <span>TOTAL</span>
+            <span>${{ total | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </mat-card-footer>
+
+      <!-- Checkout -->
+      <div class="checkout-section" *ngIf="hasItems()">
+        <form [formGroup]="form">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Cliente (opcional)</mat-label>
+            <mat-select formControlName="clienteId">
+              <mat-option [value]="null">Consumidor Final</mat-option>
+              <mat-option *ngFor="let c of clientes" [value]="c.id">
+                {{ c.nombre }} - {{ c.ruc }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Método de Pago</mat-label>
+            <mat-select formControlName="metodoPago">
+              <mat-option value="EFECTIVO">Efectivo</mat-option>
+              <mat-option value="TARJETA">Tarjeta</mat-option>
+              <mat-option value="TRANSFERENCIA">Transferencia</mat-option>
+              <mat-option value="CREDITO">Crédito</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button
+            mat-raised-button
+            color="primary"
+            class="w-100 checkout-btn"
+            (click)="onSubmit()"
+            [disabled]="loading">
+            <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+            <span *ngIf="!loading">
+              <mat-icon>payment</mat-icon>
+              Cobrar - ${{ total | number:'1.2-2' }}
+            </span>
+          </button>
+        </form>
+      </div>
+    </mat-card>
+  </div>
+</div>

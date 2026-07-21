@@ -1,0 +1,98 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h2>Detalle de Venta</h2>
+    <div class="d-flex gap-2">
+      <button mat-stroked-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Volver
+      </button>
+      <button mat-stroked-button (click)="printInvoice()">
+        <mat-icon>print</mat-icon>
+        Imprimir
+      </button>
+      <button mat-raised-button color="warn" (click)="anular()"
+        *ngIf="venta?.estado !== 'ANULADA'">
+        <mat-icon>cancel</mat-icon>
+        Anular Venta
+      </button>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div class="invoice-container" *ngIf="venta && !loading" id="invoice">
+    <!-- Invoice Header -->
+    <div class="invoice-header">
+      <div class="invoice-brand">
+        <mat-icon>hardware</mat-icon>
+        <h2>FerrePlus</h2>
+      </div>
+      <div class="invoice-info">
+        <h3>FACTURA #{{ venta.numeroFactura }}</h3>
+        <p>Fecha: {{ venta.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p>
+        <p>Estado: <span [class.text-success]="venta.estado === 'COMPLETADA'" [class.text-danger]="venta.estado === 'ANULADA'" class="fw-bold">{{ venta.estado }}</span></p>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Customer Info -->
+    <div class="invoice-customer">
+      <div>
+        <strong>Cliente:</strong>
+        <p>{{ venta.cliente?.nombre || 'Consumidor Final' }}</p>
+      </div>
+      <div>
+        <strong>Atendido por:</strong>
+        <p>{{ venta.usuario?.nombre || '-' }}</p>
+      </div>
+      <div>
+        <strong>Método de Pago:</strong>
+        <p>{{ venta.metodoPago }}</p>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Items Table -->
+    <table class="invoice-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th class="text-center">Cant.</th>
+          <th class="text-end">P. Unitario</th>
+          <th class="text-end">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of venta.detalles">
+          <td>{{ item.productoNombre }}</td>
+          <td class="text-center">{{ item.cantidad }}</td>
+          <td class="text-end">{{ formatCurrency(item.precioUnitario) }}</td>
+          <td class="text-end fw-bold">{{ formatCurrency(item.subtotal) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <mat-divider></mat-divider>
+
+    <!-- Totals -->
+    <div class="invoice-totals">
+      <div class="total-row">
+        <span>Subtotal</span>
+        <span>{{ formatCurrency(venta.subtotal) }}</span>
+      </div>
+      <div class="total-row">
+        <span>IVA (12%)</span>
+        <span>{{ formatCurrency(venta.iva) }}</span>
+      </div>
+      <mat-divider></mat-divider>
+      <div class="total-row grand-total">
+        <span>TOTAL</span>
+        <span>{{ formatCurrency(venta.total) }}</span>
+      </div>
+    </div>
+  </div>
+</div>

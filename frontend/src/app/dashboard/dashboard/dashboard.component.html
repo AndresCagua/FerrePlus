@@ -1,0 +1,92 @@
+<div class="dashboard-container fade-in">
+  <div class="page-header">
+    <h2>Dashboard</h2>
+    <small class="text-muted">Resumen del sistema</small>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Error -->
+  <div class="alert alert-danger d-flex align-items-center gap-2" *ngIf="error">
+    <mat-icon>error</mat-icon>
+    <span>Error al cargar los datos del dashboard.</span>
+    <button mat-button color="primary" (click)="loadDashboard()" class="ms-auto">Reintentar</button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <ng-container *ngIf="data && !loading">
+    <!-- Metric Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card" *ngFor="let metric of metrics">
+        <div class="metric-icon" [style.background]="metric.color">
+          <mat-icon>{{ metric.icon }}</mat-icon>
+        </div>
+        <div class="metric-info">
+          <h4>{{ getMetricValue(metric.key) }}</h4>
+          <p>{{ metric.label }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <!-- Chart Card -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Ventas por Día</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-wrapper">
+            <canvas
+              *ngIf="barChartData.datasets.length > 0"
+              baseChart
+              [data]="barChartData"
+              [options]="barChartOptions"
+              [type]="barChartType">
+            </canvas>
+            <div class="empty-state" *ngIf="barChartData.datasets.length === 0">
+              <mat-icon>show_chart</mat-icon>
+              <p>No hay datos de ventas disponibles</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Stock Bajo Card -->
+      <mat-card class="stock-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="warning-icon" color="warn">warning</mat-icon>
+            Productos con Stock Bajo
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngIf="data.productosStockBajoList && data.productosStockBajoList.length > 0; else noStockBajo">
+            <mat-list>
+              <mat-list-item *ngFor="let producto of data.productosStockBajoList.slice(0, 8)">
+                <mat-icon matListItemIcon color="warn">inventory_2</mat-icon>
+                <div matListItemTitle>{{ producto.nombre }}</div>
+                <div matListItemLine>
+                  <span class="badge-stock-low">Stock: {{ producto.stockActual }} / {{ producto.stockMinimo }}</span>
+                </div>
+              </mat-list-item>
+            </mat-list>
+            <div class="view-all" *ngIf="data.productosStockBajoList.length > 8">
+              <button mat-button color="primary" routerLink="/productos">
+                Ver todos ({{ data.productosStockBajoList.length }})
+              </button>
+            </div>
+          </ng-container>
+          <ng-template #noStockBajo>
+            <div class="empty-state">
+              <mat-icon>check_circle</mat-icon>
+              <p>No hay productos con stock bajo</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+</div>
