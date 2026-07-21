@@ -27,6 +27,7 @@ export class SidebarComponent {
     { label: 'Clientes', icon: 'people', route: '/clientes' },
     { label: 'Ventas', icon: 'point_of_sale', route: '/ventas' },
     { label: 'Compras', icon: 'shopping_cart', route: '/compras' },
+    { label: 'Precios', icon: 'attach_money', route: '/gestion-precios' },
     { label: 'Movimientos', icon: 'swap_vert', route: '/movimientos' },
     { label: 'Gastos', icon: 'money_off', route: '/gastos' },
     { label: 'Usuarios', icon: 'manage_accounts', route: '/usuarios', roles: ['ADMIN'] },

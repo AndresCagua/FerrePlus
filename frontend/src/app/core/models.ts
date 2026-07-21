@@ -186,3 +186,32 @@ export interface DashboardData {
   productosStockBajoList?: Producto[];
   ventasPorDia?: VentaDiaria[];
 }
+
+// ===== GESTIÓN DE PRECIOS =====
+export interface PrecioProducto {
+  id: number;
+  nombre: string;
+  codigoBarras: string;
+  precioCompra: number;
+  precioVenta: number;
+  ganancia: number | null;
+  margenPorcentaje: number | null;
+  fechaActualizacion: string;
+}
+
+export interface HistoricoPrecioProducto {
+  id: number;
+  productoId: number;
+  precioCompra: number;
+  precioVenta: number;
+  tipoCambio: string;
+  referencia: string | null;
+  fechaCambio: string;
+  usuarioNombre: string | null;
+}
+
+export interface ActualizarPrecioVentaRequest {
+  nuevoPrecio?: number;
+  margenPorcentaje?: number;
+  referencia?: string;
+}

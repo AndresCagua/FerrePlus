@@ -128,8 +128,11 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.data = data;
         this.loading = false;
-        this.detectChanges();
+        // Llamar loadChartData ANTES de detectChanges para que
+        // loadingChart se actualice en el mismo ciclo y no dispare
+        // ExpressionChangedAfterItHasBeenCheckedError
         this.loadChartData();
+        this.detectChanges();
       },
       error: () => {
         this.loading = false;

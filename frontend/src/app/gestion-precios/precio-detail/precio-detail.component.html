@@ -1,0 +1,140 @@
+<div class="fade-in">
+  <div class="page-header">
+    <button mat-icon-button (click)="goBack()" matTooltip="Volver">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2 *ngIf="precio">{{ precio.nombre }}</h2>
+    <h2 *ngIf="!precio && loading">Cargando...</h2>
+  </div>
+
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="error" class="error-state">
+    <mat-icon>error_outline</mat-icon>
+    <p>No se pudo cargar la información del producto</p>
+    <button mat-raised-button color="primary" (click)="loadData()">Reintentar</button>
+  </div>
+
+  <ng-container *ngIf="precio && !loading">
+    <!-- Current Price Info Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>{{ precio.nombre }}</mat-card-title>
+        <mat-card-subtitle>Código: {{ precio.codigoBarras }}</mat-card-subtitle>
+        <div class="card-actions">
+          <button mat-raised-button color="primary" (click)="openActualizarDialog()" matTooltip="Actualizar precio de venta">
+            <mat-icon>edit</mat-icon>
+            Actualizar Precio de Venta
+          </button>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="price-grid">
+          <div class="price-item">
+            <span class="price-label">Precio Compra</span>
+            <span class="price-value">{{ formatCurrency(precio.precioCompra) }}</span>
+          </div>
+          <div class="price-item">
+            <span class="price-label">Precio Venta</span>
+            <span class="price-value accent">{{ formatCurrency(precio.precioVenta) }}</span>
+          </div>
+          <div class="price-item">
+            <span class="price-label">Ganancia</span>
+            <span class="price-value" [class.text-success]="precio.ganancia !== null && precio.ganancia > 0">
+              {{ precio.ganancia !== null ? formatCurrency(precio.ganancia) : '—' }}
+            </span>
+          </div>
+          <div class="price-item">
+            <span class="price-label">Margen</span>
+            <span class="price-value" [class.text-success]="precio.margenPorcentaje !== null && precio.margenPorcentaje > 0">
+              {{ precio.margenPorcentaje !== null ? (precio.margenPorcentaje.toFixed(2) + '%') : 'Sin datos' }}
+            </span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Chart -->
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>Evolución de Precios</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="chart-container" *ngIf="historial.length > 0">
+          <canvas baseChart
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+            [type]="lineChartType">
+          </canvas>
+        </div>
+        <div class="empty-chart" *ngIf="historial.length === 0">
+          <mat-icon>show_chart</mat-icon>
+          <p>Sin datos históricos para mostrar</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Historial Table -->
+    <mat-card class="historial-card">
+      <mat-card-header>
+        <mat-card-title>Historial de Cambios</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-container">
+          <table mat-table [dataSource]="historial" class="w-100">
+            <!-- Fecha -->
+            <ng-container matColumnDef="fechaCambio">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let h">{{ h.fechaCambio | date:'short' }}</td>
+            </ng-container>
+
+            <!-- Tipo Cambio -->
+            <ng-container matColumnDef="tipoCambio">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let h">
+                <span [class.badge-compra]="h.tipoCambio === 'COMPRA'"
+                      [class.badge-venta]="h.tipoCambio === 'ACTUALIZACION_VENTA'"
+                      [class.badge-ajuste]="h.tipoCambio === 'AJUSTE'">
+                  {{ h.tipoCambio === 'ACTUALIZACION_VENTA' ? 'Actualización Venta' : h.tipoCambio }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Precio Compra -->
+            <ng-container matColumnDef="precioCompra">
+              <th mat-header-cell *matHeaderCellDef>Precio Compra</th>
+              <td mat-cell *matCellDef="let h">{{ formatCurrency(h.precioCompra) }}</td>
+            </ng-container>
+
+            <!-- Precio Venta -->
+            <ng-container matColumnDef="precioVenta">
+              <th mat-header-cell *matHeaderCellDef>Precio Venta</th>
+              <td mat-cell *matCellDef="let h">{{ formatCurrency(h.precioVenta) }}</td>
+            </ng-container>
+
+            <!-- Referencia -->
+            <ng-container matColumnDef="referencia">
+              <th mat-header-cell *matHeaderCellDef>Referencia</th>
+              <td mat-cell *matCellDef="let h">{{ h.referencia || '—' }}</td>
+            </ng-container>
+
+            <!-- Usuario -->
+            <ng-container matColumnDef="usuarioNombre">
+              <th mat-header-cell *matHeaderCellDef>Usuario</th>
+              <td mat-cell *matCellDef="let h">{{ h.usuarioNombre || '—' }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="historialColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: historialColumns;"></tr>
+          </table>
+
+          <div class="empty-state" *ngIf="historial.length === 0">
+            <mat-icon>history</mat-icon>
+            <p>No hay registros históricos</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+</ng-container>

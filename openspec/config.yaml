@@ -1,0 +1,32 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Java 21 + Spring Boot 3.4.5 (Maven) / Angular 22 + Angular Material + Bootstrap 5
+  Architecture: Layered (controller → service → repository → entity) + DTOs + JWT auth + global exception handler
+  Testing: Backend has spring-boot-starter-test + spring-security-test deps but no test files exist (src/test/ missing). Frontend has no test config, no karma/jest setup, no spec files. No linter/formatter configs found.
+  Infrastructure: Docker multi-stage build (maven:3-eclipse-temurin-21 → eclipse-temurin:21-jre), Docker Compose with host networking + PostgreSQL
+  CI: Not detected. No CI config files found.
+  Style: Standard Java package-by-layer convention. Angular feature modules (not standalone), lazy-loaded routing, shared+core module pattern.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules/packages (backend layer, frontend module, Docker/infra)
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns and conventions
+    - Load relevant coding skills (angular-developer, clean-architecture) for the project stack
+  verify:
+    - Run tests if test infrastructure exists
+    - Compare implementation against every spec scenario
+  archive:
+    - Warn before merging destructive deltas (large removals)

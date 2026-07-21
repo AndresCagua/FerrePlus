@@ -44,6 +44,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'gestion-precios',
+    loadChildren: () => import('./gestion-precios/gestion-precios.module').then(m => m.GestionPreciosModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'movimientos',
     loadChildren: () => import('./movimientos/movimientos.module').then(m => m.MovimientosModule),
     canActivate: [AuthGuard]

@@ -1,0 +1,54 @@
+<h2 mat-dialog-title>Actualizar Precio de Venta</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form">
+    <p class="text-muted" *ngIf="precioCompraCero">
+      <mat-icon>info</mat-icon>
+      No hay precio de compra registrado. Solo puedes establecer un precio directo.
+    </p>
+
+    <mat-radio-group class="option-group" formControlName="tipoOpcion">
+      <div class="option-item">
+        <mat-radio-button value="precio">
+          Nuevo Precio de Venta
+        </mat-radio-button>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nuevo Precio</mat-label>
+          <input matInput type="number" formControlName="nuevoPrecio" min="0.01" step="0.01"
+                 [matTooltip]="form.get('tipoOpcion')?.value !== 'precio' ? 'Selecciona esta opción primero' : ''">
+          <mat-error *ngIf="form.get('nuevoPrecio')?.hasError('min')">
+            El precio debe ser mayor a 0
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="option-item">
+        <mat-radio-button value="margen" [disabled]="precioCompraCero">
+          Calcular por Margen (%)
+        </mat-radio-button>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Margen (%)</mat-label>
+          <input matInput type="number" formControlName="margenPorcentaje" min="0.01" step="0.01"
+                 [matTooltip]="form.get('tipoOpcion')?.value !== 'margen' ? 'Selecciona esta opción primero' : ''">
+          <mat-error *ngIf="form.get('margenPorcentaje')?.hasError('min')">
+            El margen debe ser mayor a 0
+          </mat-error>
+          <mat-hint *ngIf="precioCompraCero">No hay precio de compra registrado</mat-hint>
+        </mat-form-field>
+      </div>
+    </mat-radio-group>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Referencia / Motivo (opcional)</mat-label>
+      <input matInput formControlName="referencia" placeholder="Ej: Ajuste estacional">
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancelar()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onGuardar()" [disabled]="form.invalid || saving">
+    <mat-spinner diameter="20" *ngIf="saving"></mat-spinner>
+    <span *ngIf="!saving">Guardar</span>
+  </button>
+</mat-dialog-actions>

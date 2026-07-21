@@ -7,6 +7,7 @@ import com.ferreplus.exception.BadRequestException;
 import com.ferreplus.exception.ResourceNotFoundException;
 import com.ferreplus.repository.CompraRepository;
 import com.ferreplus.repository.DetalleCompraRepository;
+import com.ferreplus.repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,8 @@ public class CompraService {
     private final ProductoService productoService;
     private final ProveedorService proveedorService;
     private final UsuarioService usuarioService;
+    private final PrecioService precioService;
+    private final ProductoRepository productoRepository;
 
     @Transactional(readOnly = true)
     public List<Compra> list() {
@@ -84,6 +87,11 @@ public class CompraService {
             detalleCompraRepository.save(detalle);
 
             productoService.actualizarStock(producto.getId(), detalleDTO.getCantidad(), "ENTRADA");
+
+            producto.setPrecioCompra(detalleDTO.getPrecioUnitario());
+            productoRepository.save(producto);
+            precioService.registrarHistorico(producto, detalleDTO.getPrecioUnitario(),
+                    producto.getPrecioVenta(), "COMPRA", compra.getNumeroFactura(), null);
         }
 
         return compra;
@@ -158,6 +166,11 @@ public class CompraService {
             detalleCompraRepository.save(detalle);
 
             productoService.actualizarStock(producto.getId(), detalleDTO.getCantidad(), "ENTRADA");
+
+            producto.setPrecioCompra(detalleDTO.getPrecioUnitario());
+            productoRepository.save(producto);
+            precioService.registrarHistorico(producto, detalleDTO.getPrecioUnitario(),
+                    producto.getPrecioVenta(), "COMPRA", compra.getNumeroFactura(), null);
         }
 
         return compraRepository.save(compra);
