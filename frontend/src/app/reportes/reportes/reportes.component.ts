@@ -53,11 +53,16 @@ export class ReportesComponent implements OnInit {
     private http: HttpClient,
     private cdr: ChangeDetectorRef
   ) {
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     this.form = this.fb.group({
-      fechaInicio: [''],
-      fechaFin: [''],
-      tipo: ['ventas']
+      desde: [this.toDateString(inicioMes)],
+      hasta: [this.toDateString(hoy)]
     });
+  }
+
+  private toDateString(d: Date): string {
+    return d.toISOString().split('T')[0];
   }
 
   ngOnInit(): void {
@@ -77,7 +82,7 @@ export class ReportesComponent implements OnInit {
 
     switch (this.reportType) {
       case 'ventas':
-        this.http.get<any>(`${apiUrl}/reportes/ventas`, { params }).subscribe({
+        this.http.get<any[]>(`${apiUrl}/reportes/ventas`, { params }).subscribe({
           next: (data) => {
             this.buildVentasChart(data);
             this.loadingReport = false;
@@ -111,17 +116,27 @@ export class ReportesComponent implements OnInit {
     }
   }
 
-  private buildVentasChart(data: any): void {
-    const ventas = data.ventasPorDia || [];
+  private buildVentasChart(ventas: any[]): void {
+    // Group by day and sum totals
+    const dailyTotals = new Map<string, number>();
+    for (const v of ventas) {
+      const day = v.fechaCreacion ? v.fechaCreacion.split('T')[0] : '';
+      if (!day) continue;
+      dailyTotals.set(day, (dailyTotals.get(day) || 0) + Number(v.total || 0));
+    }
+
+    // Sort by date
+    const sorted = [...dailyTotals.entries()].sort(([a], [b]) => a.localeCompare(b));
+
     this.ventasChartData = {
-      labels: ventas.map((v: any) => {
-        const d = new Date(v.fecha);
+      labels: sorted.map(([fecha]) => {
+        const d = new Date(fecha + 'T12:00:00');
         return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
       }),
       datasets: [
         {
           label: 'Ventas ($)',
-          data: ventas.map((v: any) => v.total),
+          data: sorted.map(([_, total]) => total),
           backgroundColor: '#42A5F5',
           borderRadius: 6
         }

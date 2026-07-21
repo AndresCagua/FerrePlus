@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { VentaService } from '../venta.service';
@@ -18,8 +18,13 @@ export class VentaDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private ventaService: VentaService
+    private ventaService: VentaService,
+    private cdr: ChangeDetectorRef
   ) {}
+
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
+  }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -36,9 +41,11 @@ export class VentaDetailComponent implements OnInit {
       next: (venta) => {
         this.venta = venta;
         this.loading = false;
+        this.detectChanges();
       },
       error: () => {
         this.loading = false;
+        this.detectChanges();
         Swal.fire('Error', 'No se pudo cargar la venta', 'error');
         this.router.navigate(['/ventas']);
       }
@@ -64,6 +71,7 @@ export class VentaDetailComponent implements OnInit {
             this.loadVenta(this.venta!.id);
           },
           error: () => {
+            this.detectChanges();
             Swal.fire('Error', 'No se pudo anular la venta', 'error');
           }
         });

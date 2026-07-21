@@ -20,6 +20,8 @@ interface ReporteDTO {
   totalProveedores: number;
   totalUsuarios: number;
   saldoPendienteClientes: number;
+  ventasPorDia?: { fecha: string; total: number }[];
+  productosStockBajoList?: any[];
 }
 
 @Injectable({
@@ -46,7 +48,9 @@ export class DashboardService {
         totalClientes: Number(reporte.totalClientes),
         totalProveedores: Number(reporte.totalProveedores),
         totalUsuarios: Number(reporte.totalUsuarios),
-        saldoPendienteClientes: Number(reporte.saldoPendienteClientes)
+        saldoPendienteClientes: Number(reporte.saldoPendienteClientes),
+        ventasPorDia: reporte.ventasPorDia || [],
+        productosStockBajoList: reporte.productosStockBajoList || []
       }))
     );
   }

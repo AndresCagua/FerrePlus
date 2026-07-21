@@ -81,6 +81,8 @@ export class VentaListComponent implements OnInit {
             this.loadVentas();
           },
           error: () => {
+            this.loading = false;
+            this.cdr.detectChanges();
             Swal.fire('Error', 'No se pudo anular la venta', 'error');
           }
         });

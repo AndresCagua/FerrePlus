@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
@@ -19,12 +19,17 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(4)]]
     });
+  }
+
+  private detectChanges(): void {
+    try { this.cdr.detectChanges(); } catch { /* noop */ }
   }
 
   ngOnInit(): void {
@@ -40,6 +45,7 @@ export class LoginComponent implements OnInit {
 
     this.loading = true;
     this.errorMessage = '';
+    this.detectChanges();
 
     const { email, password } = this.loginForm.value;
 
@@ -50,6 +56,7 @@ export class LoginComponent implements OnInit {
             console.error('No se pudo navegar al dashboard');
             this.loading = false;
             this.errorMessage = 'Error al cargar la aplicación. Intenta de nuevo.';
+            this.detectChanges();
           }
         });
       },
@@ -62,6 +69,7 @@ export class LoginComponent implements OnInit {
         } else {
           this.errorMessage = error.error?.message || 'Ocurrió un error al iniciar sesión.';
         }
+        this.detectChanges();
       }
     });
   }

@@ -8,15 +8,15 @@
 -- =============================================================
 -- CATEGORÍAS
 -- =============================================================
-INSERT INTO categorias (nombre, descripcion, activo) VALUES
-('Herramientas Manuales', 'Martillos, destornilladores, llaves, alicates, etc.', true),
-('Herramientas Eléctricas', 'Taladros, esmeriles, sierras eléctricas, etc.', true),
-('Material Eléctrico', 'Cables, interruptores, tomacorrientes, etc.', true),
-('Fontanería', 'Tuberías, válvulas, conexiones, grifería, etc.', true),
-('Pinturas y Accesorios', 'Pinturas, brochas, rodillos, diluyentes, etc.', true),
-('Ferretería General', 'Clavos, tornillos, pernos, arandelas, etc.', true),
-('Seguridad Industrial', 'Cascos, guantes, arneses, señalética, etc.', true),
-('Jardinería', 'Mangueras, aspersores, tijeras de podar, etc.', true)
+INSERT INTO categorias (nombre, descripcion) VALUES
+('Herramientas Manuales', 'Martillos, destornilladores, llaves, alicates, etc.'),
+('Herramientas Eléctricas', 'Taladros, esmeriles, sierras eléctricas, etc.'),
+('Material Eléctrico', 'Cables, interruptores, tomacorrientes, etc.'),
+('Fontanería', 'Tuberías, válvulas, conexiones, grifería, etc.'),
+('Pinturas y Accesorios', 'Pinturas, brochas, rodillos, diluyentes, etc.'),
+('Ferretería General', 'Clavos, tornillos, pernos, arandelas, etc.'),
+('Seguridad Industrial', 'Cascos, guantes, arneses, señalética, etc.'),
+('Jardinería', 'Mangueras, aspersores, tijeras de podar, etc.')
 ON CONFLICT (nombre) DO NOTHING;
 
 -- =============================================================

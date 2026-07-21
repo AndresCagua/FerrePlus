@@ -14,17 +14,17 @@
       </mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <div class="filtros-row">
+      <div class="filtros-row" [formGroup]="form">
         <mat-form-field appearance="outline">
           <mat-label>Fecha inicio</mat-label>
-          <input matInput [matDatepicker]="pickerFrom" formControlName="fechaInicio">
+          <input matInput [matDatepicker]="pickerFrom" formControlName="desde">
           <mat-datepicker-toggle matSuffix [for]="pickerFrom"></mat-datepicker-toggle>
           <mat-datepicker #pickerFrom></mat-datepicker>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Fecha fin</mat-label>
-          <input matInput [matDatepicker]="pickerTo" formControlName="fechaFin">
+          <input matInput [matDatepicker]="pickerTo" formControlName="hasta">
           <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
           <mat-datepicker #pickerTo></mat-datepicker>
         </mat-form-field>

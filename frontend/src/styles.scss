@@ -1,28 +1,41 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Angular Material Theme — @use MUST be first (Sass module system rule)
+   Angular Material Theme System
    ═══════════════════════════════════════════════════════════════════════════ */
 @use '@angular/material' as mat;
 
-html {
-  /* Default: light mode */
-  color-scheme: light;
-  @include mat.theme((
-    color: (
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-      theme-type: color-scheme,   /* uses CSS light-dark() — auto-switches with color-scheme */
-    ),
-    typography: Roboto,
-    density: 0,
-  ));
+/* ── Light theme ── */
+$light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+/* ── Dark theme ── */
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+/* Apply light theme as default (all component styles) */
+@include mat.all-component-themes($light-theme);
+
+/* Dark theme override — only colors change, structure/density stay */
+.dark-theme {
+  @include mat.all-component-colors($dark-theme);
 }
 
-/* Dark mode — toggle via ThemeService adds .dark-theme on <html> */
-html.dark-theme {
-  color-scheme: dark;
-}
-
-/* ── Body base — no input/select/textarea/button overrides, Material handles them ── */
+/* ── Body base — NO input/select/textarea/button element selectors ── */
 body {
   margin: 0;
   font-family: 'Inter', 'Roboto', sans-serif;
@@ -206,11 +219,13 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: transform 0.2s ease, background-color 0.3s ease;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
 }
 
 .metric-card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 }
 
 .metric-icon {
@@ -254,7 +269,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Dark Theme: Custom component overrides (non-Material or Material extras)
+   Dark Theme: Custom component overrides
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* App shell */
@@ -278,7 +293,7 @@ body {
   color: var(--primary-light);
 }
 
-/* Tables */
+/* Tables (dark overrides — keep Material dark table styles) */
 .dark-theme .mat-mdc-table {
   background-color: #2a2a2a !important;
 }
@@ -330,7 +345,7 @@ body {
   background-color: #2a2a2a !important;
 }
 
-/* Select panel / menu / dialog / tooltip */
+/* Select panel / menu / dialog / tooltip / paginator */
 .dark-theme .mat-mdc-select-panel {
   background-color: #2a2a2a !important;
 }
@@ -409,7 +424,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Buttons — Bootstrap compatibility layer
+   Buttons — Bootstrap btn-* compatibility layer (not Material)
    ═══════════════════════════════════════════════════════════════════════════ */
 .btn-primary {
   background-color: var(--primary) !important;
@@ -433,7 +448,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Tables (light mode)
+   Tables (light mode base)
    ═══════════════════════════════════════════════════════════════════════════ */
 .table-container {
   overflow-x: auto;
@@ -459,7 +474,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Form fields — layout only (NO color/border overrides — theme handles those)
+   Form fields — LAYOUT ONLY (NO color/border/background — theme handles it)
    ═══════════════════════════════════════════════════════════════════════════ */
 .mat-mdc-form-field {
   width: 100%;
@@ -525,6 +540,99 @@ body {
 
 .swal2-confirm.swal2-styled {
   background-color: var(--primary) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Invoice / Print
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Print — invoice always light on paper */
+@media print {
+  .dark-theme .invoice-container {
+    background: #ffffff !important;
+    color: #1a1a1a;
+  }
+
+  .dark-theme .invoice-container .invoice-table td,
+  .dark-theme .invoice-container .invoice-table th {
+    color: #333;
+  }
+
+  .dark-theme .invoice-container .invoice-info p {
+    color: #555;
+  }
+
+  .dark-theme .invoice-container .invoice-customer strong {
+    color: #555;
+  }
+
+  .dark-theme .invoice-container .invoice-customer p {
+    color: #1a1a1a;
+  }
+}
+
+/* Print styles — hide everything except the invoice */
+@media print {
+  /* Hide sidebar, header, backdrop, action buttons */
+  app-sidebar, app-header, .sidebar-backdrop,
+  .fade-in > .page-header,
+  .loading-overlay {
+    display: none !important;
+  }
+
+  /* Reset layout containers */
+  .app-layout, .main-content, .content-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  .app-layout {
+    min-height: auto !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .content-wrapper {
+    padding: 0 !important;
+  }
+
+  /* Reset body for print */
+  body {
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  /* Clean invoice presentation */
+  .invoice-container {
+    box-shadow: none !important;
+    padding: 20px !important;
+    margin: 0 auto !important;
+    max-width: 800px !important;
+    background: #fff !important;
+    color: #1a1a1a !important;
+  }
+
+  .invoice-container .invoice-table td,
+  .invoice-container .invoice-table th {
+    color: #333 !important;
+  }
+
+  .invoice-container .invoice-info p {
+    color: #555 !important;
+  }
+
+  .invoice-container .invoice-customer strong {
+    color: #555 !important;
+  }
+
+  .invoice-container .invoice-customer p {
+    color: #1a1a1a !important;
+  }
 }
 
 /* Animations */

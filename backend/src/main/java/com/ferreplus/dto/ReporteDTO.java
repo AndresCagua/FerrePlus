@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.ferreplus.entity.Producto;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -30,4 +31,5 @@ public class ReporteDTO {
     private BigDecimal saldoPendienteClientes;
     private List<ProductoRankingDTO> productosMasVendidos;
     private List<VentaDiariaDTO> ventasPorDia;
+    private List<Producto> productosStockBajoList;
 }

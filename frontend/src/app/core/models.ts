@@ -161,6 +161,11 @@ export interface Gasto {
 }
 
 // ===== REPORTE / DASHBOARD DATA =====
+export interface VentaDiaria {
+  fecha: string;
+  total: number;
+}
+
 export interface DashboardData {
   totalProductos: number;
   productosStockBajo: number;
@@ -177,4 +182,5 @@ export interface DashboardData {
   totalUsuarios: number;
   saldoPendienteClientes: number;
   productosStockBajoList?: Producto[];
+  ventasPorDia?: VentaDiaria[];
 }

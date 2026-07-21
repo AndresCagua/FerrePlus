@@ -126,12 +126,13 @@ export class VentaFormComponent implements OnInit {
   updateQuantity(index: number, qty: number): void {
     const control = this.items.at(index);
     const producto = this.productos.find(p => p.id === control.get('productoId')?.value);
-    if (producto && qty > producto.stockActual) {
+    const cantidad = Math.max(1, Number(qty) || 1);
+    if (producto && cantidad > producto.stockActual) {
       Swal.fire('Stock insuficiente', `Stock disponible: ${producto.stockActual}`, 'warning');
       control.patchValue({ cantidad: producto.stockActual });
       return;
     }
-    control.patchValue({ cantidad: qty < 1 ? 1 : qty });
+    control.patchValue({ cantidad });
   }
 
   updateTotals(): void {
@@ -153,7 +154,9 @@ export class VentaFormComponent implements OnInit {
   }
 
   get itemCount(): number {
-    return this.items.controls.reduce((sum, item) => sum + (item.get('cantidad')?.value || 0), 0);
+    return this.items.controls.reduce((sum, item) => {
+      return sum + (Number(item.get('cantidad')?.value) || 0);
+    }, 0);
   }
 
   hasItems(): boolean {
@@ -183,13 +186,22 @@ export class VentaFormComponent implements OnInit {
       clienteId: this.form.get('clienteId')?.value || null,
       metodoPago: this.form.get('metodoPago')?.value,
       usuarioId: currentUser?.usuarioId,
+      numeroFactura: 'TEMP-' + Date.now(),
+      subtotal: this.subtotal,
+      iva: this.iva,
+      total: this.total,
       detalles: this.items.controls
         .filter(c => c.get('productoId')?.value)
-        .map(c => ({
-          productoId: c.get('productoId')?.value,
-          cantidad: c.get('cantidad')?.value,
-          precioUnitario: c.get('precioUnitario')?.value
-        }))
+        .map(c => {
+          const cant = Number(c.get('cantidad')?.value) || 1;
+          const pUnit = Number(c.get('precioUnitario')?.value) || 0;
+          return {
+            productoId: c.get('productoId')?.value,
+            cantidad: cant,
+            precioUnitario: pUnit,
+            subtotal: cant * pUnit
+          };
+        })
     };
 
     this.ventaService.create(ventaData).subscribe({

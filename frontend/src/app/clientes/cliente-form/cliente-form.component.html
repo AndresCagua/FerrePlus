@@ -23,19 +23,10 @@
             </mat-form-field>
           </div>
 
-          <div class="col-md-6">
-            <mat-form-field appearance="outline">
-              <mat-label>Apellidos</mat-label>
-              <input matInput formControlName="apellido" placeholder="Apellidos">
-              <mat-error *ngIf="form.get('apellido')?.hasError('required')">Requerido</mat-error>
-            </mat-form-field>
-          </div>
-
           <div class="col-md-4">
             <mat-form-field appearance="outline">
-              <mat-label>Documento</mat-label>
-              <input matInput formControlName="documento" placeholder="Cédula / RUC">
-              <mat-error *ngIf="form.get('documento')?.hasError('required')">Requerido</mat-error>
+              <mat-label>RUC / Cédula</mat-label>
+              <input matInput formControlName="ruc" placeholder="Cédula / RUC">
             </mat-form-field>
           </div>
 

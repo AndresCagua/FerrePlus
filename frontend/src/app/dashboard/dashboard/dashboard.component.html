@@ -20,7 +20,7 @@
   <ng-container *ngIf="data && !loading">
     <!-- Metric Cards -->
     <div class="metrics-grid">
-      <div class="metric-card" *ngFor="let metric of metrics">
+      <div class="metric-card" *ngFor="let metric of metrics" (click)="navigateToMetric(metric)">
         <div class="metric-icon" [style.background]="metric.color">
           <mat-icon>{{ metric.icon }}</mat-icon>
         </div>
@@ -35,20 +35,50 @@
       <!-- Chart Card -->
       <mat-card class="chart-card">
         <mat-card-header>
-          <mat-card-title>Ventas por Día</mat-card-title>
+          <mat-card-title>
+            Ventas por {{ periodo === 'year' ? 'Mes' : 'Día' }}
+          </mat-card-title>
+          <div class="periodo-filtros">
+            <button
+              mat-button
+              [class.active]="periodo === 'week'"
+              (click)="setPeriodo('week')"
+              [disabled]="loadingChart">
+              Semana
+            </button>
+            <button
+              mat-button
+              [class.active]="periodo === 'month'"
+              (click)="setPeriodo('month')"
+              [disabled]="loadingChart">
+              Mes
+            </button>
+            <button
+              mat-button
+              [class.active]="periodo === 'year'"
+              (click)="setPeriodo('year')"
+              [disabled]="loadingChart">
+              Año
+            </button>
+          </div>
         </mat-card-header>
         <mat-card-content>
+          <div class="chart-legend-total">
+            <span class="periodo-label">{{ periodoLabel }}</span>
+            <span class="periodo-total">{{ formatCurrency(totalPeriodo) }}</span>
+          </div>
           <div class="chart-wrapper">
+            <mat-spinner diameter="32" *ngIf="loadingChart" class="chart-spinner"></mat-spinner>
             <canvas
-              *ngIf="barChartData.datasets.length > 0"
+              *ngIf="barChartData.datasets.length > 0 && !loadingChart"
               baseChart
               [data]="barChartData"
               [options]="barChartOptions"
               [type]="barChartType">
             </canvas>
-            <div class="empty-state" *ngIf="barChartData.datasets.length === 0">
+            <div class="empty-state" *ngIf="barChartData.datasets.length === 0 && !loadingChart">
               <mat-icon>show_chart</mat-icon>
-              <p>No hay datos de ventas disponibles</p>
+              <p>No hay datos de ventas para {{ periodoLabel.toLowerCase() }}</p>
             </div>
           </div>
         </mat-card-content>

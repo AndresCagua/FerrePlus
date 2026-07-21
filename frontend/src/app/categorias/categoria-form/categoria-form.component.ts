@@ -28,7 +28,8 @@ export class CategoriaFormComponent implements OnInit {
   ) {
     this.form = this.fb.group({
       nombre: ['', [Validators.required, Validators.maxLength(100)]],
-      descripcion: ['', Validators.maxLength(255)]
+      descripcion: ['', Validators.maxLength(255)],
+      activo: [true]
     });
   }
 

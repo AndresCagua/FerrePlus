@@ -29,14 +29,67 @@
 
 .chart-card {
   mat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding-bottom: 16px;
   }
 
-  /* Asegura que el contenido del card no desborde */
   mat-card-content {
     width: 100%;
     overflow: hidden;
   }
+}
+
+/* ── Period filter buttons ── */
+.periodo-filtros {
+  display: flex;
+  gap: 4px;
+
+  button {
+    min-width: 0;
+    padding: 4px 14px;
+    font-size: 0.85rem;
+    line-height: 30px;
+    border-radius: 20px;
+    color: var(--text-muted);
+
+    &.active {
+      background: var(--primary-light);
+      color: #1565C0;
+      font-weight: 600;
+    }
+
+    &[disabled] {
+      opacity: 0.5;
+    }
+  }
+}
+
+:host-context(.dark-theme) .periodo-filtros button.active {
+  background: rgba(66, 165, 245, 0.2);
+  color: #64B5F6;
+}
+
+/* ── Period total legend ── */
+.chart-legend-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 4px 12px;
+}
+
+.periodo-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.periodo-total {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
 }
 
 .chart-wrapper {
@@ -45,7 +98,11 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  position: relative;       /* Necesario para que Chart.js se ajuste al contenedor */
+  position: relative;
+}
+
+.chart-spinner {
+  margin: 0 auto;
 }
 
 /* Stock bajo card — responsive */
@@ -67,7 +124,6 @@
     height: 20px;
   }
 
-  /* Lista interna no desborde */
   ::ng-deep .mat-mdc-list-item {
     overflow: hidden;
     text-overflow: ellipsis;

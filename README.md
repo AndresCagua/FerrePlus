@@ -1,20 +1,20 @@
 # FerrePlus
 
-Sistema de gestión de inventario para ferreterías y bodegas de repuestos. Backend REST API con Spring Boot 3 + Angular 18 + PostgreSQL.
+Sistema de gestión de inventario para ferreterías y bodegas de repuestos. Backend REST API con Spring Boot 3 + Angular 22 + PostgreSQL.
 
 ## Stack Tecnológico
 
-| Capa     | Tecnología                              |
-| -------- | --------------------------------------- |
-| Backend  | Java 21, Spring Boot 3.4, Maven         |
-| Frontend | Angular 18, Bootstrap 5, Angular Material |
-| BD       | PostgreSQL                              |
-| Auth     | JWT (JSON Web Tokens)                   |
-| Backend (prod) | Docker                 |
+| Capa     | Tecnología                                  |
+| -------- | ------------------------------------------- |
+| Backend  | Java 21, Spring Boot 3.4, Maven             |
+| Frontend | Angular 22, Bootstrap 5, Angular Material   |
+| BD       | PostgreSQL                                  |
+| Auth     | JWT (JSON Web Tokens)                       |
+| Backend (prod) | Docker (multi-stage)                  |
 
 ## Requisitos
 
-- **Docker** (para correr el backend en producción)
+- **Docker** (para el backend)
 - **Node.js 18+** (para el frontend)
 - **PostgreSQL 15+** (base de datos local)
 
@@ -26,29 +26,18 @@ Sistema de gestión de inventario para ferreterías y bodegas de repuestos. Back
 # Crear la base de datos
 psql -U postgres -c "CREATE DATABASE ferreplus;"
 
-# Ejecutar script de inicialización (roles y admin por defecto)
+# Ejecutar script de inicialización
 psql -U postgres -d ferreplus -f backend/src/main/resources/schema.sql
 ```
 
 ### 2. Backend (Docker)
 
 ```bash
-cd backend
-docker build -t ferreplus-backend .
-docker run -p 8080:8080 \
-  -e DB_HOST=host.docker.internal \
-  -e DB_PORT=5432 \
-  -e DB_NAME=ferreplus \
-  -e DB_USERNAME=postgres \
-  -e DB_PASSWORD=base_datos_local_andres \
-  ferreplus-backend
+# Desde la raíz del proyecto
+docker compose up -d --build
 ```
 
-O usando docker-compose desde la raíz:
-
-```bash
-docker compose up -d
-```
+Esto compila el backend (multi-stage: Maven → JRE) y levanta el contenedor en `http://localhost:8081`.
 
 ### 3. Frontend
 
@@ -65,12 +54,56 @@ El frontend corre en `http://localhost:4200`.
 - **Email:** `admin@ferreplus.com`
 - **Password:** `admin123`
 
+## Desarrollo
+
+### Cuando modificás el backend
+
+Cada vez que cambies código Java, entities, servicios o controladores:
+
+```bash
+# 1. Bajá el contenedor
+docker compose down
+
+# 2. Reconstruí y levantá (compila todo en el contenedor)
+docker compose up -d --build
+
+# 3. Verificá que levantó bien
+docker compose logs --tail=20
+```
+
+> No necesitás Maven instalado en tu máquina — el multi-stage build lo maneja adentro del contenedor.
+
+### Cuando solo cambiás config (application.yml)
+
+Si solo modificás `backend/src/main/resources/application.yml` (no código Java):
+
+```bash
+docker compose down
+docker compose up -d --build
+```
+
+> `--build` forza a Docker a re-compilar la imagen aunque el código no haya cambiado.
+
+### Frontend
+
+```bash
+cd frontend
+npm start    # hot-reload en :4200
+```
+
+## Seguridad
+
+- `backend/src/main/resources/application.yml` contiene credenciales locales y **está excluido de git** (`.gitignore`).
+- Usá `application.example.yml` como plantilla para tu configuración local.
+- Las credenciales de producción se inyectan vía variables de entorno en `docker-compose.yml`.
+- `docker-compose.yml` y `backend/Dockerfile` también están excluidos de git.
+
 ## Estructura del Proyecto
 
 ```
 ferreplus/
 ├── backend/                    # Spring Boot REST API
-│   ├── Dockerfile
+│   ├── Dockerfile              # Multi-stage (solo local, excluido de git)
 │   ├── pom.xml
 │   └── src/main/java/com/ferreplus/
 │       ├── config/             # Configuración (CORS, Security)
@@ -97,7 +130,7 @@ ferreplus/
 │       ├── gastos/             # Gastos operativos
 │       ├── usuarios/           # Gestión de usuarios (admin)
 │       └── reportes/           # Reportes y gráficos
-├── docker-compose.yml
+├── docker-compose.yml          # Solo local, excluido de git
 └── README.md
 ```
 
@@ -115,6 +148,7 @@ ferreplus/
 | ------ | --------------------------- | ------------------------ |
 | POST   | `/api/auth/login`           | Inicio de sesión         |
 | GET    | `/api/reportes/dashboard`   | Métricas del dashboard   |
+| GET    | `/api/reportes/ventas`      | Ventas por período       |
 | GET    | `/api/productos`            | Listar productos         |
 | POST   | `/api/productos`            | Crear producto           |
 | GET    | `/api/productos/stock-bajo` | Productos con stock bajo |
@@ -123,5 +157,3 @@ ferreplus/
 | POST   | `/api/movimientos-stock`    | Movimiento manual        |
 | GET    | `/api/usuarios`             | Listar usuarios (admin)  |
 | POST   | `/api/usuarios`             | Crear usuario (admin)    |
-
-Ver `DOCUMENTACION_INTERNA.md` para la documentación completa del modelo de datos y API.

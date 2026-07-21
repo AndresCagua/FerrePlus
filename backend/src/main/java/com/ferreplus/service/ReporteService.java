@@ -4,6 +4,7 @@ import com.ferreplus.dto.ProductoRankingDTO;
 import com.ferreplus.dto.ReporteDTO;
 import com.ferreplus.dto.VentaDiariaDTO;
 import com.ferreplus.entity.DetalleVenta;
+import com.ferreplus.entity.Producto;
 import com.ferreplus.entity.Venta;
 import com.ferreplus.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,7 @@ public class ReporteService {
         List<ProductoRankingDTO> productosMasVendidos = getProductosMasVendidos();
 
         List<VentaDiariaDTO> ventasPorDia = getVentasPorDia(firstOfMonth, today);
+        List<Producto> productosStockBajoList = productoRepository.findStockBajo();
 
         return ReporteDTO.builder()
                 .totalProductos(totalProductos)
@@ -68,6 +70,7 @@ public class ReporteService {
                 .totalGastosMes(totalGastosMes)
                 .productosMasVendidos(productosMasVendidos)
                 .ventasPorDia(ventasPorDia)
+                .productosStockBajoList(productosStockBajoList)
                 .build();
     }
 
