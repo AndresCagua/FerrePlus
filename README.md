@@ -73,7 +73,7 @@ docker compose logs --tail=20
 
 > No necesitás Maven instalado en tu máquina — el multi-stage build lo maneja adentro del contenedor.
 
-### Cuando solo cambiás config (application.yml)
+### Cuando solo cambias config (application.yml)
 
 Si solo modificás `backend/src/main/resources/application.yml` (no código Java):
 
