@@ -56,33 +56,33 @@ El frontend corre en `http://localhost:4200`.
 
 ## Desarrollo
 
-### Cuando modificás el backend
+### Cuando modificas el backend
 
 Cada vez que cambies código Java, entities, servicios o controladores:
 
 ```bash
-# 1. Bajá el contenedor
+# 1. Baja el contenedor
 docker compose down
 
-# 2. Reconstruí y levantá (compila todo en el contenedor)
+# 2. Reconstruye y levanta (compila todo en el contenedor)
 docker compose up -d --build
 
-# 3. Verificá que levantó bien
+# 3. Verifica que levantó bien
 docker compose logs --tail=20
 ```
 
-> No necesitás Maven instalado en tu máquina — el multi-stage build lo maneja adentro del contenedor.
+> No necesitas Maven instalado en tu máquina — el multi-stage build lo maneja adentro del contenedor.
 
 ### Cuando solo cambias config (application.yml)
 
-Si solo modificás `backend/src/main/resources/application.yml` (no código Java):
+Si solo modificas `backend/src/main/resources/application.yml` (no código Java):
 
 ```bash
 docker compose down
 docker compose up -d --build
 ```
 
-> `--build` forza a Docker a re-compilar la imagen aunque el código no haya cambiado.
+> `--build` obliga a Docker a re-compilar la imagen aunque el código no haya cambiado.
 
 ### Frontend
 
