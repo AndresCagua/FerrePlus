@@ -24,7 +24,7 @@ export class CompraService {
     return this.http.post<Compra>(this.apiUrl, compra);
   }
 
-  update(id: number, data: Partial<Compra>): Observable<Compra> {
+  update(id: number, data: any): Observable<Compra> {
     return this.http.put<Compra>(`${this.apiUrl}/${id}`, data);
   }
 

@@ -83,6 +83,10 @@ export class CompraListComponent implements OnInit {
     this.router.navigate(['/compras/nueva']);
   }
 
+  editarCompra(id: number): void {
+    this.router.navigate(['/compras/editar', id]);
+  }
+
   anularCompra(compra: Compra): void {
     Swal.fire({
       title: '¿Anular compra?',

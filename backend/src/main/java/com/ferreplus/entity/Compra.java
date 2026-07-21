@@ -1,10 +1,13 @@
 package com.ferreplus.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "compras")
@@ -50,6 +53,10 @@ public class Compra {
     private LocalDateTime fechaCreacion;
 
     private LocalDateTime fechaAnulacion;
+
+    @OneToMany(mappedBy = "compra", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("compra")
+    private List<DetalleCompra> detalles = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

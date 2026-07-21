@@ -1,6 +1,6 @@
 <div class="fade-in">
   <div class="page-header">
-    <h2>Nueva Compra</h2>
+    <h2>{{ editando ? 'Editar Compra' : 'Nueva Compra' }}</h2>
     <button mat-stroked-button (click)="cancel()">
       <mat-icon>arrow_back</mat-icon>
       Volver
@@ -9,6 +9,15 @@
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <mat-form-field appearance="outline">
+          <mat-label>N° Factura</mat-label>
+          <input matInput formControlName="numeroFactura" placeholder="FC-20260721-0001">
+          <mat-error *ngIf="form.get('numeroFactura')?.hasError('required')">
+            El número de factura es obligatorio
+          </mat-error>
+        </mat-form-field>
+      </div>
       <div class="col-md-6">
         <mat-form-field appearance="outline">
           <mat-label>Proveedor</mat-label>
@@ -40,7 +49,7 @@
               <div class="col-md-5">
                 <mat-form-field appearance="outline">
                   <mat-label>Producto</mat-label>
-                  <mat-select formControlName="productoId">
+                  <mat-select formControlName="productoId" (selectionChange)="onProductoChange(i)">
                     <mat-option *ngFor="let p of productos" [value]="p.id">
                       {{ p.codigoBarras }} - {{ p.nombre }}
                     </mat-option>
@@ -86,7 +95,7 @@
             <span>${{ subtotal | number:'1.2-2' }}</span>
           </div>
           <div class="summary-row">
-            <span>IVA (12%)</span>
+            <span>IVA (15%)</span>
             <span>${{ iva | number:'1.2-2' }}</span>
           </div>
           <mat-divider></mat-divider>
@@ -104,7 +113,7 @@
         <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
         <span *ngIf="!loading">
           <mat-icon>save</mat-icon>
-          Registrar Compra
+          {{ editando ? 'Guardar Cambios' : 'Registrar Compra' }}
         </span>
       </button>
     </div>

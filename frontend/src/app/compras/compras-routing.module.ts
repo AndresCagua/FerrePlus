@@ -5,7 +5,8 @@ import { CompraFormComponent } from './compra-form/compra-form.component';
 
 const routes: Routes = [
   { path: '', component: CompraListComponent },
-  { path: 'nueva', component: CompraFormComponent }
+  { path: 'nueva', component: CompraFormComponent },
+  { path: 'editar/:id', component: CompraFormComponent }
 ];
 
 @NgModule({

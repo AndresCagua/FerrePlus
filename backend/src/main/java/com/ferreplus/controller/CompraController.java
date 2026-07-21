@@ -30,6 +30,11 @@ public class CompraController {
         return ResponseEntity.ok(compraService.getById(id));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Compra> update(@PathVariable Long id, @Valid @RequestBody CompraDTO dto) {
+        return ResponseEntity.ok(compraService.update(id, dto));
+    }
+
     @PostMapping
     public ResponseEntity<Compra> create(@Valid @RequestBody CompraDTO dto) {
         return ResponseEntity.ok(compraService.create(dto));

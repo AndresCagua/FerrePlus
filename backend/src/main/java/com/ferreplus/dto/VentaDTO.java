@@ -1,7 +1,5 @@
 package com.ferreplus.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
@@ -11,23 +9,19 @@ public class VentaDTO {
 
     private Long id;
 
-    @NotBlank(message = "El número de factura es obligatorio")
     private String numeroFactura;
 
     private Long clienteId;
 
     private String clienteNombre;
 
-    @NotNull(message = "El subtotal es obligatorio")
     @Positive(message = "El subtotal debe ser positivo")
     private BigDecimal subtotal;
 
     private BigDecimal descuento = BigDecimal.ZERO;
 
-    @NotNull(message = "El IVA es obligatorio")
     private BigDecimal iva;
 
-    @NotNull(message = "El total es obligatorio")
     @Positive(message = "El total debe ser positivo")
     private BigDecimal total;
 

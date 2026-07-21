@@ -1,3 +1,54 @@
 mat-card-header {
   padding-bottom: 8px;
 }
+
+/* ── Filtros ────────────────────────────────── */
+
+.filters-card {
+  margin-bottom: 16px;
+}
+
+.filters-card mat-card-content {
+  padding-top: 4px;
+  padding-bottom: 4px !important;
+}
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-text {
+  min-width: 200px;
+  flex: 1 1 180px;
+}
+
+.filter-date {
+  width: 160px;
+  flex: 0 0 160px;
+}
+
+.filter-client {
+  min-width: 200px;
+  flex: 1 1 200px;
+}
+
+.filter-pago {
+  width: 170px;
+  flex: 0 0 170px;
+}
+
+.filter-clear {
+  flex: 0 0 auto;
+}
+
+/* ── Footer de la tabla ─────────────────────── */
+
+.table-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 0 0;
+  font-size: 0.85rem;
+}

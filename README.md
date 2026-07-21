@@ -39,6 +39,8 @@ docker compose up -d --build
 
 Esto compila el backend (multi-stage: Maven → JRE) y levanta el contenedor en `http://localhost:8081`.
 
+> **Swagger UI:** [`http://localhost:8081/swagger-ui/index.html`](http://localhost:8081/swagger-ui/index.html) — documentación interactiva de la API REST.
+
 ### 3. Frontend
 
 ```bash

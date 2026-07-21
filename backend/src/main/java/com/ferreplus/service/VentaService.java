@@ -47,6 +47,9 @@ public class VentaService {
             cliente = clienteService.getById(dto.getClienteId());
         }
 
+        // Calcular montos si no vienen
+        calcularMontos(dto);
+
         String numeroFactura = generarNumeroFactura();
 
         Venta venta = Venta.builder()
@@ -75,12 +78,16 @@ public class VentaService {
                 );
             }
 
+            BigDecimal detSubtotal = detalleDTO.getSubtotal() != null
+                    ? detalleDTO.getSubtotal()
+                    : detalleDTO.getPrecioUnitario().multiply(BigDecimal.valueOf(detalleDTO.getCantidad()));
+
             DetalleVenta detalle = DetalleVenta.builder()
                     .venta(venta)
                     .producto(producto)
                     .cantidad(detalleDTO.getCantidad())
                     .precioUnitario(detalleDTO.getPrecioUnitario())
-                    .subtotal(detalleDTO.getSubtotal())
+                    .subtotal(detSubtotal)
                     .build();
 
             detalleVentaRepository.save(detalle);
@@ -89,6 +96,25 @@ public class VentaService {
         }
 
         return venta;
+    }
+
+    private void calcularMontos(VentaDTO dto) {
+        if (dto.getSubtotal() == null || dto.getIva() == null || dto.getTotal() == null) {
+            BigDecimal calcSubtotal = BigDecimal.ZERO;
+            for (DetalleVentaDTO det : dto.getDetalles()) {
+                BigDecimal detSubtotal = det.getSubtotal() != null
+                        ? det.getSubtotal()
+                        : det.getPrecioUnitario().multiply(BigDecimal.valueOf(det.getCantidad()));
+                calcSubtotal = calcSubtotal.add(detSubtotal);
+            }
+            dto.setSubtotal(calcSubtotal);
+            if (dto.getIva() == null) {
+                dto.setIva(calcSubtotal.multiply(new BigDecimal("0.15")));
+            }
+            if (dto.getTotal() == null) {
+                dto.setTotal(calcSubtotal.add(dto.getIva()));
+            }
+        }
     }
 
     public void anular(Long id) {

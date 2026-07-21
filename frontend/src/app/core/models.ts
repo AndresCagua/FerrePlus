@@ -84,6 +84,7 @@ export interface DetalleVenta {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  producto?: Producto; // cuando viene del backend como objeto anidado
 }
 
 // ===== VENTA =====
@@ -112,6 +113,7 @@ export interface DetalleCompra {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  producto?: Producto; // cuando viene del backend como objeto anidado
 }
 
 // ===== COMPRA =====

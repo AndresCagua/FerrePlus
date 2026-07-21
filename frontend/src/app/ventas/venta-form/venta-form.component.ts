@@ -6,6 +6,7 @@ import { VentaService } from '../venta.service';
 import { ProductoService } from '../../productos/producto.service';
 import { ClienteService } from '../../clientes/cliente.service';
 import { AuthService } from '../../core/auth.service';
+import { IVA_RATE } from '../../core/constants';
 import { Producto, Cliente } from '../../core/models';
 
 @Component({
@@ -146,7 +147,7 @@ export class VentaFormComponent implements OnInit {
   }
 
   get iva(): number {
-    return this.subtotal * 0.12;
+    return this.subtotal * IVA_RATE;
   }
 
   get total(): number {

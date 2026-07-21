@@ -44,8 +44,11 @@ public class CompraService {
         Proveedor proveedor = proveedorService.getById(dto.getProveedorId());
         Usuario usuario = usuarioService.getById(dto.getUsuarioId());
 
-        String numeroFactura = dto.getObservaciones() != null && dto.getObservaciones().contains("FACT:")
-                ? dto.getObservaciones()
+        // Calcular subtotal, iva, total si no vienen
+        calcularMontos(dto);
+
+        String numeroFactura = dto.getNumeroFactura() != null && !dto.getNumeroFactura().isBlank()
+                ? dto.getNumeroFactura()
                 : generarNumeroFactura();
 
         Compra compra = Compra.builder()
@@ -66,12 +69,16 @@ public class CompraService {
         for (DetalleCompraDTO detalleDTO : dto.getDetalles()) {
             Producto producto = productoService.getById(detalleDTO.getProductoId());
 
+            BigDecimal detSubtotal = detalleDTO.getSubtotal() != null
+                    ? detalleDTO.getSubtotal()
+                    : detalleDTO.getPrecioUnitario().multiply(BigDecimal.valueOf(detalleDTO.getCantidad()));
+
             DetalleCompra detalle = DetalleCompra.builder()
                     .compra(compra)
                     .producto(producto)
                     .cantidad(detalleDTO.getCantidad())
                     .precioUnitario(detalleDTO.getPrecioUnitario())
-                    .subtotal(detalleDTO.getSubtotal())
+                    .subtotal(detSubtotal)
                     .build();
 
             detalleCompraRepository.save(detalle);
@@ -80,6 +87,80 @@ public class CompraService {
         }
 
         return compra;
+    }
+
+    private void calcularMontos(CompraDTO dto) {
+        if (dto.getSubtotal() == null || dto.getIva() == null || dto.getTotal() == null) {
+            BigDecimal calcSubtotal = BigDecimal.ZERO;
+            for (DetalleCompraDTO det : dto.getDetalles()) {
+                BigDecimal detSubtotal = det.getSubtotal() != null
+                        ? det.getSubtotal()
+                        : det.getPrecioUnitario().multiply(BigDecimal.valueOf(det.getCantidad()));
+                calcSubtotal = calcSubtotal.add(detSubtotal);
+            }
+            dto.setSubtotal(calcSubtotal);
+            if (dto.getIva() == null) {
+                dto.setIva(calcSubtotal.multiply(new BigDecimal("0.15")));
+            }
+            if (dto.getTotal() == null) {
+                dto.setTotal(calcSubtotal.add(dto.getIva()));
+            }
+        }
+    }
+
+    @Transactional
+    public Compra update(Long id, CompraDTO dto) {
+        Compra compra = getById(id);
+
+        if ("ANULADA".equals(compra.getEstado())) {
+            throw new BadRequestException("No se puede editar una compra anulada");
+        }
+
+        // 1. Revertir stock de los detalles actuales
+        List<DetalleCompra> viejosDetalles = detalleCompraRepository.findByCompraId(id);
+        for (DetalleCompra detalle : viejosDetalles) {
+            productoService.actualizarStock(detalle.getProducto().getId(), detalle.getCantidad(), "SALIDA");
+        }
+
+        // 2. Calcular montos si no vienen
+        calcularMontos(dto);
+
+        // 3. Actualizar datos de la compra
+        Proveedor proveedor = proveedorService.getById(dto.getProveedorId());
+        compra.setProveedor(proveedor);
+        compra.setNumeroFactura(dto.getNumeroFactura());
+        compra.setSubtotal(dto.getSubtotal());
+        compra.setDescuento(dto.getDescuento() != null ? dto.getDescuento() : BigDecimal.ZERO);
+        compra.setIva(dto.getIva());
+        compra.setTotal(dto.getTotal());
+        compra.setObservaciones(dto.getObservaciones());
+        compra.setFechaFactura(dto.getFechaFactura() != null ? dto.getFechaFactura() : LocalDate.now());
+
+        // 4. Eliminar detalles viejos
+        detalleCompraRepository.deleteAll(viejosDetalles);
+
+        // 5. Crear nuevos detalles y aplicar stock
+        for (DetalleCompraDTO detalleDTO : dto.getDetalles()) {
+            Producto producto = productoService.getById(detalleDTO.getProductoId());
+
+            BigDecimal subtotal = detalleDTO.getSubtotal() != null
+                    ? detalleDTO.getSubtotal()
+                    : detalleDTO.getPrecioUnitario().multiply(BigDecimal.valueOf(detalleDTO.getCantidad()));
+
+            DetalleCompra detalle = DetalleCompra.builder()
+                    .compra(compra)
+                    .producto(producto)
+                    .cantidad(detalleDTO.getCantidad())
+                    .precioUnitario(detalleDTO.getPrecioUnitario())
+                    .subtotal(subtotal)
+                    .build();
+
+            detalleCompraRepository.save(detalle);
+
+            productoService.actualizarStock(producto.getId(), detalleDTO.getCantidad(), "ENTRADA");
+        }
+
+        return compraRepository.save(compra);
     }
 
     public void anular(Long id) {
