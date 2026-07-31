@@ -24,6 +24,12 @@ spring:
       write-dates-as-timestamps: false
     date-format: yyyy-MM-dd'T'HH:mm:ss
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  scalar:
+    path: /scalar
+
 app:
   jwt:
     secret: "YOUR_JWT_SECRET_CHANGE_ME"
