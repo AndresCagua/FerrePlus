@@ -1,13 +1,14 @@
 package com.ferreplus.config;
 
+import com.ferreplus.auth.JsonAccessDeniedHandler;
 import com.ferreplus.auth.JwtAuthenticationEntryPoint;
 import com.ferreplus.auth.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,6 +24,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -34,17 +36,14 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
-            .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .accessDeniedHandler(new JsonAccessDeniedHandler()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**", "/scalar/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/productos/**").hasAnyRole("ADMIN", "VENDEDOR", "BODEGUERO")
-                .requestMatchers(HttpMethod.POST, "/api/productos/**").hasAnyRole("ADMIN", "BODEGUERO")
-                .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasAnyRole("ADMIN", "BODEGUERO")
-                .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
-                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                .requestMatchers("/api/reportes/**").hasAnyRole("ADMIN", "VENDEDOR")
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",
+                                 "/swagger-resources/**", "/webjars/**", "/scalar/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

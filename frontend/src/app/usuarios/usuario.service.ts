@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Usuario } from '../core/models';
+import { Usuario, UsuarioRequestPayload } from '../core/models';
 
 @Injectable({
   providedIn: 'root'
@@ -20,11 +20,12 @@ export class UsuarioService {
     return this.http.get<Usuario>(`${this.apiUrl}/${id}`);
   }
 
-  create(usuario: any): Observable<Usuario> {
+  /** Envía `rolId` numérico + overrides (contrato corregido — R8). */
+  create(usuario: UsuarioRequestPayload): Observable<Usuario> {
     return this.http.post<Usuario>(this.apiUrl, usuario);
   }
 
-  update(id: number, usuario: any): Observable<Usuario> {
+  update(id: number, usuario: UsuarioRequestPayload): Observable<Usuario> {
     return this.http.put<Usuario>(`${this.apiUrl}/${id}`, usuario);
   }
 

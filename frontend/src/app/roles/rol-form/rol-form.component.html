@@ -1,0 +1,63 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h2>{{ isEditing ? 'Editar Rol' : 'Nuevo Rol' }}</h2>
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+      Volver
+    </button>
+  </div>
+
+  <div class="loading-overlay" *ngIf="loadingData">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-card *ngIf="!loadingData" class="col-md-8">
+    <mat-card-content>
+      <div class="alert alert-warning d-flex align-items-center gap-2" *ngIf="esMiRol">
+        <mat-icon>warning</mat-icon>
+        <span>
+          Estás editando el rol <strong>{{ rolActual?.nombre }}</strong>, que es tu rol actual.
+          Si quitas permisos y guardas, podrías perder acceso a módulos.
+        </span>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="row">
+          <mat-form-field appearance="outline" class="col-md-6">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombre" placeholder="Nombre del rol">
+            <mat-error *ngIf="form.get('nombre')?.hasError('required')">Requerido</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="col-md-6">
+            <mat-label>Descripción</mat-label>
+            <input matInput formControlName="descripcion" placeholder="Descripción del rol">
+          </mat-form-field>
+        </div>
+
+        <h3 class="matriz-title">Permisos</h3>
+        <p class="text-muted">
+          Expande cada módulo para marcar o desmarcar las acciones específicas.
+        </p>
+
+        <app-permisos-matriz
+          [modulos]="modulos"
+          [checked]="checkedPermisos"
+          modo="rol"
+          (change)="onMatrizChange($event)">
+        </app-permisos-matriz>
+
+        <div class="d-flex gap-2 justify-content-end mt-4">
+          <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+            <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+            <span *ngIf="!loading">
+              <mat-icon>save</mat-icon>
+              {{ isEditing ? 'Guardar Cambios' : 'Crear Rol' }}
+            </span>
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

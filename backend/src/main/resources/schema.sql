@@ -1,7 +1,14 @@
 -- =============================================================
--- FerrePlus - Inicialización de Base de Datos
+-- FerrePlus - Inicialización de Base de Datos (REFERENCIA)
 -- =============================================================
--- Este script crea la base de datos y los roles iniciales.
+-- ⚠️ NO SE EJECUTA EN RUNTIME: spring.sql.init.mode=never.
+-- La fuente única de verdad del seed es DataSeeder (CommandLineRunner),
+-- que siembra el catálogo de módulos/permisos (13 módulos, 42 permisos),
+-- la matriz de los 3 roles base (ADMIN 42 / VENDEDOR 9 / BODEGUERO 18 → 69
+-- pares rol_permisos) y el usuario admin. Ver DOCUMENTACION_INTERNA.md §4.
+--
+-- Este archivo queda como REFERENCIA del estado inicial mínimo (roles base
+-- y password BCrypt del admin) para setup manual de BD.
 -- Ejecutar SOLO una vez al inicio del proyecto.
 -- =============================================================
 

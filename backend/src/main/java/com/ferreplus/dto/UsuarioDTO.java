@@ -1,5 +1,8 @@
 package com.ferreplus.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UsuarioDTO {
 
     private Long id;
@@ -15,6 +18,10 @@ public class UsuarioDTO {
     private Long rolId;
 
     private String rolNombre;
+
+    private List<String> permisos = new ArrayList<>();
+
+    private List<UsuarioPermisoDTO> overrides = new ArrayList<>();
 
     public UsuarioDTO() {
     }
@@ -73,5 +80,21 @@ public class UsuarioDTO {
 
     public void setRolNombre(String rolNombre) {
         this.rolNombre = rolNombre;
+    }
+
+    public List<String> getPermisos() {
+        return permisos;
+    }
+
+    public void setPermisos(List<String> permisos) {
+        this.permisos = permisos;
+    }
+
+    public List<UsuarioPermisoDTO> getOverrides() {
+        return overrides;
+    }
+
+    public void setOverrides(List<UsuarioPermisoDTO> overrides) {
+        this.overrides = overrides;
     }
 }

@@ -8,6 +8,7 @@ import com.ferreplus.service.PrecioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,21 +23,25 @@ public class PrecioController {
     private final PrecioService precioService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('PRECIOS_VER')")
     public ResponseEntity<List<PrecioProductoDTO>> listarPrecios() {
         return ResponseEntity.ok(precioService.listarPrecios());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PRECIOS_VER')")
     public ResponseEntity<PrecioProductoDTO> obtenerPrecio(@PathVariable Long id) {
         return ResponseEntity.ok(precioService.obtenerPrecio(id));
     }
 
     @GetMapping("/{id}/historial")
+    @PreAuthorize("hasAuthority('PRECIOS_VER')")
     public ResponseEntity<List<HistoricoPrecioProductoDTO>> obtenerHistorial(@PathVariable Long id) {
         return ResponseEntity.ok(precioService.obtenerHistorial(id));
     }
 
     @PutMapping("/{id}/venta")
+    @PreAuthorize("hasAuthority('PRECIOS_EDITAR')")
     public ResponseEntity<PrecioProductoDTO> actualizarPrecioVenta(
             @PathVariable Long id,
             @Valid @RequestBody ActualizarPrecioVentaDTO dto,

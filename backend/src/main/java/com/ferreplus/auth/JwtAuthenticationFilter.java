@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -24,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioRepository usuarioRepository;
+    private final PermisoResolver permisoResolver;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -34,12 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             String email = jwtTokenProvider.getEmailFromToken(token);
-            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+            Usuario usuario = usuarioRepository.findWithPermisosByEmail(email).orElse(null);
 
             if (usuario != null && usuario.isActivo()) {
-                var authorities = List.of(
-                        new SimpleGrantedAuthority("ROLE_" + usuario.getRol().getNombre())
-                );
+                List<GrantedAuthority> authorities = permisoResolver.resolverAutoridades(usuario);
 
                 var authentication = new UsernamePasswordAuthenticationToken(
                         usuario, null, authorities

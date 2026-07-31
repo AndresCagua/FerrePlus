@@ -88,12 +88,11 @@ export class UsuarioListComponent implements OnInit {
   }
 
   getRolClass(rolNombre: string): string {
-    switch (rolNombre) {
-      case 'ADMIN': return 'badge bg-danger';
-      case 'SUPERVISOR': return 'badge bg-warning text-dark';
-      case 'CAJERO': return 'badge bg-info text-dark';
-      case 'BODEGUERO': return 'badge bg-secondary';
-      default: return 'badge bg-primary';
-    }
+    // Mapa genérico por rolNombre con fallback default (sin roles fantasma CAJERO/SUPERVISOR — R8).
+    const rolClasses: Record<string, string> = {
+      ADMIN: 'badge bg-danger',
+      BODEGUERO: 'badge bg-secondary'
+    };
+    return rolClasses[rolNombre] || 'badge bg-primary';
   }
 }

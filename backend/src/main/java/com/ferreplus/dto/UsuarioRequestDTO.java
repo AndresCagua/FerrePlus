@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UsuarioRequestDTO {
 
     @NotBlank(message = "El nombre es obligatorio")
@@ -14,7 +17,6 @@ public class UsuarioRequestDTO {
     @Email(message = "Formato de email inválido")
     private String email;
 
-    @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
     private String password;
 
@@ -22,6 +24,8 @@ public class UsuarioRequestDTO {
 
     @NotNull(message = "El rol es obligatorio")
     private Long rolId;
+
+    private List<UsuarioPermisoRequestDTO> overrides = new ArrayList<>();
 
     public UsuarioRequestDTO() {
     }
@@ -64,5 +68,13 @@ public class UsuarioRequestDTO {
 
     public void setRolId(Long rolId) {
         this.rolId = rolId;
+    }
+
+    public List<UsuarioPermisoRequestDTO> getOverrides() {
+        return overrides;
+    }
+
+    public void setOverrides(List<UsuarioPermisoRequestDTO> overrides) {
+        this.overrides = overrides;
     }
 }

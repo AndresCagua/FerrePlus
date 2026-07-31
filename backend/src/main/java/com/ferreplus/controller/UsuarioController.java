@@ -1,12 +1,13 @@
 package com.ferreplus.controller;
 
 import com.ferreplus.dto.CambioPasswordDTO;
+import com.ferreplus.dto.UsuarioDTO;
 import com.ferreplus.dto.UsuarioRequestDTO;
-import com.ferreplus.entity.Usuario;
 import com.ferreplus.service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,39 +22,46 @@ public class UsuarioController {
     private final UsuarioService usuarioService;
 
     @GetMapping
-    public ResponseEntity<List<Usuario>> list() {
-        return ResponseEntity.ok(usuarioService.list());
+    @PreAuthorize("hasAuthority('USUARIOS_VER')")
+    public ResponseEntity<List<UsuarioDTO>> list() {
+        return ResponseEntity.ok(usuarioService.listDTO());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.getById(id));
+    @PreAuthorize("hasAuthority('USUARIOS_VER')")
+    public ResponseEntity<UsuarioDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.getDTO(id));
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> create(@Valid @RequestBody UsuarioRequestDTO dto) {
+    @PreAuthorize("hasAuthority('USUARIOS_CREAR')")
+    public ResponseEntity<UsuarioDTO> create(@Valid @RequestBody UsuarioRequestDTO dto) {
         return ResponseEntity.ok(usuarioService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> update(@PathVariable Long id, @Valid @RequestBody UsuarioRequestDTO dto) {
+    @PreAuthorize("hasAuthority('USUARIOS_EDITAR')")
+    public ResponseEntity<UsuarioDTO> update(@PathVariable Long id, @Valid @RequestBody UsuarioRequestDTO dto) {
         return ResponseEntity.ok(usuarioService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('USUARIOS_ELIMINAR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         usuarioService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/password")
+    @PreAuthorize("hasAuthority('USUARIOS_EDITAR')")
     public ResponseEntity<Void> cambiarPassword(@PathVariable Long id, @Valid @RequestBody CambioPasswordDTO dto) {
         usuarioService.cambiarPassword(id, dto);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Usuario> getCurrentUser(@AuthenticationPrincipal Usuario usuario) {
-        return ResponseEntity.ok(usuario);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UsuarioDTO> getCurrentUser(@AuthenticationPrincipal com.ferreplus.entity.Usuario usuario) {
+        return ResponseEntity.ok(usuarioService.toDTO(usuario));
     }
 }

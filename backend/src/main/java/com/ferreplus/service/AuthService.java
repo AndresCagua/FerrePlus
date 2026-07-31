@@ -1,6 +1,7 @@
 package com.ferreplus.service;
 
 import com.ferreplus.auth.JwtTokenProvider;
+import com.ferreplus.auth.PermisoResolver;
 import com.ferreplus.dto.AuthLoginDTO;
 import com.ferreplus.dto.AuthResponseDTO;
 import com.ferreplus.entity.Usuario;
@@ -13,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -22,13 +25,14 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PermisoResolver permisoResolver;
 
     public AuthResponseDTO login(AuthLoginDTO dto) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
         );
 
-        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
+        Usuario usuario = usuarioRepository.findWithPermisosByEmail(dto.getEmail())
                 .orElseThrow(() -> new BadRequestException("Usuario no encontrado"));
 
         if (!usuario.isActivo()) {
@@ -41,12 +45,17 @@ public class AuthService {
                 usuario.getRol().getNombre()
         );
 
+        List<String> permisos = permisoResolver.codigosEfectivos(usuario).stream()
+                .sorted()
+                .toList();
+
         return AuthResponseDTO.builder()
                 .token(token)
                 .email(usuario.getEmail())
                 .nombre(usuario.getNombre())
                 .rol(usuario.getRol().getNombre())
                 .usuarioId(usuario.getId())
+                .permisos(permisos)
                 .build();
     }
 }

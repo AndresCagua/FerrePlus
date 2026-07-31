@@ -1,0 +1,50 @@
+.permisos-matriz {
+  width: 100%;
+}
+
+.modulo-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .modulo-nombre {
+    font-weight: 500;
+  }
+
+  .modulo-select-all {
+    margin-right: 16px;
+  }
+}
+
+.permiso-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 8px 0;
+
+  .permiso-checkbox {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.override-badge {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 1px 8px;
+  margin-left: 6px;
+  vertical-align: middle;
+
+  &.override-add {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.override-remove {
+    background-color: #ffebee;
+    color: #c62828;
+  }
+}

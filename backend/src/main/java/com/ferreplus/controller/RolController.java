@@ -1,10 +1,12 @@
 package com.ferreplus.controller;
 
-import com.ferreplus.entity.Rol;
+import com.ferreplus.dto.RolDTO;
+import com.ferreplus.dto.RolRequestDTO;
 import com.ferreplus.service.RolService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,26 +20,31 @@ public class RolController {
     private final RolService rolService;
 
     @GetMapping
-    public ResponseEntity<List<Rol>> list() {
-        return ResponseEntity.ok(rolService.list());
+    @PreAuthorize("hasAuthority('ROLES_VER')")
+    public ResponseEntity<List<RolDTO>> list() {
+        return ResponseEntity.ok(rolService.listDTO());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Rol> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(rolService.getById(id));
+    @PreAuthorize("hasAuthority('ROLES_VER')")
+    public ResponseEntity<RolDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(rolService.getDTO(id));
     }
 
     @PostMapping
-    public ResponseEntity<Rol> create(@Valid @RequestBody Rol rol) {
-        return ResponseEntity.ok(rolService.create(rol));
+    @PreAuthorize("hasAuthority('ROLES_EDITAR')")
+    public ResponseEntity<RolDTO> create(@Valid @RequestBody RolRequestDTO dto) {
+        return ResponseEntity.ok(rolService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Rol> update(@PathVariable Long id, @Valid @RequestBody Rol rol) {
-        return ResponseEntity.ok(rolService.update(id, rol));
+    @PreAuthorize("hasAuthority('ROLES_EDITAR')")
+    public ResponseEntity<RolDTO> update(@PathVariable Long id, @Valid @RequestBody RolRequestDTO dto) {
+        return ResponseEntity.ok(rolService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLES_EDITAR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         rolService.delete(id);
         return ResponseEntity.noContent().build();

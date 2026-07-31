@@ -1,0 +1,40 @@
+<mat-accordion [multi]="true" class="permisos-matriz">
+  <mat-expansion-panel *ngFor="let modulo of modulos">
+    <mat-expansion-panel-header>
+      <mat-panel-title class="modulo-title">
+        <span class="modulo-nombre">{{ modulo.nombre }}</span>
+        <mat-checkbox
+          class="modulo-select-all"
+          [checked]="isModuleChecked(modulo)"
+          [indeterminate]="isModuleIndeterminate(modulo)"
+          (change)="toggleAll(modulo, $event.checked)"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          title="Seleccionar todas las acciones del módulo">
+          Todos
+        </mat-checkbox>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+
+    <div class="permiso-actions">
+      <mat-checkbox
+        *ngFor="let permiso of modulo.permisos"
+        class="permiso-checkbox"
+        [checked]="isChecked(permiso.codigo)"
+        (change)="toggle(permiso.codigo, $event.checked)">
+        {{ permiso.nombre }}
+        <span *ngIf="modo === 'usuario' && isOverrideAdd(permiso.codigo)" class="override-badge override-add">
+          + agregado
+        </span>
+        <span *ngIf="modo === 'usuario' && isOverrideRemove(permiso.codigo)" class="override-badge override-remove">
+          − quitado
+        </span>
+      </mat-checkbox>
+    </div>
+  </mat-expansion-panel>
+
+  <div class="empty-state" *ngIf="modulos.length === 0">
+    <mat-icon>checklist</mat-icon>
+    <p>No hay módulos cargados</p>
+  </div>
+</mat-accordion>

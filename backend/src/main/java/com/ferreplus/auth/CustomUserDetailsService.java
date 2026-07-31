@@ -3,7 +3,7 @@ package com.ferreplus.auth;
 import com.ferreplus.entity.Usuario;
 import com.ferreplus.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,15 +19,14 @@ import java.util.List;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PermisoResolver permisoResolver;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(email)
+        Usuario usuario = usuarioRepository.findWithPermisosByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + email));
 
-        List<SimpleGrantedAuthority> authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_" + usuario.getRol().getNombre())
-        );
+        List<GrantedAuthority> authorities = permisoResolver.resolverAutoridades(usuario);
 
         return new User(
                 usuario.getEmail(),

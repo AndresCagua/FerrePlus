@@ -5,6 +5,56 @@ export interface AuthResponse {
   nombre: string;
   rol: string;
   usuarioId: number;
+  /** Códigos de permiso efectivos del usuario (rol ∪ concedidos ∖ denegados). */
+  permisos: string[];
+}
+
+// ===== CATÁLOGO DE PERMISOS / ROLES =====
+export interface Permiso {
+  id: number;
+  codigo: string;
+  nombre: string;
+  accion: string;
+  moduloId?: number;
+  moduloCodigo?: string;
+  moduloNombre?: string;
+}
+
+export interface Modulo {
+  id: number;
+  nombre: string;
+  codigo: string;
+  orden: number;
+  permisos: Permiso[];
+}
+
+export interface Rol {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  /** Códigos de permiso de la matriz del rol. */
+  permisos: string[];
+}
+
+export interface RolRequest {
+  nombre: string;
+  descripcion: string;
+  permisos: string[];
+}
+
+export interface UsuarioPermisoOverride {
+  permisoCodigo: string;
+  concedido: boolean;
+}
+
+export interface UsuarioRequestPayload {
+  nombre: string;
+  email: string;
+  telefono: string;
+  activo: boolean;
+  rolId: number;
+  password?: string;
+  overrides: UsuarioPermisoOverride[];
 }
 
 // ===== USUARIO =====
@@ -16,6 +66,9 @@ export interface Usuario {
   activo: boolean;
   rolId: number;
   rolNombre: string;
+  /** Códigos de permiso efectivos (rol ∪ concedidos ∖ denegados). Opcional porque `Usuario` también se usa anidado en ventas/compras/etc. */
+  permisos?: string[];
+  overrides?: UsuarioPermisoOverride[];
   password?: string;
   fechaCreacion?: string;
   fechaActualizacion?: string;

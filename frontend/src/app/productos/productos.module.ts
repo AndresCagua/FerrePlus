@@ -15,6 +15,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ProductosRoutingModule } from './productos-routing.module';
+import { SharedModule } from '../shared/shared.module';
 import { ProductoListComponent } from './producto-list/producto-list.component';
 import { ProductoFormComponent } from './producto-form/producto-form.component';
 
@@ -27,6 +28,7 @@ import { ProductoFormComponent } from './producto-form/producto-form.component';
     CommonModule,
     ReactiveFormsModule,
     ProductosRoutingModule,
+    SharedModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,

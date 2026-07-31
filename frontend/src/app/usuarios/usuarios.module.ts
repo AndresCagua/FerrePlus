@@ -13,6 +13,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { UsuariosRoutingModule } from './usuarios-routing.module';
+import { SharedModule } from '../shared/shared.module';
 import { UsuarioListComponent } from './usuario-list/usuario-list.component';
 import { UsuarioFormComponent } from './usuario-form/usuario-form.component';
 
@@ -25,6 +26,7 @@ import { UsuarioFormComponent } from './usuario-form/usuario-form.component';
     CommonModule,
     ReactiveFormsModule,
     UsuariosRoutingModule,
+    SharedModule,
     MatTableModule,
     MatFormFieldModule,
     MatInputModule,

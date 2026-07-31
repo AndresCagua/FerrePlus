@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ public class MovimientoStockController {
     private final MovimientoStockService movimientoStockService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('MOVIMIENTOS_VER')")
     public ResponseEntity<List<MovimientoStock>> list(
             @RequestParam(required = false) Long productoId,
             @RequestParam(required = false) String tipo,
@@ -40,6 +42,7 @@ public class MovimientoStockController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('MOVIMIENTOS_CREAR')")
     public ResponseEntity<MovimientoStock> create(@Valid @RequestBody MovimientoStockDTO dto) {
         return ResponseEntity.ok(movimientoStockService.create(dto));
     }
