@@ -43,12 +43,12 @@ public class ProveedorService {
     public Proveedor update(Long id, Proveedor proveedorActualizado) {
         Proveedor proveedor = getById(id);
         Map<String, Object> antes = snapshot(proveedor);
-        proveedor.setNombre(proveedorActualizado.getNombre());
-        proveedor.setRuc(proveedorActualizado.getRuc());
-        proveedor.setContacto(proveedorActualizado.getContacto());
-        proveedor.setTelefono(proveedorActualizado.getTelefono());
-        proveedor.setEmail(proveedorActualizado.getEmail());
-        proveedor.setDireccion(proveedorActualizado.getDireccion());
+        if (proveedorActualizado.getNombre() != null) proveedor.setNombre(proveedorActualizado.getNombre());
+        if (proveedorActualizado.getRuc() != null) proveedor.setRuc(proveedorActualizado.getRuc());
+        if (proveedorActualizado.getContacto() != null) proveedor.setContacto(proveedorActualizado.getContacto());
+        if (proveedorActualizado.getTelefono() != null) proveedor.setTelefono(proveedorActualizado.getTelefono());
+        if (proveedorActualizado.getEmail() != null) proveedor.setEmail(proveedorActualizado.getEmail());
+        if (proveedorActualizado.getDireccion() != null) proveedor.setDireccion(proveedorActualizado.getDireccion());
         proveedor.setActivo(proveedorActualizado.isActivo());
         Proveedor guardado = proveedorRepository.save(proveedor);
         auditService.registrarEvento("PROVEEDOR", guardado.getId(), "ACTUALIZAR",

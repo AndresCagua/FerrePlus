@@ -47,16 +47,17 @@ public class ProductoService {
     public Producto update(Long id, Producto productoActualizado) {
         Producto producto = getById(id);
         Map<String, Object> antes = snapshot(producto);
-        producto.setNombre(productoActualizado.getNombre());
-        producto.setDescripcion(productoActualizado.getDescripcion());
-        producto.setCodigoBarras(productoActualizado.getCodigoBarras());
-        producto.setUbicacion(productoActualizado.getUbicacion());
-        producto.setStockMinimo(productoActualizado.getStockMinimo());
-        producto.setStockMaximo(productoActualizado.getStockMaximo());
-        producto.setPrecioCompra(productoActualizado.getPrecioCompra());
-        producto.setPrecioVenta(productoActualizado.getPrecioVenta());
-        producto.setUnidadMedida(productoActualizado.getUnidadMedida());
-        producto.setImagen(productoActualizado.getImagen());
+        if (productoActualizado.getNombre() != null) producto.setNombre(productoActualizado.getNombre());
+        if (productoActualizado.getDescripcion() != null) producto.setDescripcion(productoActualizado.getDescripcion());
+        if (productoActualizado.getCodigoBarras() != null) producto.setCodigoBarras(productoActualizado.getCodigoBarras());
+        if (productoActualizado.getUbicacion() != null) producto.setUbicacion(productoActualizado.getUbicacion());
+        if (productoActualizado.getStockMinimo() != null) producto.setStockMinimo(productoActualizado.getStockMinimo());
+        if (productoActualizado.getStockMaximo() != null) producto.setStockMaximo(productoActualizado.getStockMaximo());
+        if (productoActualizado.getStockActual() != null) producto.setStockActual(productoActualizado.getStockActual());
+        if (productoActualizado.getPrecioCompra() != null) producto.setPrecioCompra(productoActualizado.getPrecioCompra());
+        if (productoActualizado.getPrecioVenta() != null) producto.setPrecioVenta(productoActualizado.getPrecioVenta());
+        if (productoActualizado.getUnidadMedida() != null) producto.setUnidadMedida(productoActualizado.getUnidadMedida());
+        if (productoActualizado.getImagen() != null) producto.setImagen(productoActualizado.getImagen());
         // Preservar relaciones que el frontend puede no enviar (evita pisar con null).
         // El form de producto no incluye categoria/proveedor: si el request no las trae,
         // se conserva el valor actual en BD (data-loss guard, expuesto por el diff de auditoria).
@@ -153,6 +154,7 @@ public class ProductoService {
         data.put("ubicacion", p.getUbicacion());
         data.put("stockMinimo", p.getStockMinimo());
         data.put("stockMaximo", p.getStockMaximo());
+        data.put("stockActual", p.getStockActual());
         data.put("precioCompra", p.getPrecioCompra());
         data.put("precioVenta", p.getPrecioVenta());
         data.put("unidadMedida", p.getUnidadMedida());

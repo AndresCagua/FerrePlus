@@ -43,13 +43,13 @@ public class GastoService {
     public Gasto update(Long id, Gasto gastoActualizado) {
         Gasto gasto = getById(id);
         Map<String, Object> antes = snapshot(gasto);
-        gasto.setDescripcion(gastoActualizado.getDescripcion());
-        gasto.setMonto(gastoActualizado.getMonto());
-        gasto.setCategoria(gastoActualizado.getCategoria());
-        gasto.setMetodoPago(gastoActualizado.getMetodoPago());
-        gasto.setNumeroComprobante(gastoActualizado.getNumeroComprobante());
-        gasto.setFechaGasto(gastoActualizado.getFechaGasto());
-        gasto.setObservaciones(gastoActualizado.getObservaciones());
+        if (gastoActualizado.getDescripcion() != null) gasto.setDescripcion(gastoActualizado.getDescripcion());
+        if (gastoActualizado.getMonto() != null) gasto.setMonto(gastoActualizado.getMonto());
+        if (gastoActualizado.getCategoria() != null) gasto.setCategoria(gastoActualizado.getCategoria());
+        if (gastoActualizado.getMetodoPago() != null) gasto.setMetodoPago(gastoActualizado.getMetodoPago());
+        if (gastoActualizado.getNumeroComprobante() != null) gasto.setNumeroComprobante(gastoActualizado.getNumeroComprobante());
+        if (gastoActualizado.getFechaGasto() != null) gasto.setFechaGasto(gastoActualizado.getFechaGasto());
+        if (gastoActualizado.getObservaciones() != null) gasto.setObservaciones(gastoActualizado.getObservaciones());
         gasto.setUsuario(gastoActualizado.getUsuario());
         Gasto guardado = gastoRepository.save(gasto);
         auditService.registrarEvento("GASTO", guardado.getId(), "ACTUALIZAR",

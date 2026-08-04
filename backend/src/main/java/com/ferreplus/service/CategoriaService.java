@@ -43,8 +43,8 @@ public class CategoriaService {
     public Categoria update(Long id, Categoria categoriaActualizada) {
         Categoria categoria = getById(id);
         Map<String, Object> antes = snapshot(categoria);
-        categoria.setNombre(categoriaActualizada.getNombre());
-        categoria.setDescripcion(categoriaActualizada.getDescripcion());
+        if (categoriaActualizada.getNombre() != null) categoria.setNombre(categoriaActualizada.getNombre());
+        if (categoriaActualizada.getDescripcion() != null) categoria.setDescripcion(categoriaActualizada.getDescripcion());
         Categoria guardada = categoriaRepository.save(categoria);
         auditService.registrarEvento("CATEGORIA", guardada.getId(), "ACTUALIZAR",
                 AuditDiff.toJson(objectMapper, AuditDiff.diff(antes, snapshot(guardada))));

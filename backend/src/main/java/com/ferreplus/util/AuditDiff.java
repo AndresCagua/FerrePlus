@@ -3,6 +3,7 @@ package com.ferreplus.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -46,7 +47,7 @@ public final class AuditDiff {
         for (String campo : unionDeClaves(antes, despues)) {
             Object valorAntes = antes.get(campo);
             Object valorDespues = despues.get(campo);
-            if (!Objects.equals(valorAntes, valorDespues)) {
+            if (!sonIguales(valorAntes, valorDespues)) {
                 Map<String, Object> cambio = new LinkedHashMap<>();
                 cambio.put("antes", valorAntes);
                 cambio.put("despues", valorDespues);
@@ -54,6 +55,15 @@ public final class AuditDiff {
             }
         }
         return cambios;
+    }
+
+    private static boolean sonIguales(Object a, Object b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        if (a instanceof BigDecimal && b instanceof BigDecimal) {
+            return ((BigDecimal) a).compareTo((BigDecimal) b) == 0;
+        }
+        return Objects.equals(a, b);
     }
 
     /**

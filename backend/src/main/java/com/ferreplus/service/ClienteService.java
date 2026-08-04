@@ -43,12 +43,12 @@ public class ClienteService {
     public Cliente update(Long id, Cliente clienteActualizado) {
         Cliente cliente = getById(id);
         Map<String, Object> antes = snapshot(cliente);
-        cliente.setNombre(clienteActualizado.getNombre());
-        cliente.setRuc(clienteActualizado.getRuc());
-        cliente.setTelefono(clienteActualizado.getTelefono());
-        cliente.setEmail(clienteActualizado.getEmail());
-        cliente.setDireccion(clienteActualizado.getDireccion());
-        cliente.setSaldoPendiente(clienteActualizado.getSaldoPendiente());
+        if (clienteActualizado.getNombre() != null) cliente.setNombre(clienteActualizado.getNombre());
+        if (clienteActualizado.getRuc() != null) cliente.setRuc(clienteActualizado.getRuc());
+        if (clienteActualizado.getTelefono() != null) cliente.setTelefono(clienteActualizado.getTelefono());
+        if (clienteActualizado.getEmail() != null) cliente.setEmail(clienteActualizado.getEmail());
+        if (clienteActualizado.getDireccion() != null) cliente.setDireccion(clienteActualizado.getDireccion());
+        if (clienteActualizado.getSaldoPendiente() != null) cliente.setSaldoPendiente(clienteActualizado.getSaldoPendiente());
         cliente.setActivo(clienteActualizado.isActivo());
         Cliente guardado = clienteRepository.save(cliente);
         auditService.registrarEvento("CLIENTE", guardado.getId(), "ACTUALIZAR",
