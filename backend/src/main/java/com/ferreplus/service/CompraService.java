@@ -8,6 +8,9 @@ import com.ferreplus.exception.ResourceNotFoundException;
 import com.ferreplus.repository.CompraRepository;
 import com.ferreplus.repository.DetalleCompraRepository;
 import com.ferreplus.repository.ProductoRepository;
+import com.ferreplus.util.AuditDiff;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +20,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -31,6 +36,8 @@ public class CompraService {
     private final UsuarioService usuarioService;
     private final PrecioService precioService;
     private final ProductoRepository productoRepository;
+    private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public List<Compra> list() {
@@ -94,6 +101,7 @@ public class CompraService {
                     producto.getPrecioVenta(), "COMPRA", compra.getNumeroFactura(), null);
         }
 
+        auditService.registrarEvento("COMPRA", compra.getId(), "CREAR", jsonDetalleCompra(compra));
         return compra;
     }
 
@@ -119,6 +127,7 @@ public class CompraService {
     @Transactional
     public Compra update(Long id, CompraDTO dto) {
         Compra compra = getById(id);
+        Map<String, Object> antes = snapshot(compra);
 
         if ("ANULADA".equals(compra.getEstado())) {
             throw new BadRequestException("No se puede editar una compra anulada");
@@ -173,7 +182,10 @@ public class CompraService {
                     producto.getPrecioVenta(), "COMPRA", compra.getNumeroFactura(), null);
         }
 
-        return compraRepository.save(compra);
+        Compra guardada = compraRepository.save(compra);
+        auditService.registrarEvento("COMPRA", guardada.getId(), "ACTUALIZAR",
+                AuditDiff.toJson(objectMapper, AuditDiff.diff(antes, snapshot(guardada))));
+        return guardada;
     }
 
     public void anular(Long id) {
@@ -191,6 +203,7 @@ public class CompraService {
         compra.setEstado("ANULADA");
         compra.setFechaAnulacion(LocalDateTime.now());
         compraRepository.save(compra);
+        auditService.registrarEvento("COMPRA", compra.getId(), "ANULAR", jsonDetalleCompra(compra));
     }
 
     @Transactional(readOnly = true)
@@ -204,5 +217,30 @@ public class CompraService {
         long count = compraRepository.count();
         String fecha = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         return "FC-" + fecha + "-" + String.format("%04d", count + 1);
+    }
+
+    private String jsonDetalleCompra(Compra compra) {
+        try {
+            return objectMapper.writeValueAsString(Map.of("numeroFactura", compra.getNumeroFactura()));
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
+    }
+
+    /**
+     * Snapshot plano de campos escalares de la compra para el diff ANTES/DESPUÉS.
+     * No incluye colecciones (detalles) — fuera de alcance del diff.
+     */
+    private Map<String, Object> snapshot(Compra c) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("numeroFactura", c.getNumeroFactura());
+        data.put("proveedorId", c.getProveedor() != null ? c.getProveedor().getId() : null);
+        data.put("subtotal", c.getSubtotal());
+        data.put("descuento", c.getDescuento());
+        data.put("iva", c.getIva());
+        data.put("total", c.getTotal());
+        data.put("observaciones", c.getObservaciones());
+        data.put("fechaFactura", c.getFechaFactura());
+        return data;
     }
 }

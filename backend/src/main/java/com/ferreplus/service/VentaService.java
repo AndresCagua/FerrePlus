@@ -7,6 +7,8 @@ import com.ferreplus.exception.BadRequestException;
 import com.ferreplus.exception.ResourceNotFoundException;
 import com.ferreplus.repository.DetalleVentaRepository;
 import com.ferreplus.repository.VentaRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -28,6 +31,8 @@ public class VentaService {
     private final ProductoService productoService;
     private final ClienteService clienteService;
     private final UsuarioService usuarioService;
+    private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public List<Venta> list() {
@@ -95,7 +100,26 @@ public class VentaService {
             productoService.actualizarStock(producto.getId(), detalleDTO.getCantidad(), "SALIDA");
         }
 
+        auditService.registrarEvento("VENTA", venta.getId(), "CREAR", jsonDetalleVenta(venta));
         return venta;
+    }
+
+    private String jsonDetalleVenta(Venta venta) {
+        try {
+            return objectMapper.writeValueAsString(Map.of(
+                    "numeroFactura", venta.getNumeroFactura(),
+                    "total", venta.getTotal()));
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
+    }
+
+    private String jsonDetalleAnulacion(Venta venta) {
+        try {
+            return objectMapper.writeValueAsString(Map.of("numeroFactura", venta.getNumeroFactura()));
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
     }
 
     private void calcularMontos(VentaDTO dto) {
@@ -132,6 +156,7 @@ public class VentaService {
         venta.setEstado("ANULADA");
         venta.setFechaAnulacion(LocalDateTime.now());
         ventaRepository.save(venta);
+        auditService.registrarEvento("VENTA", venta.getId(), "ANULAR", jsonDetalleAnulacion(venta));
     }
 
     @Transactional(readOnly = true)

@@ -8,6 +8,8 @@ import com.ferreplus.exception.BadRequestException;
 import com.ferreplus.exception.ResourceNotFoundException;
 import com.ferreplus.repository.MovimientoStockRepository;
 import com.ferreplus.repository.ProductoRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -26,6 +29,8 @@ public class MovimientoStockService {
     private final ProductoService productoService;
     private final ProductoRepository productoRepository;
     private final UsuarioService usuarioService;
+    private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public List<MovimientoStock> listByProducto(Long productoId) {
@@ -76,18 +81,33 @@ public class MovimientoStockService {
         producto.setStockActual(nuevoStock);
         productoRepository.save(producto);
 
-        MovimientoStock movimiento = MovimientoStock.builder()
-                .producto(producto)
-                .cantidad(cantidad)
-                .tipo(dto.getTipo().toUpperCase())
-                .referencia(dto.getReferencia())
-                .motivo(dto.getMotivo())
-                .precioUnitario(dto.getPrecioUnitario())
-                .usuario(usuario)
-                .stockAnterior(stockAnterior)
-                .stockPosterior(nuevoStock)
-                .build();
+        MovimientoStock movimiento = movimientoStockRepository.save(
+                MovimientoStock.builder()
+                        .producto(producto)
+                        .cantidad(cantidad)
+                        .tipo(dto.getTipo().toUpperCase())
+                        .referencia(dto.getReferencia())
+                        .motivo(dto.getMotivo())
+                        .precioUnitario(dto.getPrecioUnitario())
+                        .usuario(usuario)
+                        .stockAnterior(stockAnterior)
+                        .stockPosterior(nuevoStock)
+                        .build());
 
-        return movimientoStockRepository.save(movimiento);
+        auditService.registrarEvento("MOVIMIENTO", movimiento.getId(), "CREAR",
+                jsonDetalle(movimiento));
+        return movimiento;
+    }
+
+    private String jsonDetalle(MovimientoStock movimiento) {
+        try {
+            return objectMapper.writeValueAsString(Map.of(
+                    "productoId", movimiento.getProducto().getId(),
+                    "tipo", movimiento.getTipo(),
+                    "cantidad", movimiento.getCantidad(),
+                    "stockPosterior", movimiento.getStockPosterior()));
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
     }
 }

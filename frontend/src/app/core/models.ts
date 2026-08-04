@@ -268,3 +268,32 @@ export interface ActualizarPrecioVentaRequest {
   margenPorcentaje?: number;
   referencia?: string;
 }
+
+// ===== LOGS / AUDITORÍA =====
+/** Envelope de paginación server-side (formato Spring `Page<T>`, R2/R7). */
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first?: boolean;
+  last?: boolean;
+}
+
+/** Fila de auditoría expuesta por `GET /api/logs` (R2). */
+export interface AuditoriaLog {
+  id: number;
+  entidad: string;
+  entidadId: number | null;
+  accion: string;
+  usuarioId?: number | null;
+  usuarioNombre?: string | null;
+  fecha: string;
+  detalle?: string | null;
+}
+
+/** Respuesta de `DELETE /api/logs?desde=&hasta=` (R3): conteo de filas eliminadas. */
+export interface EliminarLogsResponse {
+  eliminados: number;
+}

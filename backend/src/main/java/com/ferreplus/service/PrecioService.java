@@ -10,6 +10,8 @@ import com.ferreplus.exception.BadRequestException;
 import com.ferreplus.exception.ResourceNotFoundException;
 import com.ferreplus.repository.HistoricoPrecioProductoRepository;
 import com.ferreplus.repository.ProductoRepository;
+import com.ferreplus.util.AuditDiff;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +31,8 @@ public class PrecioService {
 
     private final ProductoRepository productoRepository;
     private final HistoricoPrecioProductoRepository historicoRepository;
+    private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public List<PrecioProductoDTO> listarPrecios() {
@@ -88,11 +94,19 @@ public class PrecioService {
             precioVenta = dto.getNuevoPrecio();
         }
 
+        BigDecimal precioVentaAntes = producto.getPrecioVenta();
         producto.setPrecioVenta(precioVenta);
         productoRepository.save(producto);
 
         registrarHistorico(producto, producto.getPrecioCompra(), producto.getPrecioVenta(),
                 "ACTUALIZACION_VENTA", dto.getReferencia(), usuario);
+
+        Map<String, Object> antes = new HashMap<>();
+        antes.put("precioVenta", precioVentaAntes);
+        Map<String, Object> despues = new HashMap<>();
+        despues.put("precioVenta", producto.getPrecioVenta());
+        auditService.registrarEvento("PRECIO", producto.getId(), "ACTUALIZAR",
+                AuditDiff.toJson(objectMapper, AuditDiff.diff(antes, despues)));
 
         return mapToPrecioProductoDTO(producto);
     }

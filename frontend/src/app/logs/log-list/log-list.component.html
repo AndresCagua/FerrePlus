@@ -1,0 +1,141 @@
+<div class="fade-in">
+  <div class="page-header">
+    <h2>Logs</h2>
+    <button
+      mat-raised-button
+      color="warn"
+      data-testid="borrar-rango"
+      *appHasPermission="'LOGS_ELIMINAR'"
+      [disabled]="deleting"
+      (click)="openBorrarRango()">
+      <mat-icon>delete_sweep</mat-icon>
+      Borrar por rango
+    </button>
+  </div>
+
+  <mat-card class="mb-3">
+    <mat-card-content>
+      <form [formGroup]="filtrosForm" class="filtros-grid" (ngSubmit)="aplicarFiltros()">
+        <mat-form-field appearance="outline">
+          <mat-label>Desde</mat-label>
+          <input matInput [matDatepicker]="dpDesde" formControlName="fechaDesde" placeholder="dd/mm/aaaa">
+          <mat-datepicker-toggle matIconSuffix [for]="dpDesde"></mat-datepicker-toggle>
+          <mat-datepicker #dpDesde></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Hasta</mat-label>
+          <input matInput [matDatepicker]="dpHasta" formControlName="fechaHasta" placeholder="dd/mm/aaaa">
+          <mat-datepicker-toggle matIconSuffix [for]="dpHasta"></mat-datepicker-toggle>
+          <mat-datepicker #dpHasta></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Usuario</mat-label>
+          <mat-select formControlName="usuarioId">
+            <mat-option [value]="null">Todos</mat-option>
+            <mat-option *ngFor="let u of usuarios" [value]="u.id">{{ u.nombre }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Entidad</mat-label>
+          <mat-select formControlName="entidad">
+            <mat-option value="">Todas</mat-option>
+            <mat-option *ngFor="let e of entidades" [value]="e.valor">{{ e.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Acción</mat-label>
+          <mat-select formControlName="accion">
+            <mat-option value="">Todas</mat-option>
+            <mat-option *ngFor="let a of acciones" [value]="a">{{ a }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filtros-acciones">
+          <button mat-raised-button color="primary" type="submit">
+            <mat-icon>search</mat-icon>
+            Aplicar
+          </button>
+          <button mat-stroked-button type="button" (click)="limpiarFiltros()">
+            <mat-icon>clear</mat-icon>
+            Limpiar
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-content>
+      <div class="loading-overlay" *ngIf="loading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <div class="table-container" *ngIf="!loading">
+        <table mat-table [dataSource]="dataSource" class="w-100">
+          <ng-container matColumnDef="entidad">
+            <th mat-header-cell *matHeaderCellDef>Entidad</th>
+            <td mat-cell *matCellDef="let log" class="fw-medium">{{ entidadLabel(log.entidad) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="entidadId">
+            <th mat-header-cell *matHeaderCellDef>ID Entidad</th>
+            <td mat-cell *matCellDef="let log">{{ log.entidadId ?? '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="accion">
+            <th mat-header-cell *matHeaderCellDef>Acción</th>
+            <td mat-cell *matCellDef="let log">
+              <span class="accion-badge">{{ log.accion }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="usuarioId">
+            <th mat-header-cell *matHeaderCellDef>ID Usuario</th>
+            <td mat-cell *matCellDef="let log">{{ log.usuarioId ?? '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="usuarioNombre">
+            <th mat-header-cell *matHeaderCellDef>Usuario</th>
+            <td mat-cell *matCellDef="let log">{{ log.usuarioNombre || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let log">{{ log.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="detalle">
+            <th mat-header-cell *matHeaderCellDef>Detalle</th>
+            <td mat-cell *matCellDef="let log">
+              <pre
+                class="detalle-pre"
+                matTooltip="{{ formatearDetalle(log.detalle) }}"
+                matTooltipPosition="left">{{ formatearDetalle(log.detalle) }}</pre>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <mat-paginator
+          [length]="totalElements"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          [pageIndex]="currentPage"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+
+        <div class="empty-state" *ngIf="dataSource.data.length === 0 && !loading">
+          <mat-icon>receipt_long</mat-icon>
+          <p>No se encontraron logs</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

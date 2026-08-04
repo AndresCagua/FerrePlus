@@ -61,6 +61,7 @@ public class DataSeeder implements CommandLineRunner {
         MODULOS.put("USUARIOS", new int[]{11, 1, 1, 1, 1});
         MODULOS.put("ROLES", new int[]{12, 1, 1, 1, 1});
         MODULOS.put("REPORTES", new int[]{13, 1, 0, 0, 0});
+        MODULOS.put("LOGS", new int[]{14, 1, 0, 0, 1});
 
         NOMBRES_MODULO.put("DASHBOARD", "Dashboard");
         NOMBRES_MODULO.put("PRODUCTOS", "Productos");
@@ -75,6 +76,7 @@ public class DataSeeder implements CommandLineRunner {
         NOMBRES_MODULO.put("USUARIOS", "Usuarios");
         NOMBRES_MODULO.put("ROLES", "Roles");
         NOMBRES_MODULO.put("REPORTES", "Reportes");
+        NOMBRES_MODULO.put("LOGS", "Logs");
     }
 
     private static final String[] ACCIONES = {"VER", "CREAR", "EDITAR", "ELIMINAR"};
@@ -103,7 +105,8 @@ public class DataSeeder implements CommandLineRunner {
                 "GASTOS_VER", "GASTOS_CREAR", "GASTOS_EDITAR", "GASTOS_ELIMINAR",
                 "USUARIOS_VER", "USUARIOS_CREAR", "USUARIOS_EDITAR", "USUARIOS_ELIMINAR",
                 "ROLES_VER", "ROLES_CREAR", "ROLES_EDITAR", "ROLES_ELIMINAR",
-                "REPORTES_VER"
+                "REPORTES_VER",
+                "LOGS_VER", "LOGS_ELIMINAR"
         ));
         MATRIZ_ROLES.put("VENDEDOR", Set.of(
                 "DASHBOARD_VER",

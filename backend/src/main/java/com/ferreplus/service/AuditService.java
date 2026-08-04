@@ -27,11 +27,22 @@ public class AuditService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void registrarEvento(String entidad, Long entidadId, String accion, String detalle) {
+        registrarEvento(entidad, entidadId, accion, detalle, usuarioActual());
+    }
+
+    /**
+     * Overload con actor explícito (R5): usado cuando el {@code SecurityContextHolder}
+     * aún no refleja al usuario autenticado — p. ej. dentro de {@code AuthService.login()}
+     * antes de que el contexto se actualice. Mantiene {@code MANDATORY} (atomicidad R10).
+     * {@code usuario == null} representa eventos de sistema/seed.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void registrarEvento(String entidad, Long entidadId, String accion, String detalle, Usuario usuario) {
         auditoriaRepository.save(Auditoria.builder()
                 .entidad(entidad)
                 .entidadId(entidadId)
                 .accion(accion)
-                .usuario(usuarioActual())
+                .usuario(usuario)
                 .detalle(detalle)
                 .build());
     }

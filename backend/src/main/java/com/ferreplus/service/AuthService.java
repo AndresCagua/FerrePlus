@@ -26,6 +26,7 @@ public class AuthService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final PermisoResolver permisoResolver;
+    private final AuditService auditService;
 
     public AuthResponseDTO login(AuthLoginDTO dto) {
         authenticationManager.authenticate(
@@ -48,6 +49,8 @@ public class AuthService {
         List<String> permisos = permisoResolver.codigosEfectivos(usuario).stream()
                 .sorted()
                 .toList();
+
+        auditService.registrarEvento("AUTH", usuario.getId(), "LOGIN", null, usuario);
 
         return AuthResponseDTO.builder()
                 .token(token)

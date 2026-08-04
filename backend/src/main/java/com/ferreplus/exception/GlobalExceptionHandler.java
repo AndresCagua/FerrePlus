@@ -7,6 +7,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -28,6 +31,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResource(NoResourceFoundException ex) {
+        log.warn("Ruta no encontrada: {}", ex.getResourcePath());
+        return buildResponse(HttpStatus.NOT_FOUND, "Ruta no encontrada: " + ex.getResourcePath());
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(BadRequestException ex) {
         log.warn("Solicitud inválida: {}", ex.getMessage());
@@ -47,6 +56,20 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
         log.warn("Error de validación: {}", errors);
         return buildResponse(HttpStatus.BAD_REQUEST, errors);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingParam(MissingServletRequestParameterException ex) {
+        log.warn("Parámetro requerido faltante: {}", ex.getParameterName());
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "Parámetro requerido faltante: " + ex.getParameterName());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Tipo de parámetro inválido: {}", ex.getName());
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "Parámetro inválido: " + ex.getName());
     }
 
     @ExceptionHandler(Exception.class)

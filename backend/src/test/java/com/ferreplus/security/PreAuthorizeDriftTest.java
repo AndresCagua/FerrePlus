@@ -56,9 +56,9 @@ class PreAuthorizeDriftTest {
 
     @Test
     void catalogo_seed_es_completo() {
-        // 13 módulos, 42 permisos, 69 pares rol_permisos (R1, R6)
-        assertEquals(42, permisoRepository.count(),
-                "El catálogo debe tener exactamente 42 permisos");
+        // 14 módulos, 44 permisos, 71 pares rol_permisos (R1, R6)
+        assertEquals(44, permisoRepository.count(),
+                "El catálogo debe tener exactamente 44 permisos");
 
         Set<String> codigos = permisoRepository.findAll().stream()
                 .map(Permiso::getCodigo)
@@ -67,7 +67,7 @@ class PreAuthorizeDriftTest {
         List<Rol> roles = rolRepository.findAllWithPermisos();
         assertEquals(3, roles.size(), "Deben existir los 3 roles base");
         long pares = roles.stream().mapToLong(r -> r.getPermisos().size()).sum();
-        assertEquals(69, pares, "ADMIN(42) + VENDEDOR(9) + BODEGUERO(18) = 69 pares");
+        assertEquals(71, pares, "ADMIN(44) + VENDEDOR(9) + BODEGUERO(18) = 71 pares");
 
         for (Rol rol : roles) {
             for (Permiso permiso : rol.getPermisos()) {

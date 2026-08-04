@@ -87,6 +87,12 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { permissions: permisosDeRuta('/reportes') }
   },
+  {
+    path: 'logs',
+    loadChildren: () => import('./logs/logs.module').then(m => m.LogsModule),
+    canActivate: [AuthGuard],
+    data: { permissions: permisosDeRuta('/logs') }
+  },
   { path: '**', redirectTo: '/dashboard' }
 ];
 

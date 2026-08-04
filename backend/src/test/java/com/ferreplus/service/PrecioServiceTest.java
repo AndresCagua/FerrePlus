@@ -8,6 +8,7 @@ import com.ferreplus.entity.Usuario;
 import com.ferreplus.exception.BadRequestException;
 import com.ferreplus.repository.HistoricoPrecioProductoRepository;
 import com.ferreplus.repository.ProductoRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,6 +32,12 @@ class PrecioServiceTest {
 
     @Mock
     private HistoricoPrecioProductoRepository historicoRepository;
+
+    @Mock
+    private AuditService auditService;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private PrecioService precioService;

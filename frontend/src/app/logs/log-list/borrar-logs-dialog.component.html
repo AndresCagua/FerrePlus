@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>Borrar logs por rango</h2>
+<mat-dialog-content>
+  <p>
+    Se eliminarán <strong>permanentemente</strong> todos los logs cuya fecha esté dentro
+    del rango seleccionado.
+  </p>
+  <p class="text-danger fw-semibold">
+    No es posible conocer la cantidad exacta de registros antes de ejecutar. Esta
+    operación es <strong>IRREVERSIBLE</strong> y no puede deshacerse.
+  </p>
+  <form [formGroup]="form">
+    <div class="row">
+      <mat-form-field appearance="outline" class="col-md-6">
+        <mat-label>Desde</mat-label>
+        <input matInput [matDatepicker]="dpDesde" formControlName="desde" placeholder="dd/mm/aaaa">
+        <mat-datepicker-toggle matIconSuffix [for]="dpDesde"></mat-datepicker-toggle>
+        <mat-datepicker #dpDesde></mat-datepicker>
+        <mat-error *ngIf="form.get('desde')?.hasError('required')">Requerido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="col-md-6">
+        <mat-label>Hasta</mat-label>
+        <input matInput [matDatepicker]="dpHasta" formControlName="hasta" placeholder="dd/mm/aaaa">
+        <mat-datepicker-toggle matIconSuffix [for]="dpHasta"></mat-datepicker-toggle>
+        <mat-datepicker #dpHasta></mat-datepicker>
+        <mat-error *ngIf="form.get('hasta')?.hasError('required')">Requerido</mat-error>
+      </mat-form-field>
+    </div>
+    <mat-error *ngIf="rangoInvalido" class="d-block mb-2">
+      "Hasta" no puede ser anterior a "Desde".
+    </mat-error>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="onCancelar()">Cancelar</button>
+  <button
+    mat-raised-button
+    color="warn"
+    [disabled]="form.invalid || rangoInvalido"
+    (click)="onConfirmar()">
+    <mat-icon>delete_sweep</mat-icon>
+    Confirmar borrado
+  </button>
+</mat-dialog-actions>
