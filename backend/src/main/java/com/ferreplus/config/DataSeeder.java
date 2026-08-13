@@ -1,6 +1,7 @@
 package com.ferreplus.config;
 
 import com.ferreplus.entity.Modulo;
+import com.ferreplus.entity.GuiaSistema;
 import com.ferreplus.entity.Permiso;
 import com.ferreplus.entity.Rol;
 import com.ferreplus.entity.Usuario;
@@ -8,6 +9,7 @@ import com.ferreplus.repository.ModuloRepository;
 import com.ferreplus.repository.PermisoRepository;
 import com.ferreplus.repository.RolRepository;
 import com.ferreplus.repository.UsuarioRepository;
+import com.ferreplus.repository.GuiaSistemaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -42,6 +44,7 @@ public class DataSeeder implements CommandLineRunner {
     private final RolRepository rolRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GuiaSistemaRepository guiaSistemaRepository;
 
     /** Módulo → (orden, acciones que aplican). El orden define el sidebar. */
     private static final Map<String, int[]> MODULOS = new LinkedHashMap<>();
@@ -138,6 +141,7 @@ public class DataSeeder implements CommandLineRunner {
         Map<String, Permiso> permisos = sembrarCatalogo();
         sembrarRoles(permisos);
         sembrarUsuarioAdmin();
+        sembrarGuiasSistema();
         log.info("Seeder de catálogo completado: {} módulos, {} permisos, {} pares rol_permisos, usuario admin verificado",
                 moduloRepository.count(),
                 permisoRepository.count(),
@@ -226,6 +230,67 @@ public class DataSeeder implements CommandLineRunner {
                             .build());
                     log.info("Usuario admin creado: {}", ADMIN_EMAIL);
                 });
+    }
+
+    private void sembrarGuiasSistema() {
+        List<GuiaSistema> guias = List.of(
+                guia("PRODUCTOS", "/productos", "Registrar un producto",
+                        "Permite crear un producto con su descripcion, categoria, precios y stock.",
+                        "[\"Abrir Productos en /productos.\",\"Seleccionar Nuevo producto.\",\"Completar los datos y guardar.\"]",
+                        "registrar, crear, producto, nuevo"),
+                guia("CATEGORIAS", "/categorias", "Crear una categoria",
+                        "Permite organizar productos mediante categorias.",
+                        "[\"Abrir Categorias en /categorias.\",\"Seleccionar Nueva categoria.\",\"Ingresar el nombre y guardar.\"]",
+                        "crear, categoria, organizar"),
+                guia("CLIENTES", "/clientes", "Registrar un cliente",
+                        "Permite registrar los datos de contacto y comerciales de un cliente.",
+                        "[\"Abrir Clientes en /clientes.\",\"Seleccionar Nuevo cliente.\",\"Completar los datos y guardar.\"]",
+                        "registrar, crear, cliente, nuevo"),
+                guia("PROVEEDORES", "/proveedores", "Registrar un proveedor",
+                        "Permite registrar proveedores para gestionar las compras.",
+                        "[\"Abrir Proveedores en /proveedores.\",\"Seleccionar Nuevo proveedor.\",\"Completar los datos y guardar.\"]",
+                        "registrar, crear, proveedor, nuevo"),
+                guia("VENTAS", "/ventas", "Realizar una venta",
+                        "Permite seleccionar un cliente, agregar productos y registrar una venta.",
+                        "[\"Abrir Ventas en /ventas.\",\"Seleccionar Nueva venta.\",\"Agregar cliente y productos.\",\"Confirmar la venta.\"]",
+                        "venta, vender, factura, cliente"),
+                guia("COMPRAS", "/compras", "Registrar una compra",
+                        "Permite registrar compras de productos a un proveedor.",
+                        "[\"Abrir Compras en /compras.\",\"Seleccionar Nueva compra.\",\"Elegir proveedor y productos.\",\"Guardar la compra.\"]",
+                        "compra, proveedor, abastecimiento"),
+                guia("GASTOS", "/gastos", "Registrar un gasto",
+                        "Permite registrar gastos operativos del negocio.",
+                        "[\"Abrir Gastos en /gastos.\",\"Seleccionar Nuevo gasto.\",\"Ingresar descripcion, monto y fecha.\",\"Guardar el gasto.\"]",
+                        "registrar, gasto, monto"),
+                guia("USUARIOS", "/usuarios", "Crear un usuario",
+                        "Permite crear usuarios y asignarles un rol.",
+                        "[\"Abrir Usuarios en /usuarios.\",\"Seleccionar Nuevo usuario.\",\"Completar los datos y asignar un rol.\",\"Guardar.\"]",
+                        "crear, usuario, rol, acceso"),
+                guia("ROLES", "/roles", "Administrar roles",
+                        "Permite crear roles y administrar sus permisos.",
+                        "[\"Abrir Roles en /roles.\",\"Seleccionar un rol o crear uno nuevo.\",\"Ajustar permisos y guardar.\"]",
+                        "rol, permiso, administrar"),
+                guia("LOGS", "/logs", "Consultar logs",
+                        "Permite consultar la auditoria de acciones del sistema.",
+                        "[\"Abrir Logs en /logs.\",\"Aplicar filtros de fecha o usuario.\",\"Revisar los resultados.\"]",
+                        "logs, auditoria, consultar"));
+
+        guias.forEach(guia -> guiaSistemaRepository
+                .findByModuloAndRutaAndTitulo(guia.getModulo(), guia.getRuta(), guia.getTitulo())
+                .orElseGet(() -> guiaSistemaRepository.save(guia)));
+        log.info("Guias del sistema verificadas: {}", guiaSistemaRepository.count());
+    }
+
+    private GuiaSistema guia(String modulo, String ruta, String titulo, String descripcion,
+                             String pasos, String keywords) {
+        return GuiaSistema.builder()
+                .modulo(modulo)
+                .ruta(ruta)
+                .titulo(titulo)
+                .descripcion(descripcion)
+                .pasos(pasos)
+                .keywords(keywords)
+                .build();
     }
 
     private String descripcionRol(String nombre) {

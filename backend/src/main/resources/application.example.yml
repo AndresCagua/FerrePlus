@@ -35,6 +35,14 @@ app:
     secret: "YOUR_JWT_SECRET_CHANGE_ME"
     expiration: 86400000
 
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com}
+  embedding-model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}
+  chat-model: ${GEMINI_CHAT_MODEL:gemini-3.6-flash}
+  timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:10}
+  max-retries: ${GEMINI_MAX_RETRIES:1}
+
 ---
 spring:
   config:
