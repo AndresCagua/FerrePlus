@@ -108,12 +108,12 @@
 
 > **Salida verificable**: endpoints expuestos, DTOs validados, autenticación/autorización correcta, CORS multi-origen.
 
-### T12 — `ChatController`
+### T12 — `ChatController` [x]
 - **Files**: `backend/src/main/java/com/ferreplus/controller/ChatController.java` (create)
 - **Action**: `POST /api/chat` con `@PreAuthorize("isAuthenticated()")`, recibe `ChatRequest`, devuelve `ResponseEntity<ChatResponse>`. `POST /api/chat/index/rebuild` con `@PreAuthorize("hasAuthority('CHAT_INDEX_REBUILD')")`, devuelve `{indexed, skipped, failed}`. Maneja validación `@Valid` → 400, 401, 403, 429, 503.
 - **Verification**: `@WebMvcTest(ChatController.class)` verifica: 401 sin JWT, 403 rebuild sin ADMIN, 400 request vacío, 200 chat con JWT, 200 rebuild con ADMIN.
 
-### T13 — DTOs `ChatRequest`/`ChatResponse` + CORS multi-origen
+### T13 — DTOs `ChatRequest`/`ChatResponse` + CORS multi-origen [x]
 - **Files**:
   - `backend/src/main/java/com/ferreplus/dto/ChatRequest.java` (create)
   - `backend/src/main/java/com/ferreplus/dto/ChatResponse.java` (create)

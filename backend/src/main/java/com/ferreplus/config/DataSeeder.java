@@ -97,6 +97,7 @@ public class DataSeeder implements CommandLineRunner {
     static {
         MATRIZ_ROLES.put("ADMIN", Set.of(
                 "DASHBOARD_VER",
+                "CHAT_INDEX_REBUILD",
                 "PRODUCTOS_VER", "PRODUCTOS_CREAR", "PRODUCTOS_EDITAR", "PRODUCTOS_ELIMINAR",
                 "CATEGORIAS_VER", "CATEGORIAS_CREAR", "CATEGORIAS_EDITAR", "CATEGORIAS_ELIMINAR",
                 "PROVEEDORES_VER", "PROVEEDORES_CREAR", "PROVEEDORES_EDITAR", "PROVEEDORES_ELIMINAR",

@@ -49,6 +49,17 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(GeminiException.class)
+    public ResponseEntity<Map<String, Object>> handleGemini(GeminiException ex) {
+        if (ex.isRateLimited()) {
+            return buildResponse(HttpStatus.TOO_MANY_REQUESTS,
+                    "Se alcanzo el limite de consultas. Intenta nuevamente mas tarde.");
+        }
+        log.warn("Proveedor de respuestas no disponible: {}", ex.getStatusCode());
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE,
+                "El servicio de respuestas no esta disponible. Intenta nuevamente mas tarde.");
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult().getFieldErrors().stream()
