@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * estado no debe crear duplicados ni alterar matrices.
  */
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 class DataSeederIdempotencyTest {
 
@@ -57,14 +57,14 @@ class DataSeederIdempotencyTest {
 
     @Test
     void seed_siembraElEstadoCompletoEsperado() {
-        assertEquals(14, moduloRepository.count(), "Deben sembrarse 14 módulos");
-        assertEquals(44, permisoRepository.count(), "Deben sembrarse 44 permisos");
+        assertEquals(15, moduloRepository.count(), "Deben sembrarse 15 módulos");
+        assertEquals(45, permisoRepository.count(), "Deben sembrarse 45 permisos");
 
         var roles = rolRepository.findAllWithPermisos();
         assertEquals(3, roles.size(), "Deben existir exactamente 3 roles base");
 
-        assertEquals(71, roles.stream().mapToLong(r -> r.getPermisos().size()).sum(),
-                "ADMIN(44) + VENDEDOR(9) + BODEGUERO(18) = 71 pares rol_permisos");
+        assertEquals(72, roles.stream().mapToLong(r -> r.getPermisos().size()).sum(),
+                "ADMIN(45) + VENDEDOR(9) + BODEGUERO(18) = 72 pares rol_permisos");
 
         assertTrue(rolRepository.findByNombre("CAJERO").isEmpty(),
                 "El rol CAJERO fue eliminado del modelo (R7 REMOVED)");

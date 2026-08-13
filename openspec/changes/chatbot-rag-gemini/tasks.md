@@ -156,14 +156,14 @@
 
 > **Salida verificable**: cobertura de lógica pura, servicios mockeados, controladores con auth, builds/test verdes.
 
-### T16 — Unit tests de helpers puros
+### T16 — Unit tests de helpers puros [x]
 - **Files**:
   - `backend/src/test/java/com/ferreplus/service/chat/PromptBuilderTest.java` (create)
   - `backend/src/test/java/com/ferreplus/service/chat/ContentTextBuilderTest.java` (create)
 - **Action**: Tests para el builder de prompt (system + context + pregunta) y para `toContentText` de al menos Producto, Venta y Guia. Verificar idioma español, inclusión de fuentes y anti-invención.
 - **Verification**: `mvn test -Dtest=PromptBuilderTest,ContentTextBuilderTest` verde.
 
-### T17 — Service tests con Gemini mockeado
+### T17 — Service tests con Gemini mockeado [x]
 - **Files**:
   - `backend/src/test/java/com/ferreplus/service/chat/EmbeddingServiceTest.java` (create)
   - `backend/src/test/java/com/ferreplus/service/chat/GeminiChatServiceTest.java` (create)

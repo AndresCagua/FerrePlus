@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * </ul>
  */
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 class PreAuthorizeDriftTest {
 
@@ -56,9 +56,9 @@ class PreAuthorizeDriftTest {
 
     @Test
     void catalogo_seed_es_completo() {
-        // 14 módulos, 44 permisos, 71 pares rol_permisos (R1, R6)
-        assertEquals(44, permisoRepository.count(),
-                "El catálogo debe tener exactamente 44 permisos");
+        // 15 módulos, 45 permisos, 72 pares rol_permisos (R1, R6, CHAT)
+        assertEquals(45, permisoRepository.count(),
+                "El catálogo debe tener exactamente 45 permisos");
 
         Set<String> codigos = permisoRepository.findAll().stream()
                 .map(Permiso::getCodigo)
@@ -67,7 +67,7 @@ class PreAuthorizeDriftTest {
         List<Rol> roles = rolRepository.findAllWithPermisos();
         assertEquals(3, roles.size(), "Deben existir los 3 roles base");
         long pares = roles.stream().mapToLong(r -> r.getPermisos().size()).sum();
-        assertEquals(71, pares, "ADMIN(44) + VENDEDOR(9) + BODEGUERO(18) = 71 pares");
+        assertEquals(72, pares, "ADMIN(45) + VENDEDOR(9) + BODEGUERO(18) = 72 pares");
 
         for (Rol rol : roles) {
             for (Permiso permiso : rol.getPermisos()) {

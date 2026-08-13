@@ -2,6 +2,8 @@ package com.ferreplus.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "guias_sistema", uniqueConstraints = @UniqueConstraint(
@@ -29,6 +31,7 @@ public class GuiaSistema {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String descripcion;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "JSONB")
     private String pasos;
 

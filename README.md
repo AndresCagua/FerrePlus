@@ -95,6 +95,49 @@ cd frontend
 npm start    # hot-reload en :4200
 ```
 
+## Tests
+
+### Backend (requiere PostgreSQL con pgvector)
+
+La suite de tests del backend corre contra un **PostgreSQL real con la extensión pgvector** (no H2) para validar los tipos `vector(768)`, `JSONB` y el operador de similitud coseno `<=>` de forma fiel a producción.
+
+**1. Levantar el contenedor de tests (una sola vez):**
+
+```bash
+docker run -d --name ferreplus-pgtest \
+  -e POSTGRES_PASSWORD=test \
+  -e POSTGRES_DB=ferreplus_test \
+  -p 5433:5432 \
+  pgvector/pgvector:pg16
+```
+
+> Usa el puerto `5433` para no chocar con tu PostgreSQL local de desarrollo (`5432`). La configuración está en `backend/src/test/resources/application-test.properties`.
+
+**2. Correr la suite:**
+
+```bash
+# Desde la raíz del proyecto (Maven corre dentro de un contenedor, no necesitás instalarlo)
+docker run --rm --network=host \
+  -v "$(pwd)/backend:/app" -w /app \
+  maven:3.9-eclipse-temurin-21 mvn test
+```
+
+**3. Detener/limpiar el contenedor cuando no lo necesites:**
+
+```bash
+docker stop ferreplus-pgtest
+docker rm ferreplus-pgtest   # para eliminarlo definitivamente
+```
+
+### Frontend
+
+```bash
+cd frontend
+CI=true npm test -- --watch=false
+```
+
+> Los tests del chat (ChatService, ChatComponent) están incluidos en la suite.
+
 ## Seguridad
 
 - `backend/src/main/resources/application.yml` contiene credenciales locales y **está excluido de git** (`.gitignore`).
@@ -116,6 +159,7 @@ ferreplus/
 │       ├── dto/                # Data Transfer Objects
 │       ├── repository/         # Repositorios JPA
 │       ├── service/            # Lógica de negocio
+│       ├── service/chat/       # Chat RAG (mappers, indexing, RAG)
 │       ├── controller/         # Controladores REST
 │       └── exception/          # Manejo de errores
 ├── frontend/                   # Angular SPA

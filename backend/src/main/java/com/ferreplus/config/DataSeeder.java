@@ -51,20 +51,21 @@ public class DataSeeder implements CommandLineRunner {
     private static final Map<String, String> NOMBRES_MODULO = new HashMap<>();
 
     static {
-        MODULOS.put("DASHBOARD", new int[]{1, 1, 0, 0, 0});
-        MODULOS.put("PRODUCTOS", new int[]{2, 1, 1, 1, 1});
-        MODULOS.put("CATEGORIAS", new int[]{3, 1, 1, 1, 1});
-        MODULOS.put("PROVEEDORES", new int[]{4, 1, 1, 1, 1});
-        MODULOS.put("CLIENTES", new int[]{5, 1, 1, 1, 1});
-        MODULOS.put("VENTAS", new int[]{6, 1, 1, 1, 1});
-        MODULOS.put("COMPRAS", new int[]{7, 1, 1, 1, 1});
-        MODULOS.put("PRECIOS", new int[]{8, 1, 0, 1, 0});
-        MODULOS.put("MOVIMIENTOS", new int[]{9, 1, 1, 0, 0});
-        MODULOS.put("GASTOS", new int[]{10, 1, 1, 1, 1});
-        MODULOS.put("USUARIOS", new int[]{11, 1, 1, 1, 1});
-        MODULOS.put("ROLES", new int[]{12, 1, 1, 1, 1});
-        MODULOS.put("REPORTES", new int[]{13, 1, 0, 0, 0});
-        MODULOS.put("LOGS", new int[]{14, 1, 0, 0, 1});
+        MODULOS.put("DASHBOARD", new int[]{1, 1, 0, 0, 0, 0});
+        MODULOS.put("PRODUCTOS", new int[]{2, 1, 1, 1, 1, 0});
+        MODULOS.put("CATEGORIAS", new int[]{3, 1, 1, 1, 1, 0});
+        MODULOS.put("PROVEEDORES", new int[]{4, 1, 1, 1, 1, 0});
+        MODULOS.put("CLIENTES", new int[]{5, 1, 1, 1, 1, 0});
+        MODULOS.put("VENTAS", new int[]{6, 1, 1, 1, 1, 0});
+        MODULOS.put("COMPRAS", new int[]{7, 1, 1, 1, 1, 0});
+        MODULOS.put("PRECIOS", new int[]{8, 1, 0, 1, 0, 0});
+        MODULOS.put("MOVIMIENTOS", new int[]{9, 1, 1, 0, 0, 0});
+        MODULOS.put("GASTOS", new int[]{10, 1, 1, 1, 1, 0});
+        MODULOS.put("USUARIOS", new int[]{11, 1, 1, 1, 1, 0});
+        MODULOS.put("ROLES", new int[]{12, 1, 1, 1, 1, 0});
+        MODULOS.put("REPORTES", new int[]{13, 1, 0, 0, 0, 0});
+        MODULOS.put("LOGS", new int[]{14, 1, 0, 0, 1, 0});
+        MODULOS.put("CHAT", new int[]{15, 0, 0, 0, 0, 1});
 
         NOMBRES_MODULO.put("DASHBOARD", "Dashboard");
         NOMBRES_MODULO.put("PRODUCTOS", "Productos");
@@ -80,9 +81,10 @@ public class DataSeeder implements CommandLineRunner {
         NOMBRES_MODULO.put("ROLES", "Roles");
         NOMBRES_MODULO.put("REPORTES", "Reportes");
         NOMBRES_MODULO.put("LOGS", "Logs");
+        NOMBRES_MODULO.put("CHAT", "Asistente");
     }
 
-    private static final String[] ACCIONES = {"VER", "CREAR", "EDITAR", "ELIMINAR"};
+    private static final String[] ACCIONES = {"VER", "CREAR", "EDITAR", "ELIMINAR", "INDEX_REBUILD"};
     private static final Map<String, String> VERBO_ACCION = new HashMap<>();
 
     static {
@@ -90,6 +92,7 @@ public class DataSeeder implements CommandLineRunner {
         VERBO_ACCION.put("CREAR", "Crear");
         VERBO_ACCION.put("EDITAR", "Editar");
         VERBO_ACCION.put("ELIMINAR", "Eliminar");
+        VERBO_ACCION.put("INDEX_REBUILD", "Reindexar");
     }
 
     private static final Map<String, Set<String>> MATRIZ_ROLES = new LinkedHashMap<>();

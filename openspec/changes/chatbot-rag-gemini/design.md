@@ -16,6 +16,8 @@ Se usara `RestClient` de Spring MVC contra la API REST de Gemini, encapsulado en
 ### D3: Persistencia vectorial
 Se usara PostgreSQL con pgvector y consulta exacta `<=>` (distancia coseno), top 5. Para el volumen demo no se crea indice ANN: el costo de escanear pocos documentos es menor que mantener IVFFlat/HNSW. Si crece el volumen, se agrega HNSW sin cambiar el contrato del repositorio. La extension y tablas se crean con migracion Flyway; no se depende de `ddl-auto: update` para produccion.
 
+**Tests contra PostgreSQL real (2026-08-13)**: la suite de tests corre contra un contenedor `pgvector/pgvector:pg16` (puerto 5433) en vez de H2, para validar el tipo `vector(768)`, `JSONB` y el operador `<=>` de forma real. Los tests usan `@AutoConfigureTestDatabase(replace = NONE)` para respetar el datasource del perfil `test` (`application-test.properties`). Las columnas JSONB requieren `@JdbcTypeCode(SqlTypes.JSON)` en la entidad para que Hibernate bindee el String como JSON.
+
 ### D4: Rebuild
 El rebuild sera sincrono y por lotes, adecuado para el dataset pequeno. Primero elimina documentos administrados y luego indexa entidades y guias; cada fallo se informa como error controlado. Actualizaciones normales llaman a `index(entity)` despues de guardar, con hash para no re-embebir contenido igual.
 

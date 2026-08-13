@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * El principal autenticado (admin) queda registrado como usuario_id.
  */
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @Transactional
 class AuditoriaTest {

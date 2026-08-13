@@ -2,6 +2,8 @@ package com.ferreplus.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -31,6 +33,7 @@ public class DocumentEmbedding {
     @Column(name = "content_hash", nullable = false, length = 64)
     private String contentHash;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "JSONB")
     private String metadata;
 
