@@ -1,0 +1,72 @@
+<div class="chat-container">
+  <mat-card class="chat-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>smart_toy</mat-icon>
+      <mat-card-title>Asistente FerrePlus</mat-card-title>
+      <mat-card-subtitle>Consulta productos, ventas y como usar el sistema</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content class="chat-content">
+      <div class="message-list" aria-live="polite">
+        <div class="empty-state" *ngIf="messages.length === 0">
+          <mat-icon>forum</mat-icon>
+          <p>Escribe una pregunta para comenzar.</p>
+        </div>
+
+        <div class="message-row" *ngFor="let message of messages" [class.user-message]="message.role === 'user'">
+          <div class="message-bubble">
+            <span class="message-author">{{ message.role === 'user' ? 'Tu' : 'Asistente' }}</span>
+            <p>{{ message.content }}</p>
+
+            <mat-accordion *ngIf="message.sources?.length">
+              <mat-expansion-panel class="sources-panel">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <mat-icon>source</mat-icon>
+                    Fuentes ({{ message.sources.length }})
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <mat-list>
+                  <mat-list-item *ngFor="let source of message.sources">
+                    <mat-icon matListItemIcon>description</mat-icon>
+                    <span matListItemTitle>{{ getSourceTitle(source) }}</span>
+                    <span matListItemLine>{{ source.excerpt || source.entityType }}</span>
+                  </mat-list-item>
+                </mat-list>
+              </mat-expansion-panel>
+            </mat-accordion>
+          </div>
+        </div>
+
+        <div class="loading-row" *ngIf="loading">
+          <mat-spinner diameter="28" aria-label="Consultando al asistente"></mat-spinner>
+          <span>Consultando...</span>
+        </div>
+      </div>
+
+      <p class="error-message" *ngIf="errorMessage" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        {{ errorMessage }}
+      </p>
+    </mat-card-content>
+
+    <mat-card-actions class="composer">
+      <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
+        <mat-form-field appearance="outline" class="question-field">
+          <mat-label>Escribe tu pregunta</mat-label>
+          <textarea matInput formControlName="question" rows="2" maxlength="1000"
+            placeholder="Ejemplo: ¿Donde registro un producto?"></textarea>
+          <mat-error *ngIf="messageForm.controls.question.hasError('required')">
+            Escribe una pregunta.
+          </mat-error>
+          <mat-error *ngIf="messageForm.controls.question.hasError('maxlength')">
+            La pregunta no puede superar los 1000 caracteres.
+          </mat-error>
+        </mat-form-field>
+        <button mat-fab color="primary" type="submit" [disabled]="loading" aria-label="Enviar pregunta">
+          <mat-icon>send</mat-icon>
+        </button>
+      </form>
+    </mat-card-actions>
+  </mat-card>
+</div>

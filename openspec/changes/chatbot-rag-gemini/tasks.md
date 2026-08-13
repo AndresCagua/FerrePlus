@@ -128,7 +128,7 @@
 
 > **Salida verificable**: módulo lazy `/chat`, entrada en sidebar, componente con UI de chat, servicio consume `POST /api/chat`.
 
-### T14 — Feature module `ChatModule` + routing + sidebar
+### T14 — Feature module `ChatModule` + routing + sidebar [x]
 - **Files**:
   - `frontend/src/app/chat/chat.module.ts` (create)
   - `frontend/src/app/chat/chat-routing.module.ts` (create)
@@ -142,7 +142,7 @@
 - **Action**: Crear feature NgModule `chat/` con ruta lazy `/chat` protegida por `AuthGuard` (sin permiso adicional: cualquier usuario autenticado). `ChatService` con `HttpClient` enviando `{question}` y recibiendo `{answer, sources}`. Agregar entrada al sidebar y a `RUTAS_POR_PERMISO`.
 - **Verification**: `ng build` limpio; ruta `/chat` carga lazy; sidebar muestra ítem para usuario autenticado.
 
-### T15 — UI de chat
+### T15 — UI de chat [x]
 - **Files**:
   - `frontend/src/app/chat/chat.component.ts` (modify)
   - `frontend/src/app/chat/chat.component.html` (modify)
