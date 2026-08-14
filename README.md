@@ -8,8 +8,9 @@ Sistema de gestión de inventario para ferreterías y bodegas de repuestos. Back
 | -------- | ------------------------------------------- |
 | Backend  | Java 21, Spring Boot 3.4, Maven             |
 | Frontend | Angular 22, Bootstrap 5, Angular Material   |
-| BD       | PostgreSQL                                  |
+| BD       | PostgreSQL (pgvector)                       |
 | Auth     | JWT (JSON Web Tokens)                       |
+| IA       | Google Gemini (chat + embeddings)           |
 | Backend (prod) | Docker (multi-stage)                  |
 
 ## Requisitos
@@ -57,6 +58,49 @@ El frontend corre en `http://localhost:4200`.
 
 - **Email:** `admin@ferreplus.com`
 - **Password:** `admin123`
+
+## Chat Inteligente (IA)
+
+FerrePlus incluye un asistente conversacional que responde preguntas sobre el negocio en lenguaje natural. Combina **RAG (Retrieval-Augmented Generation)** sobre los datos del sistema con **consultas analíticas** predefinidas.
+
+- **Frontend:** widget de chat disponible en `http://localhost:4200/chat` (requiere sesión iniciada).
+- **Backend:** `POST /api/chat` — autenticado con JWT, responde JSON `{ answer, sources }`.
+
+### Consultas soportadas
+
+| Consulta | Ejemplo |
+| -------- | ------- |
+| Ventas del mes | "¿Cuánto vendimos este mes?" |
+| Productos más vendidos | "¿Cuáles son los 5 productos más vendidos?" |
+| Stock bajo | "¿Qué productos tienen stock bajo?" |
+| Último cambio de producto | "¿Cuál fue el último cambio a un producto?" |
+| Compra de mayor monto | "¿Cuál fue la compra más cara?" |
+| Mayor gasto | "¿Cuál es el mayor gasto?" |
+| Proveedor principal | "¿A qué proveedor le compramos más?" |
+| Guías y catálogo (RAG) | "¿Cómo registro una venta?" |
+
+**Semántica de fechas:** sin mencionar fecha = historial completo; "este mes" = mes actual; "último mes"/"el mes pasado" = mes calendario anterior; fechas explícitas `YYYY-MM-DD` = rango.
+
+### Seguridad
+
+- Gemini **nunca genera SQL**: las preguntas se clasifican contra un conjunto cerrado de intents y el enrutado usa una whitelist explícita.
+- Todas las consultas analíticas son **solo lectura** (`readOnly`); el chat jamás puede modificar ni eliminar datos.
+- Si la pregunta no corresponde a ningún intent soportado, responde con un fallback seguro.
+
+### Configuración
+
+Las credenciales de Gemini se inyectan por variables de entorno (ver `application.example.yml`):
+
+| Variable | Default | Descripción |
+| -------- | ------- | ----------- |
+| `GEMINI_API_KEY` | — (requerida) | API key de Google AI Studio |
+| `GEMINI_CHAT_MODEL` | `gemini-3.6-flash` | Modelo del chat |
+| `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | Modelo de embeddings |
+| `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com` | Endpoint de Gemini |
+
+Las consultas analíticas se pueden desactivar con `chat.analytics.enabled: false` (default `true`).
+
+> Sin `GEMINI_API_KEY` el chat responde con un fallback seguro y las consultas analíticas siguen funcionando.
 
 ## Desarrollo
 
@@ -176,6 +220,7 @@ ferreplus/
 │       ├── compras/            # Compras a proveedores
 │       ├── movimientos/        # Movimientos de stock
 │       ├── gastos/             # Gastos operativos
+│       ├── chat/               # Widget de chat IA
 │       ├── usuarios/           # Gestión de usuarios (admin)
 │       └── reportes/           # Reportes y gráficos
 ├── docker-compose.yml          # Solo local, excluido de git
@@ -195,6 +240,7 @@ ferreplus/
 | Método | Endpoint                    | Descripción              |
 | ------ | --------------------------- | ------------------------ |
 | POST   | `/api/auth/login`           | Inicio de sesión         |
+| POST   | `/api/chat`                 | Chat IA (consultas y RAG) |
 | GET    | `/api/reportes/dashboard`   | Métricas del dashboard   |
 | GET    | `/api/reportes/ventas`      | Ventas por período       |
 | GET    | `/api/productos`            | Listar productos         |
