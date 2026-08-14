@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * registra nada.</p>
  */
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @Transactional
 class AuditoriaInstrumentacionTest {

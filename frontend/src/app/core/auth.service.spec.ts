@@ -195,12 +195,12 @@ describe('AuthService.getHomeRoute (navegación post-login)', () => {
     expect(service.getHomeRoute()).toBe('/gastos');
   });
 
-  it('usuario SIN ningún permiso → retorna null (no hay página accesible)', () => {
+  it('usuario SIN ningún permiso de módulo → no tiene una ruta de página accesible', () => {
     sessionStorage.setItem(SESSION_KEYS.permisos, JSON.stringify([]));
     expect(service.getHomeRoute()).toBeNull();
   });
 
-  it('sin permisos almacenados en sessionStorage → retorna null', () => {
+  it('sin permisos almacenados en sessionStorage → no tiene una ruta de página accesible', () => {
     sessionStorage.removeItem(SESSION_KEYS.permisos);
     expect(service.getHomeRoute()).toBeNull();
   });

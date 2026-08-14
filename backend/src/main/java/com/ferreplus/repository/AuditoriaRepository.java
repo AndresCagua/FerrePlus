@@ -15,12 +15,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AuditoriaRepository
         extends JpaRepository<Auditoria, Long>, JpaSpecificationExecutor<Auditoria> {
 
     List<Auditoria> findByEntidadAndEntidadIdAndAccion(String entidad, Long entidadId, String accion);
+
+    @EntityGraph(attributePaths = "usuario")
+    Optional<Auditoria> findFirstByEntidadOrderByFechaDescIdDesc(String entidad);
+
+    @EntityGraph(attributePaths = "usuario")
+    Optional<Auditoria> findFirstByEntidadAndEntidadIdOrderByFechaDescIdDesc(String entidad, Long entidadId);
 
     /**
      * Consulta paginada con filtros dinámicos (R2). {@code @EntityGraph("usuario")}

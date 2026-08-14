@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * peticiones MockMvc corren en el mismo hilo → participan de la transacción.
  */
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
@@ -106,7 +106,7 @@ class SecurityEnforcementTest {
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.email").value("admin@ferreplus.com"))
                 .andExpect(jsonPath("$.rol").value("ADMIN"))
-                .andExpect(jsonPath("$.permisos.length()").value(44))
+                .andExpect(jsonPath("$.permisos.length()").value(45))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

@@ -8,6 +8,7 @@ backend/*.jar
 
 # === Config (contiene secrets locales) ===
 backend/src/main/resources/application.yml
+.env
 
 # === Node / Angular ===
 frontend/node_modules/

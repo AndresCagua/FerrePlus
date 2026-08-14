@@ -46,8 +46,7 @@ public class ReporteService {
         BigDecimal ventasHoy = ventaRepository.sumTotalByFechaCreacionBetweenAndEstado(startOfDay, endOfDay, "COMPLETADA");
         if (ventasHoy == null) ventasHoy = BigDecimal.ZERO;
 
-        BigDecimal ventasMes = ventaRepository.sumTotalByFechaCreacionBetweenAndEstado(startOfMonth, endOfMonth, "COMPLETADA");
-        if (ventasMes == null) ventasMes = BigDecimal.ZERO;
+        BigDecimal ventasMes = getVentasMes(firstOfMonth, today);
 
         long totalClientes = clienteRepository.count();
         long totalProveedores = proveedorRepository.count();
@@ -58,7 +57,7 @@ public class ReporteService {
         List<ProductoRankingDTO> productosMasVendidos = getProductosMasVendidos();
 
         List<VentaDiariaDTO> ventasPorDia = getVentasPorDia(firstOfMonth, today);
-        List<Producto> productosStockBajoList = productoRepository.findStockBajo();
+        List<Producto> productosStockBajoList = getProductosStockBajo();
 
         return ReporteDTO.builder()
                 .totalProductos(totalProductos)
@@ -74,14 +73,17 @@ public class ReporteService {
                 .build();
     }
 
-    private List<ProductoRankingDTO> getProductosMasVendidos() {
-        List<DetalleVenta> detalles = detalleVentaRepository.findAll();
+    public List<ProductoRankingDTO> getProductosMasVendidos() {
+        return getProductosMasVendidos(10);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductoRankingDTO> getProductosMasVendidos(int limit) {
+        List<DetalleVenta> detalles = detalleVentaRepository
+                .findAllWithVentaAndProductoByVentaEstado("COMPLETADA");
         Map<Long, ProductoRankingDTO> rankingMap = new LinkedHashMap<>();
 
         for (DetalleVenta detalle : detalles) {
-            if (!"COMPLETADA".equals(detalle.getVenta().getEstado())) {
-                continue;
-            }
             Long productoId = detalle.getProducto().getId();
             ProductoRankingDTO existing = rankingMap.get(productoId);
             if (existing != null) {
@@ -97,8 +99,20 @@ public class ReporteService {
 
         return rankingMap.values().stream()
                 .sorted((a, b) -> Long.compare(b.getTotalVendido(), a.getTotalVendido()))
-                .limit(10)
+                .limit(limit)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> getProductosStockBajo() {
+        return productoRepository.findStockBajo();
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getVentasMes(LocalDate from, LocalDate to) {
+        BigDecimal total = ventaRepository.sumTotalByFechaCreacionBetweenAndEstado(
+                from.atStartOfDay(), to.atTime(LocalTime.MAX), "COMPLETADA");
+        return total == null ? BigDecimal.ZERO : total;
     }
 
     private List<VentaDiariaDTO> getVentasPorDia(LocalDate firstOfMonth, LocalDate today) {

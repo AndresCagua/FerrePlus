@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
@@ -18,4 +19,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     List<Producto> findStockBajo();
 
     List<Producto> findByNombreContainingIgnoreCaseOrCodigoBarrasContainingIgnoreCase(String nombre, String codigoBarras);
+
+    Optional<Producto> findFirstByNombreIgnoreCaseOrderByIdAsc(String nombre);
 }

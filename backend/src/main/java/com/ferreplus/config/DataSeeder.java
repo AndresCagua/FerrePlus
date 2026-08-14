@@ -1,6 +1,7 @@
 package com.ferreplus.config;
 
 import com.ferreplus.entity.Modulo;
+import com.ferreplus.entity.GuiaSistema;
 import com.ferreplus.entity.Permiso;
 import com.ferreplus.entity.Rol;
 import com.ferreplus.entity.Usuario;
@@ -8,6 +9,7 @@ import com.ferreplus.repository.ModuloRepository;
 import com.ferreplus.repository.PermisoRepository;
 import com.ferreplus.repository.RolRepository;
 import com.ferreplus.repository.UsuarioRepository;
+import com.ferreplus.repository.GuiaSistemaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -42,26 +44,28 @@ public class DataSeeder implements CommandLineRunner {
     private final RolRepository rolRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GuiaSistemaRepository guiaSistemaRepository;
 
     /** Módulo → (orden, acciones que aplican). El orden define el sidebar. */
     private static final Map<String, int[]> MODULOS = new LinkedHashMap<>();
     private static final Map<String, String> NOMBRES_MODULO = new HashMap<>();
 
     static {
-        MODULOS.put("DASHBOARD", new int[]{1, 1, 0, 0, 0});
-        MODULOS.put("PRODUCTOS", new int[]{2, 1, 1, 1, 1});
-        MODULOS.put("CATEGORIAS", new int[]{3, 1, 1, 1, 1});
-        MODULOS.put("PROVEEDORES", new int[]{4, 1, 1, 1, 1});
-        MODULOS.put("CLIENTES", new int[]{5, 1, 1, 1, 1});
-        MODULOS.put("VENTAS", new int[]{6, 1, 1, 1, 1});
-        MODULOS.put("COMPRAS", new int[]{7, 1, 1, 1, 1});
-        MODULOS.put("PRECIOS", new int[]{8, 1, 0, 1, 0});
-        MODULOS.put("MOVIMIENTOS", new int[]{9, 1, 1, 0, 0});
-        MODULOS.put("GASTOS", new int[]{10, 1, 1, 1, 1});
-        MODULOS.put("USUARIOS", new int[]{11, 1, 1, 1, 1});
-        MODULOS.put("ROLES", new int[]{12, 1, 1, 1, 1});
-        MODULOS.put("REPORTES", new int[]{13, 1, 0, 0, 0});
-        MODULOS.put("LOGS", new int[]{14, 1, 0, 0, 1});
+        MODULOS.put("DASHBOARD", new int[]{1, 1, 0, 0, 0, 0});
+        MODULOS.put("PRODUCTOS", new int[]{2, 1, 1, 1, 1, 0});
+        MODULOS.put("CATEGORIAS", new int[]{3, 1, 1, 1, 1, 0});
+        MODULOS.put("PROVEEDORES", new int[]{4, 1, 1, 1, 1, 0});
+        MODULOS.put("CLIENTES", new int[]{5, 1, 1, 1, 1, 0});
+        MODULOS.put("VENTAS", new int[]{6, 1, 1, 1, 1, 0});
+        MODULOS.put("COMPRAS", new int[]{7, 1, 1, 1, 1, 0});
+        MODULOS.put("PRECIOS", new int[]{8, 1, 0, 1, 0, 0});
+        MODULOS.put("MOVIMIENTOS", new int[]{9, 1, 1, 0, 0, 0});
+        MODULOS.put("GASTOS", new int[]{10, 1, 1, 1, 1, 0});
+        MODULOS.put("USUARIOS", new int[]{11, 1, 1, 1, 1, 0});
+        MODULOS.put("ROLES", new int[]{12, 1, 1, 1, 1, 0});
+        MODULOS.put("REPORTES", new int[]{13, 1, 0, 0, 0, 0});
+        MODULOS.put("LOGS", new int[]{14, 1, 0, 0, 1, 0});
+        MODULOS.put("CHAT", new int[]{15, 0, 0, 0, 0, 1});
 
         NOMBRES_MODULO.put("DASHBOARD", "Dashboard");
         NOMBRES_MODULO.put("PRODUCTOS", "Productos");
@@ -77,9 +81,10 @@ public class DataSeeder implements CommandLineRunner {
         NOMBRES_MODULO.put("ROLES", "Roles");
         NOMBRES_MODULO.put("REPORTES", "Reportes");
         NOMBRES_MODULO.put("LOGS", "Logs");
+        NOMBRES_MODULO.put("CHAT", "Asistente");
     }
 
-    private static final String[] ACCIONES = {"VER", "CREAR", "EDITAR", "ELIMINAR"};
+    private static final String[] ACCIONES = {"VER", "CREAR", "EDITAR", "ELIMINAR", "INDEX_REBUILD"};
     private static final Map<String, String> VERBO_ACCION = new HashMap<>();
 
     static {
@@ -87,6 +92,7 @@ public class DataSeeder implements CommandLineRunner {
         VERBO_ACCION.put("CREAR", "Crear");
         VERBO_ACCION.put("EDITAR", "Editar");
         VERBO_ACCION.put("ELIMINAR", "Eliminar");
+        VERBO_ACCION.put("INDEX_REBUILD", "Reindexar");
     }
 
     private static final Map<String, Set<String>> MATRIZ_ROLES = new LinkedHashMap<>();
@@ -94,6 +100,7 @@ public class DataSeeder implements CommandLineRunner {
     static {
         MATRIZ_ROLES.put("ADMIN", Set.of(
                 "DASHBOARD_VER",
+                "CHAT_INDEX_REBUILD",
                 "PRODUCTOS_VER", "PRODUCTOS_CREAR", "PRODUCTOS_EDITAR", "PRODUCTOS_ELIMINAR",
                 "CATEGORIAS_VER", "CATEGORIAS_CREAR", "CATEGORIAS_EDITAR", "CATEGORIAS_ELIMINAR",
                 "PROVEEDORES_VER", "PROVEEDORES_CREAR", "PROVEEDORES_EDITAR", "PROVEEDORES_ELIMINAR",
@@ -138,6 +145,7 @@ public class DataSeeder implements CommandLineRunner {
         Map<String, Permiso> permisos = sembrarCatalogo();
         sembrarRoles(permisos);
         sembrarUsuarioAdmin();
+        sembrarGuiasSistema();
         log.info("Seeder de catálogo completado: {} módulos, {} permisos, {} pares rol_permisos, usuario admin verificado",
                 moduloRepository.count(),
                 permisoRepository.count(),
@@ -226,6 +234,67 @@ public class DataSeeder implements CommandLineRunner {
                             .build());
                     log.info("Usuario admin creado: {}", ADMIN_EMAIL);
                 });
+    }
+
+    private void sembrarGuiasSistema() {
+        List<GuiaSistema> guias = List.of(
+                guia("PRODUCTOS", "/productos", "Registrar un producto",
+                        "Permite crear un producto con su descripcion, categoria, precios y stock.",
+                        "[\"Abrir Productos en /productos.\",\"Seleccionar Nuevo producto.\",\"Completar los datos y guardar.\"]",
+                        "registrar, crear, producto, nuevo"),
+                guia("CATEGORIAS", "/categorias", "Crear una categoria",
+                        "Permite organizar productos mediante categorias.",
+                        "[\"Abrir Categorias en /categorias.\",\"Seleccionar Nueva categoria.\",\"Ingresar el nombre y guardar.\"]",
+                        "crear, categoria, organizar"),
+                guia("CLIENTES", "/clientes", "Registrar un cliente",
+                        "Permite registrar los datos de contacto y comerciales de un cliente.",
+                        "[\"Abrir Clientes en /clientes.\",\"Seleccionar Nuevo cliente.\",\"Completar los datos y guardar.\"]",
+                        "registrar, crear, cliente, nuevo"),
+                guia("PROVEEDORES", "/proveedores", "Registrar un proveedor",
+                        "Permite registrar proveedores para gestionar las compras.",
+                        "[\"Abrir Proveedores en /proveedores.\",\"Seleccionar Nuevo proveedor.\",\"Completar los datos y guardar.\"]",
+                        "registrar, crear, proveedor, nuevo"),
+                guia("VENTAS", "/ventas", "Realizar una venta",
+                        "Permite seleccionar un cliente, agregar productos y registrar una venta.",
+                        "[\"Abrir Ventas en /ventas.\",\"Seleccionar Nueva venta.\",\"Agregar cliente y productos.\",\"Confirmar la venta.\"]",
+                        "venta, vender, factura, cliente"),
+                guia("COMPRAS", "/compras", "Registrar una compra",
+                        "Permite registrar compras de productos a un proveedor.",
+                        "[\"Abrir Compras en /compras.\",\"Seleccionar Nueva compra.\",\"Elegir proveedor y productos.\",\"Guardar la compra.\"]",
+                        "compra, proveedor, abastecimiento"),
+                guia("GASTOS", "/gastos", "Registrar un gasto",
+                        "Permite registrar gastos operativos del negocio.",
+                        "[\"Abrir Gastos en /gastos.\",\"Seleccionar Nuevo gasto.\",\"Ingresar descripcion, monto y fecha.\",\"Guardar el gasto.\"]",
+                        "registrar, gasto, monto"),
+                guia("USUARIOS", "/usuarios", "Crear un usuario",
+                        "Permite crear usuarios y asignarles un rol.",
+                        "[\"Abrir Usuarios en /usuarios.\",\"Seleccionar Nuevo usuario.\",\"Completar los datos y asignar un rol.\",\"Guardar.\"]",
+                        "crear, usuario, rol, acceso"),
+                guia("ROLES", "/roles", "Administrar roles",
+                        "Permite crear roles y administrar sus permisos.",
+                        "[\"Abrir Roles en /roles.\",\"Seleccionar un rol o crear uno nuevo.\",\"Ajustar permisos y guardar.\"]",
+                        "rol, permiso, administrar"),
+                guia("LOGS", "/logs", "Consultar logs",
+                        "Permite consultar la auditoria de acciones del sistema.",
+                        "[\"Abrir Logs en /logs.\",\"Aplicar filtros de fecha o usuario.\",\"Revisar los resultados.\"]",
+                        "logs, auditoria, consultar"));
+
+        guias.forEach(guia -> guiaSistemaRepository
+                .findByModuloAndRutaAndTitulo(guia.getModulo(), guia.getRuta(), guia.getTitulo())
+                .orElseGet(() -> guiaSistemaRepository.save(guia)));
+        log.info("Guias del sistema verificadas: {}", guiaSistemaRepository.count());
+    }
+
+    private GuiaSistema guia(String modulo, String ruta, String titulo, String descripcion,
+                             String pasos, String keywords) {
+        return GuiaSistema.builder()
+                .modulo(modulo)
+                .ruta(ruta)
+                .titulo(titulo)
+                .descripcion(descripcion)
+                .pasos(pasos)
+                .keywords(keywords)
+                .build();
     }
 
     private String descripcionRol(String nombre) {

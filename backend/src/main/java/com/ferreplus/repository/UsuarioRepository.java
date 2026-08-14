@@ -14,6 +14,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByEmail(String email);
 
+    Optional<Usuario> findFirstByNombreIgnoreCaseOrderByIdAsc(String nombre);
+
     /**
      * Resuelve usuario + rol + matriz de permisos del rol + overrides en una
      * sola query (anti N+1). LEFT JOIN para no excluir usuarios sin permisos

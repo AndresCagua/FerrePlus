@@ -297,3 +297,20 @@ export interface AuditoriaLog {
 export interface EliminarLogsResponse {
   eliminados: number;
 }
+
+// ===== CHAT =====
+export interface ChatRequest {
+  question: string;
+}
+
+export interface ChatSource {
+  entityType: string;
+  entityId: number;
+  excerpt?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ChatResponse {
+  answer: string;
+  sources: ChatSource[];
+}
