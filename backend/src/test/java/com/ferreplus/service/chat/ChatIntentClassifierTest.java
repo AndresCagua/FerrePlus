@@ -17,6 +17,9 @@ class ChatIntentClassifierTest {
         assertThat(classifier.parse("INTENT: mas_vendidos").intent()).isEqualTo(ChatIntent.MAS_VENDIDOS);
         assertThat(classifier.parse("INTENT: ventas_mes").intent()).isEqualTo(ChatIntent.VENTAS_MES);
         assertThat(classifier.parse("INTENT: stock_bajo").intent()).isEqualTo(ChatIntent.STOCK_BAJO);
+        assertThat(classifier.parse("INTENT: mayor_compra").intent()).isEqualTo(ChatIntent.MAYOR_COMPRA);
+        assertThat(classifier.parse("INTENT: mayor_gasto").intent()).isEqualTo(ChatIntent.MAYOR_GASTO);
+        assertThat(classifier.parse("INTENT: proveedor_top").intent()).isEqualTo(ChatIntent.PROVEEDOR_TOP);
         assertThat(classifier.parse("INTENT: guia_catalogo").intent()).isEqualTo(ChatIntent.GUIA_CATALOGO);
         assertThat(classifier.parse("INTENT: desconocido").intent()).isEqualTo(ChatIntent.DESCONOCIDO);
     }

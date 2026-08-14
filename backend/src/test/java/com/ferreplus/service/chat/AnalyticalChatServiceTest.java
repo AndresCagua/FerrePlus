@@ -35,7 +35,7 @@ class AnalyticalChatServiceTest {
     @InjectMocks private AnalyticalChatService service;
 
     private final ValidatedChatParameters parameters = new ValidatedChatParameters(
-            new DateRange(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 14)), 1);
+            Optional.of(new DateRange(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 14))), 1);
 
     @Test
     void mapsRankingAndAppliesValidatedLimit() {
@@ -49,11 +49,11 @@ class AnalyticalChatServiceTest {
 
     @Test
     void sumsCompletedSalesThroughReporteService() {
-        when(reporteService.getVentasMes(parameters.dateRange().from(), parameters.dateRange().to()))
+        when(reporteService.getVentasMes(parameters.dateRange().orElseThrow().from(), parameters.dateRange().orElseThrow().to()))
                 .thenReturn(new BigDecimal("125.50"));
 
         assertThat(service.ventasMes(parameters).totalCompletadas()).isEqualByComparingTo("125.50");
-        verify(reporteService).getVentasMes(parameters.dateRange().from(), parameters.dateRange().to());
+        verify(reporteService).getVentasMes(parameters.dateRange().orElseThrow().from(), parameters.dateRange().orElseThrow().to());
     }
 
     @Test

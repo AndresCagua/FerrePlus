@@ -6,14 +6,14 @@ Definir el comportamiento del chat híbrido que, además del pipeline RAG existe
 
 ## Alcance
 
-- **En scope:** clasificación de intención cerrada, routing por whitelist, consultas analíticas deterministas (`mas_vendidos`, `ventas_mes`, `stock_bajo`, `ultimo_cambio`), conservación del flujo RAG para `guia_catalogo`, fallback seguro y pruebas de seguridad.
+- **En scope:** clasificación de intención cerrada, routing por whitelist, consultas analíticas deterministas (`mas_vendidos`, `ventas_mes`, `stock_bajo`, `ultimo_cambio`, `mayor_compra`, `mayor_gasto`, `proveedor_top`), conservación del flujo RAG para `guia_catalogo`, fallback seguro y pruebas de seguridad.
 - **Fuera de scope:** generación de SQL/JPQL por el LLM, filtros libres, ordenamiento dinámico, cambios de esquema, cambios en el widget Angular.
 
 ## Requisitos
 
 ### R1 — Clasificación de intención cerrada
 
-El sistema DEBE (MUST) clasificar cada pregunta en uno y solo uno de los siguientes tokens: `mas_vendidos`, `ventas_mes`, `stock_bajo`, `ultimo_cambio`, `guia_catalogo`, `desconocido`. El LLM DEBE (MUST) emitir únicamente el token correspondiente. Para la intención `ultimo_cambio`, el clasificador DEBE (MUST) extraer además la entidad objetivo de un conjunto cerrado (`PRODUCTO`, `CLIENTE`, `PROVEEDOR`, `VENTA`, `COMPRA`, `GASTO`, `USUARIO`) y, opcionalmente, un nombre específico de entidad. El sistema DEBE (MUST) rechazar cualquier salida que contenga texto adicional, JSON, SQL, JPQL, nombres de tabla, expresiones, entidades fuera del conjunto cerrado o tokens fuera de la whitelist; en esos casos DEBE (MUST) tratar la clasificación como `desconocido`.
+El sistema DEBE (MUST) clasificar cada pregunta en uno y solo uno de los siguientes tokens: `mas_vendidos`, `ventas_mes`, `stock_bajo`, `ultimo_cambio`, `mayor_compra`, `mayor_gasto`, `proveedor_top`, `guia_catalogo`, `desconocido`. El LLM DEBE (MUST) emitir únicamente el token correspondiente. Para la intención `ultimo_cambio`, el clasificador DEBE (MUST) extraer además la entidad objetivo de un conjunto cerrado (`PRODUCTO`, `CLIENTE`, `PROVEEDOR`, `VENTA`, `COMPRA`, `GASTO`, `USUARIO`) y, opcionalmente, un nombre específico de entidad. El sistema DEBE (MUST) rechazar cualquier salida que contenga texto adicional, JSON, SQL, JPQL, nombres de tabla, expresiones, entidades fuera del conjunto cerrado o tokens fuera de la whitelist; en esos casos DEBE (MUST) tratar la clasificación como `desconocido`.
 
 #### Escenario R1.1: Clasificación válida de productos más vendidos
 
@@ -70,6 +70,24 @@ El sistema DEBE (MUST) clasificar cada pregunta en uno y solo uno de los siguien
 - ENTONCES el sistema trata la intención como `desconocido`
 - Y no ejecuta ninguna consulta de auditoría
 
+#### Escenario R1.9: Clasificación válida de mayor compra
+
+- DADO un usuario autenticado que envía la pregunta "¿cuál fue la compra más cara?"
+- CUANDO el clasificador procesa la pregunta
+- ENTONCES el token devuelto es `mayor_compra`
+
+#### Escenario R1.10: Clasificación válida de mayor gasto
+
+- DADO un usuario autenticado que envía la pregunta "¿cuál es el mayor gasto?"
+- CUANDO el clasificador procesa la pregunta
+- ENTONCES el token devuelto es `mayor_gasto`
+
+#### Escenario R1.11: Clasificación válida de proveedor top
+
+- DADO un usuario autenticado que envía la pregunta "¿cuál es el proveedor al que más se le ha comprado?"
+- CUANDO el clasificador procesa la pregunta
+- ENTONCES el token devuelto es `proveedor_top`
+
 ### R2 — Routing por whitelist
 
 El sistema DEBE (MUST) implementar un router Java que asigne cada token validado a un caso de uso predefinido mediante un mapeo explícito (switch/enum). El sistema NO DEBE (MUST NOT) usar reflexión, dispatch dinámico ni nombres de métodos/clases provenientes del usuario. Tokens no válidos o no presentes en el mapeo DEBEN (MUST) derivar al fallback seguro.
@@ -98,6 +116,24 @@ El sistema DEBE (MUST) implementar un router Java que asigne cada token validado
 - DADO el token `ultimo_cambio` con entidad `PRODUCTO`
 - CUANDO el router lo procesa
 - ENTONCES invoca el caso de uso predefinido de último cambio
+
+#### Escenario R2.5: Router invoca caso de uso de mayor compra
+
+- DADO el token `mayor_compra`
+- CUANDO el router lo procesa
+- ENTONCES invoca el caso de uso predefinido de mayor compra
+
+#### Escenario R2.6: Router invoca caso de uso de mayor gasto
+
+- DADO el token `mayor_gasto`
+- CUANDO el router lo procesa
+- ENTONCES invoca el caso de uso predefinido de mayor gasto
+
+#### Escenario R2.7: Router invoca caso de uso de proveedor top
+
+- DADO el token `proveedor_top`
+- CUANDO el router lo procesa
+- ENTONCES invoca el caso de uso predefinido de proveedor top
 
 ### R3 — Analíticas deterministas y reutilización de lógica
 
@@ -381,6 +417,123 @@ El sistema DEBE (MUST) soportar la intención `ultimo_cambio` para responder cu�
 - Y el método está anotado con `@Transactional(readOnly = true)`
 - Y no se generan sentencias de escritura
 
+### R11 — Mayor compra y mayor gasto
+
+El sistema DEBE (MUST) soportar las intenciones `mayor_compra` y `mayor_gasto` para responder, de forma determinista, cuál fue la compra de mayor monto y cuál es el gasto más alto. Para `mayor_compra` el sistema DEBE (MUST) considerar únicamente las compras con estado `COMPLETADA` y devolver la de mayor `total`. Para `mayor_gasto` el sistema DEBE (MUST) devolver el gasto con mayor `monto`. Si la pregunta no indica un rango de fechas, el sistema DEBE (MUST) evaluar toda la historia disponible; si indica fechas ISO, DEBE (MUST) acotar el resultado al rango; si utiliza frases equivalentes a "último mes", DEBE (MUST) usar el mes calendario anterior. Cuando no existan datos en el rango, el sistema DEBE (MUST) responder con un mensaje controlado ("No se encontraron compras/gastos en el período consultado") y no ejecutar el fallback RAG.
+
+#### Escenario R11.1: Mayor compra sin rango (historia completa)
+
+- DADO que existen compras completadas con distintos totales
+- CUANDO el usuario pregunta "¿cuál fue la compra más cara?"
+- ENTONCES el sistema devuelve la compra completada con mayor `total`
+- Y no aplica ningún filtro de fecha
+
+#### Escenario R11.2: Mayor compra con rango explícito
+
+- DADO que existen compras completadas dentro y fuera del rango 2024-03-01 al 2024-03-31
+- CUANDO el usuario pregunta "¿cuál fue la compra más cara del 2024-03-01 al 2024-03-31?"
+- ENTONCES el sistema devuelve la compra completada de mayor `total` dentro del rango
+
+#### Escenario R11.3: Mayor compra con frase "último mes"
+
+- DADO que existen compras completadas en el mes anterior y en el mes actual
+- CUANDO el usuario pregunta "¿cuál fue la compra más cara del último mes?"
+- ENTONCES el rango es el mes calendario anterior
+- Y devuelve la compra completada de mayor `total` de ese mes
+
+#### Escenario R11.4: Compras no completadas se excluyen
+
+- DADO una compra `ANULADA` con `total` mayor que cualquier compra `COMPLETADA`
+- CUANDO el usuario pregunta "¿cuál fue la compra más cara?"
+- ENTONCES el sistema no selecciona la compra anulada
+- Y devuelve la compra `COMPLETADA` de mayor `total`
+
+#### Escenario R11.5: Sin datos de compras
+
+- DADO que no existen compras `COMPLETADA`
+- CUANDO el usuario pregunta "¿cuál fue la compra más cara?"
+- ENTONCES el sistema responde "No se encontraron compras en el período consultado"
+- Y no ejecuta el fallback RAG
+
+#### Escenario R11.6: Mayor gasto sin rango
+
+- DADO que existen gastos con distintos `monto`
+- CUANDO el usuario pregunta "¿cuál es el mayor gasto?"
+- ENTONCES el sistema devuelve el gasto con mayor `monto`
+- Y no aplica ningún filtro de fecha
+
+### R12 — Proveedor al que más se le ha comprado
+
+El sistema DEBE (MUST) soportar la intención `proveedor_top` para responder, de forma determinista, cuál es el proveedor al que más se le ha comprado. El sistema DEBE (MUST) sumar los `total` de las compras `COMPLETADA` agrupadas por proveedor y devolver el proveedor con el mayor total acumulado. Si dos o más proveedores tienen el mismo total acumulado, el sistema DEBE (MUST) desempatar por el menor `id` para garantizar determinismo. El rango de fechas sigue la misma semántica de R11: sin rango es historia completa, fechas ISO acotan el rango y "último mes" es el mes calendario anterior. Si no hay datos, DEBE (MUST) responder "No se encontraron compras completadas en el período consultado" sin ejecutar fallback RAG.
+
+#### Escenario R12.1: Proveedor top sin rango
+
+- DADO compras completadas de varios proveedores con totales distintos
+- CUANDO el usuario pregunta "¿cuál es el proveedor al que más se le ha comprado?"
+- ENTONCES el sistema devuelve el proveedor con mayor total acumulado de compras completadas
+
+#### Escenario R12.2: Proveedor top con rango explícito
+
+- DADO compras completadas dentro y fuera del rango 2024-02-01 al 2024-02-29
+- CUANDO el usuario pregunta con esas fechas
+- ENTONCES el sistema considera solo compras completadas dentro del rango
+- Y devuelve el proveedor con mayor total acumulado de ese rango
+
+#### Escenario R12.3: Proveedor top con frase "del mes pasado"
+
+- DADO compras completadas en el mes anterior y en el mes actual
+- CUANDO el usuario pregunta "¿cuál es el proveedor al que más se le compró el mes pasado?"
+- ENTONCES el rango es el mes calendario anterior
+- Y devuelve el proveedor top de ese mes
+
+#### Escenario R12.4: Empate determinista
+
+- DADO dos proveedores con el mismo total acumulado de compras completadas
+- CUANDO el usuario pregunta por el proveedor top
+- ENTONCES el sistema devuelve el proveedor con menor `id`
+
+#### Escenario R12.5: Sin datos
+
+- DADO que no existen compras completadas
+- CUANDO el usuario pregunta por el proveedor top
+- ENTONCES responde "No se encontraron compras completadas en el período consultado"
+- Y no ejecuta fallback RAG
+
+### R13 — Semántica de rangos de fecha
+
+El sistema DEBE (MUST) distinguir entre "sin rango de fechas mencionado" y "rango explícito" al extraer parámetros de una consulta analítica. Si la pregunta no contiene fechas ni frases temporales, las intenciones `mayor_compra`, `mayor_gasto` y `proveedor_top` DEBEN (MUST) evaluarse sobre toda la historia disponible. Las fechas en formato ISO (YYYY-MM-DD) DEBEN (MUST) definir el rango exacto indicado; una sola fecha DEBE (MUST) significar [fecha, fecha]. Las frases `último mes`, `el último mes`, `del mes pasado` y `el mes pasado` DEBEN (MUST) traducirse al mes calendario anterior [primer día, último día]. La frase `este mes` DEBE (MUST) traducirse al mes calendario actual [primer día, hoy]. La intención `ventas_mes` DEBE (MUST) conservar su semántica actual: cuando no se menciona rango, responde el monto total de ventas `COMPLETADA` del mes calendario en curso.
+
+#### Escenario R13.1: Sin rango implica historia completa para nuevas consultas
+
+- DADO una pregunta de `mayor_compra` sin fechas ni frases temporales
+- CUANDO se extraen los parámetros
+- ENTONCES el caso de uso evalúa todas las compras completadas
+
+#### Escenario R13.2: Rango ISO explícito
+
+- DADO una pregunta "compra más cara del 2024-01-15 al 2024-01-20"
+- CUANDO se extrae el rango
+- ENTONCES el rango es [2024-01-15, 2024-01-20]
+
+#### Escenario R13.3: Frase "último mes"
+
+- DADO una pregunta "mayor gasto del último mes"
+- CUANDO se extrae el rango
+- ENTONCES el rango es el mes calendario anterior completo
+
+#### Escenario R13.4: Frase "este mes"
+
+- DADO una pregunta "proveedor al que más se le compró este mes"
+- CUANDO se extrae el rango
+- ENTONCES el rango es [primer día del mes actual, hoy]
+
+#### Escenario R13.5: VENTAS_MES sin rango mantiene mes actual
+
+- DADO una pregunta "ventas del mes" sin fechas
+- CUANDO se invoca `ventas_mes`
+- ENTONCES el sistema usa el rango [primer día del mes actual, hoy]
+- Y responde el total de ventas completadas de ese rango
+
 ## Criterios de aceptación
 
 - [ ] Una pregunta equivalente a "¿cuál es el producto más vendido?" se clasifica como `mas_vendidos` y responde con datos de la agregación de ventas.
@@ -393,6 +546,9 @@ El sistema DEBE (MUST) soportar la intención `ultimo_cambio` para responder cu�
 - [ ] Los casos de uso analíticos, incluido `ultimo_cambio`, ejecutan en `@Transactional(readOnly = true)`.
 - [ ] El flujo `guia_catalogo` conserva el RAG existente y el frontend no requiere cambios funcionales.
 - [ ] El backend mantiene autenticación JWT, method security, DTOs y todas las pruebas existentes continúan pasando.
+- [ ] Una pregunta equivalente a "¿cuál fue la compra más cara?" / "¿cuál es el mayor gasto?" se clasifica como `mayor_compra` / `mayor_gasto` y responde con datos deterministas.
+- [ ] Una pregunta "¿cuál es el proveedor al que más se le ha comprado?" se clasifica como `proveedor_top` y devuelve el proveedor con mayor acumulado de compras completadas.
+- [ ] Sin rango de fechas, `mayor_compra`, `mayor_gasto` y `proveedor_top` evalúan toda la historia disponible; `ventas_mes` conserva el mes actual.
 
 ## Notas de diseño (no normativas)
 

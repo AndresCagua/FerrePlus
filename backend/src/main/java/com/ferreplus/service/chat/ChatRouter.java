@@ -34,7 +34,8 @@ public class ChatRouter {
             case ULTIMO_CAMBIO -> new ChatRouteResult(
                     ChatIntent.ULTIMO_CAMBIO,
                     analyticalChatService.ultimoCambio(intentResult.entity(), intentResult.entityName()), false);
-            case GUIA_CATALOGO, DESCONOCIDO -> ChatRouteResult.safeFallback();
+            case MAYOR_COMPRA, MAYOR_GASTO, PROVEEDOR_TOP, GUIA_CATALOGO, DESCONOCIDO ->
+                    ChatRouteResult.safeFallback();
         };
     }
 

@@ -17,8 +17,8 @@ class ChatRouterTest {
     @Mock
     private AnalyticalChatService analyticalChatService;
 
-    private final ValidatedChatParameters parameters = new ValidatedChatParameters(
-            new DateRange(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 14)), 5);
+        private final ValidatedChatParameters parameters = new ValidatedChatParameters(
+            Optional.of(new DateRange(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 14))), 5);
 
     @Test
     void routesEveryAnalyticalIntentToItsExplicitUseCase() {

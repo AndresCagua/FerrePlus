@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 @Service
 public class AnalyticalChatService {
@@ -48,7 +49,10 @@ public class AnalyticalChatService {
 
     @Transactional(readOnly = true)
     public VentasMesResult ventasMes(ValidatedChatParameters parameters) {
-        DateRange range = parameters.dateRange();
+        DateRange range = parameters.dateRange().orElseGet(() -> {
+            LocalDate today = LocalDate.now();
+            return new DateRange(today.withDayOfMonth(1), today);
+        });
         return new VentasMesResult(range.from(), range.to(), reporteService.getVentasMes(range.from(), range.to()));
     }
 

@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 public class ChatIntentClassifier {
 
     private static final Pattern SIMPLE_INTENT = Pattern.compile(
-            "^INTENT: (mas_vendidos|ventas_mes|stock_bajo|guia_catalogo|desconocido)$");
+            "^INTENT: (mas_vendidos|ventas_mes|stock_bajo|mayor_compra|mayor_gasto|proveedor_top|guia_catalogo|desconocido)$");
     private static final Pattern LAST_CHANGE_INTENT = Pattern.compile(
             "^INTENT: ultimo_cambio; ENTITY: (PRODUCTO|CLIENTE|PROVEEDOR|VENTA|COMPRA|GASTO|USUARIO)"
                     + "(?:; NAME: ?([^;\\r\\n]{0,200}))?$");
@@ -67,6 +67,9 @@ public class ChatIntentClassifier {
             case "mas_vendidos" -> ChatIntent.MAS_VENDIDOS;
             case "ventas_mes" -> ChatIntent.VENTAS_MES;
             case "stock_bajo" -> ChatIntent.STOCK_BAJO;
+            case "mayor_compra" -> ChatIntent.MAYOR_COMPRA;
+            case "mayor_gasto" -> ChatIntent.MAYOR_GASTO;
+            case "proveedor_top" -> ChatIntent.PROVEEDOR_TOP;
             case "guia_catalogo" -> ChatIntent.GUIA_CATALOGO;
             case "desconocido" -> ChatIntent.DESCONOCIDO;
             default -> ChatIntent.DESCONOCIDO;

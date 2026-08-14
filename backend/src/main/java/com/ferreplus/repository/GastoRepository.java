@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GastoRepository extends JpaRepository<Gasto, Long> {
@@ -17,4 +18,8 @@ public interface GastoRepository extends JpaRepository<Gasto, Long> {
 
     @Query("SELECT COALESCE(SUM(g.monto), 0) FROM Gasto g WHERE g.fechaGasto BETWEEN :desde AND :hasta")
     BigDecimal sumMontoByFechaGastoBetween(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
+
+    Optional<Gasto> findFirstByOrderByMontoDescIdAsc();
+
+    Optional<Gasto> findFirstByFechaGastoBetweenOrderByMontoDescIdAsc(LocalDate from, LocalDate to);
 }
