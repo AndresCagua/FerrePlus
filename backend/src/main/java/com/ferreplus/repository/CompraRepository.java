@@ -26,22 +26,22 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
             String estado, LocalDate from, LocalDate to);
 
     @Query("""
-            SELECT c.proveedor.id AS proveedorId, c.proveedor.nombre AS proveedorNombre,
+            SELECT c.proveedor.id AS proveedorId, MAX(c.proveedor.nombre) AS proveedorNombre,
                    SUM(c.total) AS totalAcumulado
             FROM Compra c
             WHERE c.estado = :estado
-            GROUP BY c.proveedor.id, c.proveedor.nombre
+            GROUP BY c.proveedor.id
             ORDER BY SUM(c.total) DESC, c.proveedor.id ASC
             """)
     List<ProveedorCompraTotalProjection> findProveedorTotalsByEstado(
             @Param("estado") String estado, Pageable pageable);
 
     @Query("""
-            SELECT c.proveedor.id AS proveedorId, c.proveedor.nombre AS proveedorNombre,
+            SELECT c.proveedor.id AS proveedorId, MAX(c.proveedor.nombre) AS proveedorNombre,
                    SUM(c.total) AS totalAcumulado
             FROM Compra c
             WHERE c.estado = :estado AND c.fechaFactura BETWEEN :from AND :to
-            GROUP BY c.proveedor.id, c.proveedor.nombre
+            GROUP BY c.proveedor.id
             ORDER BY SUM(c.total) DESC, c.proveedor.id ASC
             """)
     List<ProveedorCompraTotalProjection> findProveedorTotalsByEstadoAndFechaFacturaBetween(
