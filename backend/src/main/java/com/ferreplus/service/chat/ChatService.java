@@ -56,6 +56,9 @@ public class ChatService {
             case VENTAS_MES -> responseComposer.composeVentasMes((VentasMesResult) route.result());
             case STOCK_BAJO -> responseComposer.composeStockBajo(cast(route.result()));
             case ULTIMO_CAMBIO -> responseComposer.composeUltimoCambio(castOptional(route.result()));
+            case MAYOR_COMPRA -> responseComposer.composeMayorCompra(castOptional(route.result()));
+            case MAYOR_GASTO -> responseComposer.composeMayorGasto(castOptional(route.result()));
+            case PROVEEDOR_TOP -> responseComposer.composeProveedorTop(castOptional(route.result()));
             default -> throw new IllegalStateException("Ruta analitica no soportada");
         };
         return new ChatResult(answer, List.of());
@@ -67,8 +70,8 @@ public class ChatService {
     }
 
     @SuppressWarnings("unchecked")
-    private Optional<UltimoCambioResult> castOptional(Object value) {
-        return (Optional<UltimoCambioResult>) value;
+    private <T> Optional<T> castOptional(Object value) {
+        return (Optional<T>) value;
     }
 
     private ChatResult answerWithRag(String question) {

@@ -196,9 +196,9 @@
 - **Files**: `backend/src/main/java/com/ferreplus/service/chat/AnalyticalResponseComposer.java` (create)
 - **Action**: Convertir records analíticos a mensajes en español deterministas. Ranking: lista nombre + cantidad. Ventas del mes: rango + total. Stock bajo: nombre + stock actual + mínimo. Último cambio: acción, fecha, usuario, detalle truncado. Mayor compra: "Compra más cara: factura {numeroFactura}, total {total}, proveedor {proveedor}, fecha {fechaFactura}.". Mayor gasto: "Mayor gasto: {descripcion}, monto {monto}, fecha {fechaGasto}.". Proveedor top: "Proveedor con mayor compra acumulada: {proveedor}, total acumulado {total}.". Mensajes vacíos exactos: "No se encontraron compras en el período consultado", "No se encontraron gastos en el período consultado", "No se encontraron compras completadas en el período consultado". No llama a Gemini.
 - **Acceptance criteria**:
-  - [ ] Cada record produce un `String` coherente en español.
-  - [ ] Resultado vacío produce mensaje controlado según el tipo.
-  - [ ] No se genera segunda llamada al LLM.
+   - [x] Cada record produce un `String` coherente en español.
+   - [x] Resultado vacío produce mensaje controlado según el tipo.
+   - [x] No se genera segunda llamada al LLM.
 - **Verification**: `mvn test -Dtest=AnalyticalResponseComposerTest`.
 - **Dependencies**: 1.3.
 
@@ -206,15 +206,15 @@
 - **Files**: `backend/src/main/java/com/ferreplus/service/chat/ChatRouter.java` (create)
 - **Action**: Implementar `route(ChatIntentResult intent, ValidatedChatParameters params, String originalQuestion)` con `switch (intent.intent())`. Mapeo del design incluyendo `MAYOR_COMPRA`, `MAYOR_GASTO` y `PROVEEDOR_TOP`. Sin reflection, `Method.invoke`, mapas de nombres de métodos ni dispatch dinámico. `DESCONOCIDO` y `default` devuelven fallback. `GUIA_CATALOGO` no se resuelve aquí (ChatService lo delega a RAG).
 - **Acceptance criteria**:
-  - [ ] `MAS_VENDIDOS` invoca `analyticalChatService.productosMasVendidos(params)`.
-  - [ ] `VENTAS_MES` invoca `ventasMes(params)`.
-  - [ ] `STOCK_BAJO` invoca `stockBajo(params)`.
-  - [ ] `ULTIMO_CAMBIO` invoca `ultimoCambio(intent.entity(), intent.entityName())`.
-  - [ ] `MAYOR_COMPRA` invoca `compraMasCara(params)`.
-  - [ ] `MAYOR_GASTO` invoca `mayorGasto(params)`.
-  - [ ] `PROVEEDOR_TOP` invoca `proveedorTop(params)`.
-  - [ ] `DESCONOCIDO` y token no mapeado devuelven fallback sin tocar repositorios.
-  - [ ] Cero uso de reflection.
+   - [x] `MAS_VENDIDOS` invoca `analyticalChatService.productosMasVendidos(params)`.
+   - [x] `VENTAS_MES` invoca `ventasMes(params)`.
+   - [x] `STOCK_BAJO` invoca `stockBajo(params)`.
+   - [x] `ULTIMO_CAMBIO` invoca `ultimoCambio(intent.entity(), intent.entityName())`.
+   - [x] `MAYOR_COMPRA` invoca `compraMasCara(params)`.
+   - [x] `MAYOR_GASTO` invoca `mayorGasto(params)`.
+   - [x] `PROVEEDOR_TOP` invoca `proveedorTop(params)`.
+   - [x] `DESCONOCIDO` y token no mapeado devuelven fallback sin tocar repositorios.
+   - [x] Cero uso de reflection.
 - **Verification**: `mvn test -Dtest=ChatRouterTest`.
 - **Dependencies**: 3.2, 3.3, 3.4, 3.6.
 
@@ -226,10 +226,10 @@
   - `Optional<ProveedorTopResult> proveedorTop(ValidatedChatParameters)` — proveedor con mayor total acumulado de compras `COMPLETADA`; si `dateRange` está presente filtrar por `fechaFactura`; desempate `proveedor.id ASC`; usar `PageRequest.of(0,1)` sobre la proyección agrupada.
   Sin rango se evalúa toda la historia disponible.
 - **Acceptance criteria**:
-  - [ ] Solo compras `COMPLETADA` entran en `compraMasCara` y `proveedorTop`.
-  - [ ] Sin `dateRange` se usan los métodos de history completa.
-  - [ ] Con `dateRange` se usan los métodos `Between` correspondientes.
-  - [ ] Los métodos devuelven `Optional.empty()` cuando no hay datos; el compositor traduce al mensaje vacío.
+   - [x] Solo compras `COMPLETADA` entran en `compraMasCara` y `proveedorTop`.
+   - [x] Sin `dateRange` se usan los métodos de history completa.
+   - [x] Con `dateRange` se usan los métodos `Between` correspondientes.
+   - [x] Los métodos devuelven `Optional.empty()` cuando no hay datos; el compositor traduce al mensaje vacío.
 - **Verification**: `mvn test -Dtest=AnalyticalChatServiceTest`.
 - **Dependencies**: 1.3, 1.4, 1.6, 3.2.
 

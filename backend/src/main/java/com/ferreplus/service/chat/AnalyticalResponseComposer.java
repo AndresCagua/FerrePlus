@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -34,6 +35,28 @@ public class AnalyticalResponseComposer {
         String user = change.usuarioNombre() == null ? "usuario no identificado" : change.usuarioNombre();
         return "Ultimo cambio: " + change.accion() + " el " + change.fecha() + " por " + user
                 + ". Detalle: " + (change.detalle() == null ? "sin detalle" : change.detalle()) + ".";
+    }
+
+    public String composeMayorCompra(Optional<MayorCompraResult> result) {
+        if (result == null || result.isEmpty()) return "No se encontraron compras completadas.";
+        MayorCompraResult purchase = result.get();
+        return "La compra mas cara fue la factura " + purchase.numeroFactura() + " de "
+                + purchase.proveedorNombre() + " por " + money(purchase.total()) + " el "
+                + purchase.fechaFactura() + ".";
+    }
+
+    public String composeMayorGasto(Optional<MayorGastoResult> result) {
+        if (result == null || result.isEmpty()) return "No se encontraron gastos registrados.";
+        MayorGastoResult expense = result.get();
+        return "El mayor gasto fue " + expense.descripcion() + " por " + money(expense.monto())
+                + " el " + expense.fechaGasto() + ".";
+    }
+
+    public String composeProveedorTop(Optional<ProveedorTopResult> result) {
+        if (result == null || result.isEmpty()) return "No se encontraron compras registradas.";
+        ProveedorTopResult provider = result.get();
+        return "El proveedor al que mas se le ha comprado es " + provider.proveedorNombre()
+                + " con " + money(provider.totalAcumulado()) + " acumulados.";
     }
 
     private String money(BigDecimal value) {

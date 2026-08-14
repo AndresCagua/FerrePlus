@@ -26,6 +26,9 @@ class ChatRouterTest {
         when(analyticalChatService.ventasMes(parameters)).thenReturn(null);
         when(analyticalChatService.stockBajo(parameters)).thenReturn(List.of());
         when(analyticalChatService.ultimoCambio(ChatEntity.PRODUCTO, Optional.empty())).thenReturn(Optional.empty());
+        when(analyticalChatService.compraMasCara(parameters)).thenReturn(Optional.empty());
+        when(analyticalChatService.mayorGasto(parameters)).thenReturn(Optional.empty());
+        when(analyticalChatService.proveedorTop(parameters)).thenReturn(Optional.empty());
 
         new ChatRouter(analyticalChatService).route(
                 new ChatIntentResult(ChatIntent.MAS_VENDIDOS, null, Optional.empty()), parameters, "");
@@ -35,11 +38,20 @@ class ChatRouterTest {
                 new ChatIntentResult(ChatIntent.STOCK_BAJO, null, Optional.empty()), parameters, "");
         new ChatRouter(analyticalChatService).route(
                 new ChatIntentResult(ChatIntent.ULTIMO_CAMBIO, ChatEntity.PRODUCTO, Optional.empty()), parameters, "");
+        new ChatRouter(analyticalChatService).route(
+                new ChatIntentResult(ChatIntent.MAYOR_COMPRA, null, Optional.empty()), parameters, "");
+        new ChatRouter(analyticalChatService).route(
+                new ChatIntentResult(ChatIntent.MAYOR_GASTO, null, Optional.empty()), parameters, "");
+        new ChatRouter(analyticalChatService).route(
+                new ChatIntentResult(ChatIntent.PROVEEDOR_TOP, null, Optional.empty()), parameters, "");
 
         verify(analyticalChatService).productosMasVendidos(parameters);
         verify(analyticalChatService).ventasMes(parameters);
         verify(analyticalChatService).stockBajo(parameters);
         verify(analyticalChatService).ultimoCambio(ChatEntity.PRODUCTO, Optional.empty());
+        verify(analyticalChatService).compraMasCara(parameters);
+        verify(analyticalChatService).mayorGasto(parameters);
+        verify(analyticalChatService).proveedorTop(parameters);
     }
 
     @Test

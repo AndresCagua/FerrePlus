@@ -2,9 +2,14 @@ package com.ferreplus.service.chat;
 
 import com.ferreplus.dto.ProductoRankingDTO;
 import com.ferreplus.entity.Auditoria;
+import com.ferreplus.entity.Compra;
 import com.ferreplus.entity.Producto;
+import com.ferreplus.entity.Proveedor;
+import com.ferreplus.entity.Gasto;
 import com.ferreplus.repository.AuditoriaRepository;
 import com.ferreplus.repository.ClienteRepository;
+import com.ferreplus.repository.CompraRepository;
+import com.ferreplus.repository.GastoRepository;
 import com.ferreplus.repository.ProductoRepository;
 import com.ferreplus.repository.ProveedorRepository;
 import com.ferreplus.repository.UsuarioRepository;
@@ -14,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,6 +34,8 @@ import static org.mockito.Mockito.*;
 class AnalyticalChatServiceTest {
     @Mock private ReporteService reporteService;
     @Mock private AuditoriaRepository auditoriaRepository;
+    @Mock private CompraRepository compraRepository;
+    @Mock private GastoRepository gastoRepository;
     @Mock private ProductoRepository productoRepository;
     @Mock private ClienteRepository clienteRepository;
     @Mock private ProveedorRepository proveedorRepository;
@@ -89,5 +97,71 @@ class AnalyticalChatServiceTest {
     void unsupportedNamedEntityDoesNotQueryAnyRepository() {
         assertThat(service.ultimoCambio(ChatEntity.VENTA, Optional.of("factura-1"))).isEmpty();
         verifyNoInteractions(auditoriaRepository, productoRepository, clienteRepository, proveedorRepository, usuarioRepository);
+    }
+
+    @Test
+    void findsMostExpensiveCompletedPurchaseFromHistory() {
+        Compra purchase = Compra.builder().id(4L).numeroFactura("F-4").total(new BigDecimal("900.00"))
+                .fechaFactura(LocalDate.of(2026, 8, 10))
+                .proveedor(Proveedor.builder().id(8L).nombre("Proveedor Uno").build()).build();
+        when(compraRepository.findFirstByEstadoOrderByTotalDescIdAsc("COMPLETADA"))
+                .thenReturn(Optional.of(purchase));
+
+        assertThat(service.compraMasCara(new ValidatedChatParameters(Optional.empty(), 10)))
+                .contains(new MayorCompraResult(4L, "F-4", new BigDecimal("900.00"), "Proveedor Uno",
+                        LocalDate.of(2026, 8, 10)));
+        verify(compraRepository).findFirstByEstadoOrderByTotalDescIdAsc("COMPLETADA");
+        verify(compraRepository, never()).findFirstByEstadoAndFechaFacturaBetweenOrderByTotalDescIdAsc(
+                anyString(), any(), any());
+    }
+
+    @Test
+    void findsMostExpensiveCompletedPurchaseWithinRange() {
+        DateRange range = new DateRange(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 14));
+        when(compraRepository.findFirstByEstadoAndFechaFacturaBetweenOrderByTotalDescIdAsc(
+                "COMPLETADA", range.from(), range.to())).thenReturn(Optional.empty());
+
+        assertThat(service.compraMasCara(new ValidatedChatParameters(Optional.of(range), 10))).isEmpty();
+        verify(compraRepository).findFirstByEstadoAndFechaFacturaBetweenOrderByTotalDescIdAsc(
+                "COMPLETADA", range.from(), range.to());
+        verify(compraRepository, never()).findFirstByEstadoOrderByTotalDescIdAsc(anyString());
+    }
+
+    @Test
+    void findsLargestExpenseWithAndWithoutRange() {
+        Gasto expense = Gasto.builder().id(3L).descripcion("Arriendo").monto(new BigDecimal("500.00"))
+                .fechaGasto(LocalDate.of(2026, 8, 5)).build();
+        when(gastoRepository.findFirstByOrderByMontoDescIdAsc()).thenReturn(Optional.of(expense));
+        assertThat(service.mayorGasto(new ValidatedChatParameters(Optional.empty(), 10))).contains(
+                new MayorGastoResult(3L, "Arriendo", new BigDecimal("500.00"), LocalDate.of(2026, 8, 5)));
+        verify(gastoRepository).findFirstByOrderByMontoDescIdAsc();
+
+        DateRange range = new DateRange(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 14));
+        when(gastoRepository.findFirstByFechaGastoBetweenOrderByMontoDescIdAsc(range.from(), range.to()))
+                .thenReturn(Optional.empty());
+        assertThat(service.mayorGasto(new ValidatedChatParameters(Optional.of(range), 10))).isEmpty();
+        verify(gastoRepository).findFirstByFechaGastoBetweenOrderByMontoDescIdAsc(range.from(), range.to());
+    }
+
+    @Test
+    void findsTopProviderUsingHistoryOrRangeProjection() {
+        PageRequest page = PageRequest.of(0, 1);
+        ProveedorCompraTotalProjection projection = mock(ProveedorCompraTotalProjection.class);
+        when(projection.getProveedorId()).thenReturn(8L);
+        when(projection.getProveedorNombre()).thenReturn("Proveedor Uno");
+        when(projection.getTotalAcumulado()).thenReturn(new BigDecimal("1200.00"));
+        when(compraRepository.findProveedorTotalsByEstado("COMPLETADA", page))
+                .thenReturn(List.of(projection));
+
+        assertThat(service.proveedorTop(new ValidatedChatParameters(Optional.empty(), 10))).contains(
+                new ProveedorTopResult(8L, "Proveedor Uno", new BigDecimal("1200.00")));
+        verify(compraRepository).findProveedorTotalsByEstado("COMPLETADA", page);
+
+        DateRange range = new DateRange(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 14));
+        when(compraRepository.findProveedorTotalsByEstadoAndFechaFacturaBetween(
+                "COMPLETADA", range.from(), range.to(), page)).thenReturn(List.of());
+        assertThat(service.proveedorTop(new ValidatedChatParameters(Optional.of(range), 10))).isEmpty();
+        verify(compraRepository).findProveedorTotalsByEstadoAndFechaFacturaBetween(
+                "COMPLETADA", range.from(), range.to(), page);
     }
 }

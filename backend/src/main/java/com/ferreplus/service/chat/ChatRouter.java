@@ -34,8 +34,13 @@ public class ChatRouter {
             case ULTIMO_CAMBIO -> new ChatRouteResult(
                     ChatIntent.ULTIMO_CAMBIO,
                     analyticalChatService.ultimoCambio(intentResult.entity(), intentResult.entityName()), false);
-            case MAYOR_COMPRA, MAYOR_GASTO, PROVEEDOR_TOP, GUIA_CATALOGO, DESCONOCIDO ->
-                    ChatRouteResult.safeFallback();
+            case MAYOR_COMPRA -> new ChatRouteResult(
+                    ChatIntent.MAYOR_COMPRA, analyticalChatService.compraMasCara(parameters), false);
+            case MAYOR_GASTO -> new ChatRouteResult(
+                    ChatIntent.MAYOR_GASTO, analyticalChatService.mayorGasto(parameters), false);
+            case PROVEEDOR_TOP -> new ChatRouteResult(
+                    ChatIntent.PROVEEDOR_TOP, analyticalChatService.proveedorTop(parameters), false);
+            case GUIA_CATALOGO, DESCONOCIDO -> ChatRouteResult.safeFallback();
         };
     }
 

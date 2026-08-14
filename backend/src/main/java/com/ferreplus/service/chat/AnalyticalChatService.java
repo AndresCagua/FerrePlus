@@ -2,14 +2,19 @@ package com.ferreplus.service.chat;
 
 import com.ferreplus.dto.ProductoRankingDTO;
 import com.ferreplus.entity.Auditoria;
+import com.ferreplus.entity.Compra;
+import com.ferreplus.entity.Gasto;
 import com.ferreplus.entity.Producto;
 import com.ferreplus.repository.AuditoriaRepository;
 import com.ferreplus.repository.ClienteRepository;
+import com.ferreplus.repository.CompraRepository;
+import com.ferreplus.repository.GastoRepository;
 import com.ferreplus.repository.ProductoRepository;
 import com.ferreplus.repository.ProveedorRepository;
 import com.ferreplus.repository.UsuarioRepository;
 import com.ferreplus.service.ReporteService;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -20,6 +25,8 @@ import java.time.LocalDate;
 public class AnalyticalChatService {
     private final ReporteService reporteService;
     private final AuditoriaRepository auditoriaRepository;
+    private final CompraRepository compraRepository;
+    private final GastoRepository gastoRepository;
     private final ProductoRepository productoRepository;
     private final ClienteRepository clienteRepository;
     private final ProveedorRepository proveedorRepository;
@@ -28,12 +35,16 @@ public class AnalyticalChatService {
     public AnalyticalChatService(
             ReporteService reporteService,
             AuditoriaRepository auditoriaRepository,
+            CompraRepository compraRepository,
+            GastoRepository gastoRepository,
             ProductoRepository productoRepository,
             ClienteRepository clienteRepository,
             ProveedorRepository proveedorRepository,
             UsuarioRepository usuarioRepository) {
         this.reporteService = reporteService;
         this.auditoriaRepository = auditoriaRepository;
+        this.compraRepository = compraRepository;
+        this.gastoRepository = gastoRepository;
         this.productoRepository = productoRepository;
         this.clienteRepository = clienteRepository;
         this.proveedorRepository = proveedorRepository;
@@ -62,6 +73,34 @@ public class AnalyticalChatService {
                 .limit(parameters.limit())
                 .map(this::toStockBajoResult)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<MayorCompraResult> compraMasCara(ValidatedChatParameters parameters) {
+        Optional<Compra> compra = parameters.dateRange()
+                .map(range -> compraRepository.findFirstByEstadoAndFechaFacturaBetweenOrderByTotalDescIdAsc(
+                        "COMPLETADA", range.from(), range.to()))
+                .orElseGet(() -> compraRepository.findFirstByEstadoOrderByTotalDescIdAsc("COMPLETADA"));
+        return compra.map(this::toMayorCompraResult);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<MayorGastoResult> mayorGasto(ValidatedChatParameters parameters) {
+        Optional<Gasto> gasto = parameters.dateRange()
+                .map(range -> gastoRepository.findFirstByFechaGastoBetweenOrderByMontoDescIdAsc(
+                        range.from(), range.to()))
+                .orElseGet(gastoRepository::findFirstByOrderByMontoDescIdAsc);
+        return gasto.map(this::toMayorGastoResult);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ProveedorTopResult> proveedorTop(ValidatedChatParameters parameters) {
+        PageRequest page = PageRequest.of(0, 1);
+        List<ProveedorCompraTotalProjection> totals = parameters.dateRange()
+                .map(range -> compraRepository.findProveedorTotalsByEstadoAndFechaFacturaBetween(
+                        "COMPLETADA", range.from(), range.to(), page))
+                .orElseGet(() -> compraRepository.findProveedorTotalsByEstado("COMPLETADA", page));
+        return totals.stream().findFirst().map(this::toProveedorTopResult);
     }
 
     @Transactional(readOnly = true)
@@ -112,5 +151,20 @@ public class AnalyticalChatService {
         String userName = audit.getUsuario() == null ? null : audit.getUsuario().getNombre();
         return new UltimoCambioResult(
                 audit.getEntidad(), audit.getEntidadId(), audit.getAccion(), audit.getFecha(), userName, audit.getDetalle());
+    }
+
+    private MayorCompraResult toMayorCompraResult(Compra compra) {
+        String providerName = compra.getProveedor() == null ? null : compra.getProveedor().getNombre();
+        return new MayorCompraResult(compra.getId(), compra.getNumeroFactura(), compra.getTotal(),
+                providerName, compra.getFechaFactura());
+    }
+
+    private MayorGastoResult toMayorGastoResult(Gasto gasto) {
+        return new MayorGastoResult(gasto.getId(), gasto.getDescripcion(), gasto.getMonto(), gasto.getFechaGasto());
+    }
+
+    private ProveedorTopResult toProveedorTopResult(ProveedorCompraTotalProjection projection) {
+        return new ProveedorTopResult(projection.getProveedorId(), projection.getProveedorNombre(),
+                projection.getTotalAcumulado());
     }
 }
