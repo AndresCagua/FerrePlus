@@ -42,4 +42,27 @@ class GeminiChatServiceTest {
                 .hasMessageContaining("no esta disponible")
                 .hasMessageNotContaining("internal-provider");
     }
+
+    @Test
+    void classify_usesDedicatedDelimitedPrompt() {
+        GeminiClient client = mock(GeminiClient.class);
+        when(client.generate(anyString())).thenReturn("INTENT: mas_vendidos");
+
+        assertThat(new GeminiChatService(client).classify("¿Que vendi?"))
+                .isEqualTo("INTENT: mas_vendidos");
+        verify(client).generate(argThat(prompt -> prompt.contains("INTENT: ultimo_cambio")
+                && prompt.contains("<<<QUESTION_START>>>\n¿Que vendi?\n<<<QUESTION_END>>>")
+                && !prompt.contains("Eres el asistente de FerrePlus")));
+    }
+
+    @Test
+    void classify_translatesProviderFailureWithoutChangingGenerateContract() {
+        GeminiClient client = mock(GeminiClient.class);
+        when(client.generate(anyString())).thenThrow(new RuntimeException("internal-provider"));
+
+        assertThatThrownBy(() -> new GeminiChatService(client).classify("pregunta"))
+                .isInstanceOf(GeminiException.class)
+                .hasMessageContaining("clasificacion")
+                .hasMessageNotContaining("internal-provider");
+    }
 }
