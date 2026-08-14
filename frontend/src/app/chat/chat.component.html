@@ -32,7 +32,7 @@
         <div class="message-row" *ngFor="let message of messages()" [class.user-message]="message.role === 'user'">
           <div class="message-bubble">
             <span class="message-author">{{ message.role === 'user' ? 'Tu' : 'Asistente' }}</span>
-            <p>{{ message.content }}</p>
+            <p [innerHTML]="renderContent(message.content)"></p>
 
             <mat-accordion *ngIf="message.sources?.length">
               <mat-expansion-panel class="sources-panel">

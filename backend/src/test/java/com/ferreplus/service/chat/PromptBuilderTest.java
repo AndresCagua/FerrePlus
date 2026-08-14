@@ -1,5 +1,6 @@
 package com.ferreplus.service.chat;
 
+import com.ferreplus.config.ChatAnalyticsProperties;
 import com.ferreplus.service.GeminiChatService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,7 +23,9 @@ class PromptBuilderTest {
                         List.of(mock(com.ferreplus.entity.DocumentEmbedding.class))));
         when(geminiChatService.generate(anyString())).thenReturn("Debes ir a /productos. [GUIA:7]");
 
-        new ChatService(ragService, geminiChatService).answer("¿Dónde registro un producto?");
+        new ChatService(
+                ragService, geminiChatService, new ChatAnalyticsProperties(false), null, null, null)
+                .answer("¿Dónde registro un producto?");
 
         ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
         verify(geminiChatService).generate(prompt.capture());

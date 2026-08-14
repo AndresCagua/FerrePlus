@@ -1,5 +1,6 @@
 package com.ferreplus.service.chat;
 
+import com.ferreplus.config.ChatAnalyticsProperties;
 import com.ferreplus.service.GeminiChatService;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +21,8 @@ class ChatServiceTest {
                 "[PRODUCTO:4] Cable", List.of(source), List.of(new com.ferreplus.entity.DocumentEmbedding())));
         when(gemini.generate(anyString())).thenReturn("Hay un cable. [PRODUCTO:4]");
 
-        ChatService.ChatResult result = new ChatService(rag, gemini).answer("¿Que hay?");
+        ChatService.ChatResult result = new ChatService(
+                rag, gemini, new ChatAnalyticsProperties(false), null, null, null).answer("¿Que hay?");
 
         assertThat(result.answer()).contains("[PRODUCTO:4]");
         assertThat(result.sources()).containsExactly(source);
@@ -28,7 +30,9 @@ class ChatServiceTest {
 
     @Test
     void answer_emptyQuestion_rejectsValidation() {
-        ChatService service = new ChatService(mock(RagService.class), mock(GeminiChatService.class));
+        ChatService service = new ChatService(
+                mock(RagService.class), mock(GeminiChatService.class),
+                new ChatAnalyticsProperties(false), null, null, null);
 
         assertThatThrownBy(() -> service.answer("  "))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -41,7 +45,8 @@ class ChatServiceTest {
         GeminiChatService gemini = mock(GeminiChatService.class);
         when(rag.search("sin resultados", 5)).thenReturn(new RagService.RagResult("", List.of(), List.of()));
 
-        ChatService.ChatResult result = new ChatService(rag, gemini).answer("sin resultados");
+        ChatService.ChatResult result = new ChatService(
+                rag, gemini, new ChatAnalyticsProperties(false), null, null, null).answer("sin resultados");
 
         assertThat(result.answer()).contains("No dispongo de datos suficientes");
         verifyNoInteractions(gemini);
