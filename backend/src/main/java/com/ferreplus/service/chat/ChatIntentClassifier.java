@@ -14,8 +14,8 @@ public class ChatIntentClassifier {
     private static final Pattern SIMPLE_INTENT = Pattern.compile(
             "^INTENT: (mas_vendidos|ventas_mes|stock_bajo|guia_catalogo|desconocido)$");
     private static final Pattern LAST_CHANGE_INTENT = Pattern.compile(
-            "^INTENT: ultimo_cambio; ENTITY: (PRODUCTO|CLIENTE|PROVEEDOR|VENTA|COMPRA|GASTO|USUARIO); "
-                    + "NAME: ?([^;\\r\\n]{0,200})$");
+            "^INTENT: ultimo_cambio; ENTITY: (PRODUCTO|CLIENTE|PROVEEDOR|VENTA|COMPRA|GASTO|USUARIO)"
+                    + "(?:; NAME: ?([^;\\r\\n]{0,200}))?$");
     private static final Set<ChatEntity> ENTITIES_ALLOWING_NAME = Set.of(
             ChatEntity.PRODUCTO, ChatEntity.CLIENTE, ChatEntity.PROVEEDOR, ChatEntity.USUARIO);
 
@@ -50,7 +50,7 @@ public class ChatIntentClassifier {
         }
 
         ChatEntity entity = parseEntity(lastChangeMatcher.group(1));
-        String name = lastChangeMatcher.group(2);
+        String name = Optional.ofNullable(lastChangeMatcher.group(2)).orElse("");
         if (!ENTITIES_ALLOWING_NAME.contains(entity) && !name.isEmpty()) {
             return ChatIntentResult.unknown();
         }
@@ -90,6 +90,6 @@ public class ChatIntentClassifier {
         return !name.contains("--")
                 && !name.contains("/*")
                 && !name.contains("*/")
-                && !name.matches("(?i).*\\b(drop|delete|insert|update|truncate|select|from|where)\\b.*");
+                && !name.contains(";");
     }
 }

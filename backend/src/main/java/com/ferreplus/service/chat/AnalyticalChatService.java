@@ -41,8 +41,7 @@ public class AnalyticalChatService {
 
     @Transactional(readOnly = true)
     public List<ProductoMasVendidoResult> productosMasVendidos(ValidatedChatParameters parameters) {
-        return reporteService.getProductosMasVendidos().stream()
-                .limit(parameters.limit())
+        return reporteService.getProductosMasVendidos(parameters.limit()).stream()
                 .map(this::toProductoMasVendidoResult)
                 .toList();
     }

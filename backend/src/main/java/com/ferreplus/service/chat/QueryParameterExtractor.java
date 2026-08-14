@@ -29,19 +29,25 @@ public final class QueryParameterExtractor {
         Matcher matcher = DATE.matcher(question);
         LocalDate from = null;
         LocalDate to = null;
+        int dateCount = 0;
         while (matcher.find()) {
             try {
                 LocalDate value = LocalDate.parse(matcher.group());
                 if (from == null) from = value;
                 else if (to == null) to = value;
                 else return Optional.empty();
+                dateCount++;
             } catch (DateTimeParseException exception) {
                 return Optional.empty();
             }
         }
         LocalDate today = LocalDate.now();
-        if (from == null) from = today.withDayOfMonth(1);
-        if (to == null) to = today;
+        if (dateCount == 0) {
+            from = today.withDayOfMonth(1);
+            to = today;
+        } else if (dateCount == 1) {
+            to = from;
+        }
         return from.isAfter(to) ? Optional.empty() : Optional.of(new DateRange(from, to));
     }
 

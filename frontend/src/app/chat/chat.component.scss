@@ -98,6 +98,15 @@
   white-space: pre-wrap;
 }
 
+.message-bubble ul {
+  margin: 0.25rem 0 0 1.25rem;
+  padding: 0;
+}
+
+.message-bubble li {
+  padding-left: 0.15rem;
+}
+
 /* ── Contraste en modo oscuro ── */
 :host-context(.dark-theme) .message-bubble {
   background: #3a3a3a;

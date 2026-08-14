@@ -79,4 +79,10 @@ describe('ChatComponent', () => {
     expect(sendMessageMock).not.toHaveBeenCalled();
     expect(component.messages()).toHaveLength(0);
   });
+
+  it('renderiza listas y escapa contenido HTML no confiable', () => {
+    const rendered = component.renderContent('- Producto <script>alert(1)</script>\n- Select');
+
+    expect(rendered).toBe('<ul><li>Producto &lt;script&gt;alert(1)&lt;/script&gt;</li><li>Select</li></ul>');
+  });
 });

@@ -40,6 +40,24 @@ class ChatIntentClassifierTest {
     }
 
     @Test
+    void parse_acceptsLastChangeWithoutNameField() {
+        ChatIntentResult result = new ChatIntentClassifier(mock(GeminiChatService.class))
+                .parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO");
+
+        assertThat(result).isEqualTo(new ChatIntentResult(
+                ChatIntent.ULTIMO_CAMBIO, ChatEntity.PRODUCTO, Optional.empty()));
+    }
+
+    @Test
+    void parse_acceptsEntityNamesThatAreSqlKeywords() {
+        ChatIntentResult result = new ChatIntentClassifier(mock(GeminiChatService.class))
+                .parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Select");
+
+        assertThat(result).isEqualTo(new ChatIntentResult(
+                ChatIntent.ULTIMO_CAMBIO, ChatEntity.PRODUCTO, Optional.of("Select")));
+    }
+
+    @Test
     void parse_trimsOnlyOuterWhitespace() {
         assertThat(new ChatIntentClassifier(mock(GeminiChatService.class))
                 .parse("\n INTENT: mas_vendidos \t").intent())
@@ -64,6 +82,7 @@ class ChatIntentClassifierTest {
         assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: FACTURA; NAME: x"));
         assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: VENTA; NAME: factura-1"));
         assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Martillo; DROP"));
+        assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Select; DROP TABLE"));
     }
 
     @Test

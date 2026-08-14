@@ -11,9 +11,9 @@ public class AnalyticalResponseComposer {
     public String composeProductosMasVendidos(List<ProductoMasVendidoResult> results) {
         if (results == null || results.isEmpty()) return "No se encontraron productos vendidos.";
         String products = results.stream()
-                .map(result -> result.nombre() + " (" + result.totalVendido() + ")")
-                .collect(Collectors.joining(", "));
-        return "Productos mas vendidos: " + products + ".";
+                .map(result -> "- " + result.nombre() + " (" + result.totalVendido() + ")")
+                .collect(Collectors.joining("\n"));
+        return "Productos mas vendidos:\n" + products;
     }
 
     public String composeVentasMes(VentasMesResult result) {
@@ -23,9 +23,9 @@ public class AnalyticalResponseComposer {
 
     public String composeStockBajo(List<StockBajoResult> results) {
         if (results == null || results.isEmpty()) return "No hay productos con stock bajo.";
-        return "Productos con stock bajo: " + results.stream()
-                .map(result -> result.nombre() + " (" + result.stockActual() + "/" + result.stockMinimo() + ")")
-                .collect(Collectors.joining(", ")) + ".";
+        return "Productos con stock bajo:\n" + results.stream()
+                .map(result -> "- " + result.nombre() + " (" + result.stockActual() + "/" + result.stockMinimo() + ")")
+                .collect(Collectors.joining("\n"));
     }
 
     public String composeUltimoCambio(java.util.Optional<UltimoCambioResult> result) {

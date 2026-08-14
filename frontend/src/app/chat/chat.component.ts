@@ -99,6 +99,40 @@ export class ChatComponent implements AfterViewChecked {
     return typeof title === 'string' && title.trim() ? title : `${source.entityType} #${source.entityId}`;
   }
 
+  renderContent(content: string): string {
+    const escaped = content
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    const lines = escaped.split('\n');
+    let html = '';
+    let inList = false;
+
+    lines.forEach((line, index) => {
+      const bullet = line.startsWith('- ');
+      if (bullet && !inList) {
+        html += '<ul>';
+        inList = true;
+      }
+      if (bullet) {
+        html += `<li>${line.slice(2)}</li>`;
+      } else {
+        if (inList) {
+          html += '</ul>';
+          inList = false;
+        }
+        html += line;
+        if (index < lines.length - 1) {
+          html += '<br>';
+        }
+      }
+    });
+
+    return inList ? `${html}</ul>` : html;
+  }
+
   private getErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 429) {
       return 'Se alcanzo el limite de consultas. Intenta nuevamente mas tarde.';

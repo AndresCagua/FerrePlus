@@ -74,13 +74,16 @@ public class ReporteService {
     }
 
     public List<ProductoRankingDTO> getProductosMasVendidos() {
-        List<DetalleVenta> detalles = detalleVentaRepository.findAll();
+        return getProductosMasVendidos(10);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductoRankingDTO> getProductosMasVendidos(int limit) {
+        List<DetalleVenta> detalles = detalleVentaRepository
+                .findAllWithVentaAndProductoByVentaEstado("COMPLETADA");
         Map<Long, ProductoRankingDTO> rankingMap = new LinkedHashMap<>();
 
         for (DetalleVenta detalle : detalles) {
-            if (!"COMPLETADA".equals(detalle.getVenta().getEstado())) {
-                continue;
-            }
             Long productoId = detalle.getProducto().getId();
             ProductoRankingDTO existing = rankingMap.get(productoId);
             if (existing != null) {
@@ -96,7 +99,7 @@ public class ReporteService {
 
         return rankingMap.values().stream()
                 .sorted((a, b) -> Long.compare(b.getTotalVendido(), a.getTotalVendido()))
-                .limit(10)
+                .limit(limit)
                 .collect(Collectors.toList());
     }
 

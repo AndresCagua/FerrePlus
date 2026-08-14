@@ -41,7 +41,7 @@ class AnalyticalChatServiceTest {
     void mapsRankingAndAppliesValidatedLimit() {
         ProductoRankingDTO first = ProductoRankingDTO.builder().productoId(1L).nombre("Martillo").totalVendido(8L).build();
         ProductoRankingDTO second = ProductoRankingDTO.builder().productoId(2L).nombre("Taladro").totalVendido(4L).build();
-        when(reporteService.getProductosMasVendidos()).thenReturn(List.of(first, second));
+        when(reporteService.getProductosMasVendidos(1)).thenReturn(List.of(first));
 
         assertThat(service.productosMasVendidos(parameters))
                 .containsExactly(new ProductoMasVendidoResult(1L, "Martillo", 8L));
