@@ -46,8 +46,7 @@ public class ReporteService {
         BigDecimal ventasHoy = ventaRepository.sumTotalByFechaCreacionBetweenAndEstado(startOfDay, endOfDay, "COMPLETADA");
         if (ventasHoy == null) ventasHoy = BigDecimal.ZERO;
 
-        BigDecimal ventasMes = ventaRepository.sumTotalByFechaCreacionBetweenAndEstado(startOfMonth, endOfMonth, "COMPLETADA");
-        if (ventasMes == null) ventasMes = BigDecimal.ZERO;
+        BigDecimal ventasMes = getVentasMes(firstOfMonth, today);
 
         long totalClientes = clienteRepository.count();
         long totalProveedores = proveedorRepository.count();
@@ -58,7 +57,7 @@ public class ReporteService {
         List<ProductoRankingDTO> productosMasVendidos = getProductosMasVendidos();
 
         List<VentaDiariaDTO> ventasPorDia = getVentasPorDia(firstOfMonth, today);
-        List<Producto> productosStockBajoList = productoRepository.findStockBajo();
+        List<Producto> productosStockBajoList = getProductosStockBajo();
 
         return ReporteDTO.builder()
                 .totalProductos(totalProductos)
@@ -74,7 +73,7 @@ public class ReporteService {
                 .build();
     }
 
-    private List<ProductoRankingDTO> getProductosMasVendidos() {
+    public List<ProductoRankingDTO> getProductosMasVendidos() {
         List<DetalleVenta> detalles = detalleVentaRepository.findAll();
         Map<Long, ProductoRankingDTO> rankingMap = new LinkedHashMap<>();
 
@@ -99,6 +98,18 @@ public class ReporteService {
                 .sorted((a, b) -> Long.compare(b.getTotalVendido(), a.getTotalVendido()))
                 .limit(10)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> getProductosStockBajo() {
+        return productoRepository.findStockBajo();
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getVentasMes(LocalDate from, LocalDate to) {
+        BigDecimal total = ventaRepository.sumTotalByFechaCreacionBetweenAndEstado(
+                from.atStartOfDay(), to.atTime(LocalTime.MAX), "COMPLETADA");
+        return total == null ? BigDecimal.ZERO : total;
     }
 
     private List<VentaDiariaDTO> getVentasPorDia(LocalDate firstOfMonth, LocalDate today) {
