@@ -16,6 +16,8 @@ import org.springframework.test.context.ActiveProfiles;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -53,6 +55,9 @@ class CompraServiceIntegrationTest {
 
     @Autowired
     private MovimientoStockRepository movimientoStockRepository;
+
+    @Autowired
+    private DocumentEmbeddingRepository documentEmbeddingRepository;
 
     private Rol rol;
     private Categoria categoria;
@@ -231,5 +236,30 @@ class CompraServiceIntegrationTest {
         // The oldest (last descending) should have precioCompra=10.00
         assertEquals(0, new BigDecimal("10.00").compareTo(historicos.get(1).getPrecioCompra()),
                 "El registro más antiguo debe tener precioCompra=10.00");
+    }
+
+    @Test
+    void documentEmbeddingRepository_persistsAndSearchesFloatVectorAgainstPostgres() {
+        float[] storedEmbedding = new float[768];
+        storedEmbedding[0] = 1.0f;
+
+        DocumentEmbedding document = DocumentEmbedding.builder()
+                .entityType("PRODUCTO")
+                .entityId(999_001L)
+                .contentText("Producto vectorial de prueba")
+                .contentHash("a".repeat(64))
+                .metadata("{\"title\":\"Producto vectorial\"}")
+                .embedding(storedEmbedding)
+                .build();
+
+        DocumentEmbedding saved = documentEmbeddingRepository.saveAndFlush(document);
+
+        float[] queryEmbedding = new float[768];
+        queryEmbedding[0] = 0.99f;
+        List<DocumentEmbedding> nearest = documentEmbeddingRepository.findNearest(queryEmbedding, 1);
+
+        assertThat(saved.getId()).isNotNull();
+        assertThat(nearest).extracting(DocumentEmbedding::getId).containsExactly(saved.getId());
+        assertThat(nearest.getFirst().getEmbedding()).containsExactly(storedEmbedding);
     }
 }

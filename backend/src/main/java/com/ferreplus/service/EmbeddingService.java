@@ -4,10 +4,6 @@ import com.ferreplus.client.GeminiClient;
 import com.ferreplus.exception.GeminiException;
 import org.springframework.stereotype.Service;
 
-import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 @Service
 public class EmbeddingService {
 
@@ -31,9 +27,4 @@ public class EmbeddingService {
         }
     }
 
-    public String toPgVector(float[] embedding) {
-        return "[" + IntStream.range(0, embedding.length)
-                .mapToObj(index -> String.format(Locale.ROOT, "%.8f", embedding[index]))
-                .collect(Collectors.joining(",")) + "]";
-    }
 }

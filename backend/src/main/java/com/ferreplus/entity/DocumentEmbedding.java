@@ -37,8 +37,9 @@ public class DocumentEmbedding {
     @Column(columnDefinition = "JSONB")
     private String metadata;
 
+    @JdbcTypeCode(SqlTypes.VECTOR)
     @Column(nullable = false, columnDefinition = "vector(768)")
-    private String embedding;
+    private float[] embedding;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

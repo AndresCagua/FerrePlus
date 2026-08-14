@@ -10,6 +10,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TokenInterceptor } from './core/token.interceptor';
 import { SharedModule } from './shared/shared.module';
+import { ChatModule } from './chat/chat.module';
 
 /**
  * Inicializa MatIconRegistry con el set de fuentes de Material Icons por defecto.
@@ -32,7 +33,8 @@ export function configureIconRegistry(registry: MatIconRegistry): () => void {
     ReactiveFormsModule,
     AppRoutingModule,
     MatIconModule,
-    SharedModule
+    SharedModule,
+    ChatModule
   ],
   providers: [
     provideCharts(withDefaultRegisterables()),

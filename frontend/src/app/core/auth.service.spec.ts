@@ -195,13 +195,13 @@ describe('AuthService.getHomeRoute (navegación post-login)', () => {
     expect(service.getHomeRoute()).toBe('/gastos');
   });
 
-  it('usuario SIN ningún permiso de módulo → home /chat (chat accesible sin permisos)', () => {
+  it('usuario SIN ningún permiso de módulo → no tiene una ruta de página accesible', () => {
     sessionStorage.setItem(SESSION_KEYS.permisos, JSON.stringify([]));
-    expect(service.getHomeRoute()).toBe('/chat');
+    expect(service.getHomeRoute()).toBeNull();
   });
 
-  it('sin permisos almacenados en sessionStorage → home /chat (chat accesible sin permisos)', () => {
+  it('sin permisos almacenados en sessionStorage → no tiene una ruta de página accesible', () => {
     sessionStorage.removeItem(SESSION_KEYS.permisos);
-    expect(service.getHomeRoute()).toBe('/chat');
+    expect(service.getHomeRoute()).toBeNull();
   });
 });

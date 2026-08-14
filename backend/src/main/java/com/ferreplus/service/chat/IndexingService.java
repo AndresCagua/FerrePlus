@@ -77,7 +77,7 @@ public class IndexingService {
         if (existing.isPresent() && hash.equals(existing.get().getContentHash())) return new IndexResult(false, true);
         DocumentEmbedding document = existing.orElseGet(DocumentEmbedding::new);
         document.setEntityType(mapper.entityType()); document.setEntityId(mapper.entityId(entity)); document.setContentText(content); document.setContentHash(hash);
-        document.setMetadata(toJson(mapper.metadata(entity))); document.setEmbedding(embeddingService.toPgVector(embeddingService.embed(content))); document.setUpdatedAt(LocalDateTime.now());
+        document.setMetadata(toJson(mapper.metadata(entity))); document.setEmbedding(embeddingService.embed(content)); document.setUpdatedAt(LocalDateTime.now());
         documentRepository.save(document); return new IndexResult(true, false);
     }
     private String toJson(Map<String, Object> metadata) { try { return objectMapper.writeValueAsString(metadata); } catch (JsonProcessingException e) { throw new IllegalStateException("No se pudieron serializar los metadatos", e); } }

@@ -16,7 +16,7 @@ public interface DocumentEmbeddingRepository extends JpaRepository<DocumentEmbed
 
     @Query(value = "SELECT * FROM document_embeddings "
             + "ORDER BY embedding <=> CAST(:embedding AS vector) LIMIT :limit", nativeQuery = true)
-    List<DocumentEmbedding> findNearest(@Param("embedding") String embedding, @Param("limit") int limit);
+    List<DocumentEmbedding> findNearest(@Param("embedding") float[] embedding, @Param("limit") int limit);
 
     Optional<DocumentEmbedding> findByEntityTypeAndEntityId(String entityType, Long entityId);
 

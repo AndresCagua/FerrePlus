@@ -34,8 +34,7 @@ export const RUTAS_POR_PERMISO: RutaPorPermiso[] = [
   { label: 'Usuarios', icon: 'manage_accounts', route: '/usuarios', permissions: ['USUARIOS_VER'] },
   { label: 'Roles', icon: 'admin_panel_settings', route: '/roles', permissions: ['ROLES_VER'] },
   { label: 'Reportes', icon: 'bar_chart', route: '/reportes', permissions: ['REPORTES_VER'] },
-  { label: 'Logs', icon: 'receipt_long', route: '/logs', permissions: ['LOGS_VER'] },
-  { label: 'Asistente', icon: 'smart_toy', route: '/chat' }
+  { label: 'Logs', icon: 'receipt_long', route: '/logs', permissions: ['LOGS_VER'] }
 ];
 
 /** Retorna los permisos requeridos para una ruta top-level (o [] si no está mapeada). */

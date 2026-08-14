@@ -10,7 +10,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { ChatRoutingModule } from './chat-routing.module';
 import { ChatComponent } from './chat.component';
 
 @NgModule({
@@ -18,7 +17,6 @@ import { ChatComponent } from './chat.component';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    ChatRoutingModule,
     MatButtonModule,
     MatCardModule,
     MatExpansionModule,
@@ -27,6 +25,7 @@ import { ChatComponent } from './chat.component';
     MatInputModule,
     MatListModule,
     MatProgressSpinnerModule
-  ]
+  ],
+  exports: [ChatComponent]
 })
 export class ChatModule { }

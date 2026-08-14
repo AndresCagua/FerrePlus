@@ -93,12 +93,6 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { permissions: permisosDeRuta('/logs') }
   },
-  {
-    path: 'chat',
-    loadChildren: () => import('./chat/chat.module').then(m => m.ChatModule),
-    canActivate: [AuthGuard],
-    data: { permissions: permisosDeRuta('/chat') }
-  },
   { path: '**', redirectTo: '/dashboard' }
 ];
 

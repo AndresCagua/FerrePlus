@@ -3,6 +3,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of } from 'rxjs';
+import { throwError } from 'rxjs';
 import { ChatComponent } from './chat.component';
 import { ChatModule } from './chat.module';
 import { ChatService } from '../services/chat.service';
@@ -31,15 +32,43 @@ describe('ChatComponent', () => {
   });
 
   it('envia la pregunta y renderiza respuesta y fuentes', () => {
+    component.isOpen.set(true);
     component.messageForm.controls.question.setValue('¿Donde registro un producto?');
     component.sendMessage();
     fixture.detectChanges();
 
     expect(sendMessageMock).toHaveBeenCalledWith('¿Donde registro un producto?');
-    expect(component.messages).toHaveLength(2);
-    expect(component.messages[1].content).toContain('/productos');
-    expect(component.messages[1].sources).toHaveLength(1);
+    expect(component.messages()).toHaveLength(2);
+    expect(component.messages()[1].content).toContain('/productos');
+    expect(component.messages()[1].sources).toHaveLength(1);
     expect(fixture.nativeElement.textContent).toContain('Registrar producto');
+  });
+
+  it('abre y cierra el panel desde el FAB', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.chat-panel')).toBeNull();
+    fixture.nativeElement.querySelector('.chat-fab').click();
+    fixture.detectChanges();
+    expect(component.isOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('.chat-panel')).not.toBeNull();
+
+    fixture.nativeElement.querySelector('[aria-label="Cerrar asistente"]').click();
+    fixture.detectChanges();
+    expect(component.isOpen()).toBe(false);
+  });
+
+  it('muestra un error visible cuando el servicio falla', () => {
+    sendMessageMock.mockReturnValueOnce(throwError(() => ({ status: 503 })));
+    component.isOpen.set(true);
+    component.messageForm.controls.question.setValue('¿Hay productos con stock bajo?');
+
+    component.sendMessage();
+    fixture.detectChanges();
+
+    expect(component.errorMessage()).toContain('no esta disponible');
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent)
+      .toContain('no esta disponible');
   });
 
   it('no envia una pregunta vacia', () => {
@@ -48,6 +77,6 @@ describe('ChatComponent', () => {
     component.sendMessage();
 
     expect(sendMessageMock).not.toHaveBeenCalled();
-    expect(component.messages).toHaveLength(0);
+    expect(component.messages()).toHaveLength(0);
   });
 });

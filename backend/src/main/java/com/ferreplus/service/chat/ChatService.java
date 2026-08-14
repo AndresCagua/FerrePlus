@@ -14,7 +14,7 @@ public class ChatService {
         if (question == null || question.isBlank()) throw new IllegalArgumentException("La pregunta no puede estar vacia");
         RagService.RagResult rag = ragService.search(question, 5);
         if (rag.documents().isEmpty()) return new ChatResult("No dispongo de datos suficientes para responder esa pregunta.", rag.sources());
-        String prompt = "Responde en espanol usando unicamente el contexto. No inventes cifras, rutas ni pasos. Cita cada fuente con [TIPO:id].\n\nContexto:\n" + rag.context() + "\n\nPregunta: " + question;
+        String prompt = "Responde en espanol usando unicamente el contexto. No inventes cifras, rutas ni pasos. No incluyas marcadores de citacion como [GUIA:1] ni [TIPO:id] en la respuesta; las fuentes se muestran por separado.\n\nContexto:\n" + rag.context() + "\n\nPregunta: " + question;
         return new ChatResult(geminiChatService.generate(prompt), rag.sources());
     }
 

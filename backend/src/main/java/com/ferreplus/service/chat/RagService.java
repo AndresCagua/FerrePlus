@@ -19,7 +19,7 @@ public class RagService {
     }
 
     public RagResult search(String question, int limit) {
-        List<DocumentEmbedding> documents = documentRepository.findNearest(embeddingService.toPgVector(embeddingService.embed(question)), Math.max(1, limit));
+        List<DocumentEmbedding> documents = documentRepository.findNearest(embeddingService.embed(question), Math.max(1, limit));
         List<Source> sources = documents.stream().map(this::source).toList();
         String context = documents.stream().map(document -> "[" + document.getEntityType() + ":" + document.getEntityId() + "] " + document.getContentText()).reduce("", (left, right) -> left.isBlank() ? right : left + "\n\n" + right);
         return new RagResult(context, sources, documents);

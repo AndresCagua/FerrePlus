@@ -1,19 +1,35 @@
-<div class="chat-container">
-  <mat-card class="chat-card">
-    <mat-card-header>
+<div class="chat-widget">
+  <button
+    *ngIf="!isOpen()"
+    mat-fab
+    color="primary"
+    class="chat-fab"
+    type="button"
+    aria-label="Abrir asistente FerrePlus"
+    (click)="togglePanel()">
+    <mat-icon>smart_toy</mat-icon>
+  </button>
+
+  <mat-card class="chat-panel" *ngIf="isOpen()" role="dialog" aria-labelledby="chat-title">
+    <mat-card-header class="chat-header">
       <mat-icon mat-card-avatar>smart_toy</mat-icon>
-      <mat-card-title>Asistente FerrePlus</mat-card-title>
-      <mat-card-subtitle>Consulta productos, ventas y como usar el sistema</mat-card-subtitle>
+      <div class="chat-heading">
+        <mat-card-title id="chat-title">Asistente FerrePlus</mat-card-title>
+        <mat-card-subtitle>Consulta productos, ventas y como usar el sistema</mat-card-subtitle>
+      </div>
+      <button mat-icon-button type="button" aria-label="Cerrar asistente" (click)="closePanel()">
+        <mat-icon>close</mat-icon>
+      </button>
     </mat-card-header>
 
     <mat-card-content class="chat-content">
-      <div class="message-list" aria-live="polite">
-        <div class="empty-state" *ngIf="messages.length === 0">
+      <div #messageList class="message-list" aria-live="polite">
+        <div class="empty-state" *ngIf="messages().length === 0">
           <mat-icon>forum</mat-icon>
           <p>Escribe una pregunta para comenzar.</p>
         </div>
 
-        <div class="message-row" *ngFor="let message of messages" [class.user-message]="message.role === 'user'">
+        <div class="message-row" *ngFor="let message of messages()" [class.user-message]="message.role === 'user'">
           <div class="message-bubble">
             <span class="message-author">{{ message.role === 'user' ? 'Tu' : 'Asistente' }}</span>
             <p>{{ message.content }}</p>
@@ -38,15 +54,15 @@
           </div>
         </div>
 
-        <div class="loading-row" *ngIf="loading">
+        <div class="loading-row" *ngIf="loading()">
           <mat-spinner diameter="28" aria-label="Consultando al asistente"></mat-spinner>
           <span>Consultando...</span>
         </div>
       </div>
 
-      <p class="error-message" *ngIf="errorMessage" role="alert">
+      <p class="error-message" *ngIf="errorMessage()" role="alert">
         <mat-icon>error_outline</mat-icon>
-        {{ errorMessage }}
+        {{ errorMessage() }}
       </p>
     </mat-card-content>
 
@@ -63,7 +79,7 @@
             La pregunta no puede superar los 1000 caracteres.
           </mat-error>
         </mat-form-field>
-        <button mat-fab color="primary" type="submit" [disabled]="loading" aria-label="Enviar pregunta">
+        <button mat-fab color="primary" type="submit" [disabled]="loading()" aria-label="Enviar pregunta">
           <mat-icon>send</mat-icon>
         </button>
       </form>
