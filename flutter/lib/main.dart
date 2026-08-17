@@ -1,34 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'core/constants/app_constants.dart';
+import 'core/routing/app_router.dart';
 
 void main() {
-  runApp(const FerrePlusApp());
+  runApp(const ProviderScope(child: FerrePlusApp()));
 }
 
-class FerrePlusApp extends StatelessWidget {
+class FerrePlusApp extends ConsumerWidget {
   const FerrePlusApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FerrePlus',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const PlaceholderHomePage(),
-    );
-  }
-}
-
-class PlaceholderHomePage extends StatelessWidget {
-  const PlaceholderHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('FerrePlus'),
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
+      title: AppConstants.appTitle,
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)), useMaterial3: true),
+      routerConfig: router,
     );
   }
 }

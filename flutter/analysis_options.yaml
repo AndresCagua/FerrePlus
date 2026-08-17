@@ -30,7 +30,8 @@ linter:
     prefer_const_constructors: true
     prefer_const_declarations: true
     always_declare_return_types: true
-    always_specify_types: true
+    # Generated Riverpod/freezed code and Flutter callback APIs use inferred
+    # generic types; explicit types remain required in public declarations.
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
