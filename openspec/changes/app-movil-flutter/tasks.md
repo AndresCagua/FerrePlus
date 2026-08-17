@@ -37,14 +37,14 @@
 
 ## Phase 2 — Slice S2: Catálogos y CRUD core (R11–R16)
 
-- [ ] 2.1 Crear modelos de dominio y DTOs `Producto`, `Categoria`, `Proveedor`, `Cliente` en `flutter/lib/domain/models/` y `flutter/lib/data/models/`, con enums tolerantes y converters de fechas; mapeadores DTO → dominio. (R11–R15)
-- [ ] 2.2 Crear interfaces de repositorio en `flutter/lib/domain/repositories/` e implementaciones en `flutter/lib/data/repositories/` para productos, categorías, proveedores y clientes (listar, crear, editar, eliminar, filtros de búsqueda). (R11–R15)
-- [ ] 2.3 Crear providers `productosProvider`, `categoriasProvider`, `proveedoresProvider`, `clientesProvider` como `AsyncNotifier` con estado de consulta (búsqueda, filtros) y métodos `reload()` / invalidación. (R11)
-- [ ] 2.4 Crear `flutter/lib/presentation/features/productos/pages/productos_list_page.dart` con búsqueda por nombre/código, filtros, `ListView.builder`, estados vacío/carga/error y navegación a detalle. (R11)
-- [ ] 2.5 Crear `flutter/lib/presentation/features/productos/pages/producto_form_page.dart` para alta/edición de productos con validaciones; ocultar acciones según `PRODUCTOS_CREAR` / `PRODUCTOS_EDITAR`. (R12)
-- [ ] 2.6 Crear pantallas list/form para categorías, proveedores y clientes reutilizando widgets comunes donde sea posible. (R13–R15)
-- [ ] 2.7 Crear widgets reutilizables `PermissionVisibility` / `PermissionButton` y aplicarlos a todos los catálogos para ocultar/deshabilitar crear, editar y eliminar sin permiso. (R16, R46)
-- [ ] 2.8 Suite de tests S2: unitarios de mapeadores, repositorios (URLs y payloads), filtros e invalidación de providers; widget tests de lista vacía/carga/error, búsqueda, formulario representativo y botones ocultos. Ejecutar `flutter test`. (R47)
+- [x] 2.1 Crear modelos de dominio y DTOs `Producto`, `Categoria`, `Proveedor`, `Cliente` en `flutter/lib/domain/models/` y `flutter/lib/data/models/`, con enums tolerantes y converters de fechas; mapeadores DTO → dominio. (R11–R15)
+- [x] 2.2 Crear interfaces de repositorio en `flutter/lib/domain/repositories/` e implementaciones en `flutter/lib/data/repositories/` para productos, categorías, proveedores y clientes (listar, crear, editar, eliminar, filtros de búsqueda). (R11–R15)
+- [x] 2.3 Crear providers `productosProvider`, `categoriasProvider`, `proveedoresProvider`, `clientesProvider` como `AsyncNotifier` con estado de consulta (búsqueda, filtros) y métodos `reload()` / invalidación. (R11)
+- [x] 2.4 Crear `flutter/lib/presentation/features/productos/pages/productos_list_page.dart` con búsqueda por nombre/código, filtros, `ListView.builder`, estados vacío/carga/error y navegación a detalle. (R11)
+- [x] 2.5 Crear `flutter/lib/presentation/features/productos/pages/producto_form_page.dart` para alta/edición de productos con validaciones; ocultar acciones según `PRODUCTOS_CREAR` / `PRODUCTOS_EDITAR`. (R12)
+- [x] 2.6 Crear pantallas list/form para categorías, proveedores y clientes reutilizando widgets comunes donde sea posible. (R13–R15)
+- [x] 2.7 Crear widgets reutilizables `PermissionVisibility` / `PermissionButton` y aplicarlos a todos los catálogos para ocultar/deshabilitar crear, editar y eliminar sin permiso. (R16, R46)
+- [x] 2.8 Suite de tests S2: unitarios de mapeadores, repositorios (URLs y payloads), filtros e invalidación de providers; widget tests de lista vacía/carga/error, búsqueda, formulario representativo y botones ocultos. Ejecutar `flutter test`. (R47)
 - [ ] 2.9 Smoke check manual: ejecutar flujos de catálogos en emulator y verificar que las acciones de escritura se oculten sin permiso. (R11–R16)
 - [ ] 2.10 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S3.
 
