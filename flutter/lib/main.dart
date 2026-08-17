@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/routing/app_router.dart';
+import 'presentation/theme/app_theme.dart';
 
 void main() {
   runApp(const ProviderScope(child: FerrePlusApp()));
@@ -16,7 +17,8 @@ class FerrePlusApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: AppConstants.appTitle,
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)), useMaterial3: true),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: router,
     );
   }

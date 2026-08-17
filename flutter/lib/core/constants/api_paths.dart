@@ -25,4 +25,6 @@ class ApiPaths {
   static const String reportesInventario = '/api/reportes/inventario';
   static const String reportesMovimientos = '/api/reportes/movimientos';
   static const String logs = '/api/logs';
+  static const String chat = '/api/chat';
+  static const String chatIndexRebuild = '/api/chat/index/rebuild';
 }

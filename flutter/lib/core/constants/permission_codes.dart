@@ -46,4 +46,5 @@ class PermissionCodes {
   static const String logs = 'LOGS_VER';
   static const String logsEliminar = 'LOGS_ELIMINAR';
   static const String chat = 'CHAT_VER';
+  static const String chatIndexRebuild = 'CHAT_INDEX_REBUILD';
 }

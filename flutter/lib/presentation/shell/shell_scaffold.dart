@@ -22,6 +22,24 @@ class ShellScaffold extends ConsumerWidget {
                 PermissionCodes.productos,
               ),
               const _Destination(
+                'Categorias',
+                '/categorias',
+                Icons.category,
+                PermissionCodes.categorias,
+              ),
+              const _Destination(
+                'Proveedores',
+                '/proveedores',
+                Icons.local_shipping,
+                PermissionCodes.proveedores,
+              ),
+              const _Destination(
+                'Clientes',
+                '/clientes',
+                Icons.person,
+                PermissionCodes.clientes,
+              ),
+              const _Destination(
                 'Ventas',
                 '/ventas',
                 Icons.point_of_sale,
@@ -32,6 +50,18 @@ class ShellScaffold extends ConsumerWidget {
                 '/compras',
                 Icons.shopping_cart,
                 PermissionCodes.compras,
+              ),
+              const _Destination(
+                'Movimientos',
+                '/movimientos',
+                Icons.swap_vert,
+                PermissionCodes.movimientos,
+              ),
+              const _Destination(
+                'Gastos',
+                '/gastos',
+                Icons.money_off,
+                PermissionCodes.gastos,
               ),
               const _Destination(
                 'Usuarios',
@@ -62,6 +92,12 @@ class ShellScaffold extends ConsumerWidget {
                 '/logs',
                 Icons.history,
                 PermissionCodes.logs,
+              ),
+              const _Destination(
+                'Chat',
+                '/chat',
+                Icons.smart_toy,
+                PermissionCodes.chat,
               ),
             ]
             .where(

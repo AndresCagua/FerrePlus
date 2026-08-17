@@ -12,6 +12,7 @@ import '../../domain/models/catalog_models.dart';
 import '../../domain/models/admin_models.dart';
 import '../../presentation/features/admin_pages.dart';
 import '../../presentation/shell/shell_scaffold.dart';
+import '../../presentation/features/chat/pages/chat_page.dart';
 import '../constants/permission_codes.dart';
 import '../providers/auth_providers.dart';
 
@@ -270,6 +271,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/logs',
             builder: (context, state) => const LogsPageView(),
           ),
+          GoRoute(path: '/chat', builder: (context, state) => const ChatPage()),
           ...stubRoutes.where(
             (GoRoute route) => !const <String>{
               '/productos',
@@ -285,6 +287,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               '/roles',
               '/reportes',
               '/logs',
+              '/chat',
             }.contains(route.path),
           ),
         ],
