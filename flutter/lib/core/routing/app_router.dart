@@ -7,6 +7,7 @@ import '../../presentation/features/auth/login_screen.dart';
 import '../../presentation/features/dashboard/dashboard_screen.dart';
 import '../../presentation/features/catalog_pages.dart';
 import '../../presentation/features/productos/productos_pages.dart';
+import '../../presentation/features/commercial_pages.dart';
 import '../../domain/models/catalog_models.dart';
 import '../../presentation/shell/shell_scaffold.dart';
 import '../constants/permission_codes.dart';
@@ -121,12 +122,91 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          GoRoute(
+            path: '/ventas',
+            builder: (context, state) => const VentasPage(),
+            routes: <RouteBase>[
+              GoRoute(
+                path: 'nuevo',
+                builder: (context, state) => const VentaFormPage(),
+              ),
+              GoRoute(
+                path: 'reportes',
+                builder: (context, state) =>
+                    const CommercialReportPage(sales: true),
+              ),
+              GoRoute(
+                path: 'reportes',
+                builder: (context, state) =>
+                    const CommercialReportPage(sales: true),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (context, state) =>
+                    VentaDetailPage(id: int.parse(state.pathParameters['id']!)),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/compras',
+            builder: (context, state) => const ComprasPage(),
+            routes: <RouteBase>[
+              GoRoute(
+                path: 'nuevo',
+                builder: (context, state) => const CompraFormPage(),
+              ),
+              GoRoute(
+                path: 'reportes',
+                builder: (context, state) =>
+                    const CommercialReportPage(sales: false),
+              ),
+              GoRoute(
+                path: 'reportes',
+                builder: (context, state) =>
+                    const CommercialReportPage(sales: false),
+              ),
+              GoRoute(
+                path: ':id/editar',
+                builder: (context, state) =>
+                    CompraFormPage(id: int.parse(state.pathParameters['id']!)),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/movimientos',
+            builder: (context, state) => const MovimientosPage(),
+            routes: <RouteBase>[
+              GoRoute(
+                path: 'nuevo',
+                builder: (context, state) => const MovimientoFormPage(),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/gastos',
+            builder: (context, state) => const GastosPage(),
+            routes: <RouteBase>[
+              GoRoute(
+                path: 'nuevo',
+                builder: (context, state) => const GastoFormPage(),
+              ),
+              GoRoute(
+                path: ':id/editar',
+                builder: (context, state) =>
+                    GastoFormPage(id: int.parse(state.pathParameters['id']!)),
+              ),
+            ],
+          ),
           ...stubRoutes.where(
             (GoRoute route) => !const <String>{
               '/productos',
               '/categorias',
               '/proveedores',
               '/clientes',
+              '/ventas',
+              '/compras',
+              '/movimientos',
+              '/gastos',
             }.contains(route.path),
           ),
         ],
