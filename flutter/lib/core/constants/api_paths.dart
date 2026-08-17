@@ -16,4 +16,13 @@ class ApiPaths {
   static const String reportesVentas = '/api/reportes/ventas';
   static const String ventasReporte = '/api/ventas/reportes/por-fecha';
   static const String comprasReporte = '/api/compras/reportes/por-fecha';
+  static const String precios = '/api/precios';
+  static const String usuarios = '/api/usuarios';
+  static const String roles = '/api/roles';
+  static const String modulos = '/api/modulos';
+  static const String permisos = '/api/permisos';
+  static const String reportesDashboard = '/api/reportes/dashboard';
+  static const String reportesInventario = '/api/reportes/inventario';
+  static const String reportesMovimientos = '/api/reportes/movimientos';
+  static const String logs = '/api/logs';
 }

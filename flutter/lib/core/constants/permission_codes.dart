@@ -33,9 +33,17 @@ class PermissionCodes {
   static const String gastosEditar = 'GASTOS_EDITAR';
   static const String gastosEliminar = 'GASTOS_ELIMINAR';
   static const String precios = 'PRECIOS_VER';
+  static const String preciosEditar = 'PRECIOS_EDITAR';
   static const String usuarios = 'USUARIOS_VER';
+  static const String usuariosCrear = 'USUARIOS_CREAR';
+  static const String usuariosEditar = 'USUARIOS_EDITAR';
+  static const String usuariosEliminar = 'USUARIOS_ELIMINAR';
   static const String roles = 'ROLES_VER';
+  static const String rolesCrear = 'ROLES_CREAR';
+  static const String rolesEditar = 'ROLES_EDITAR';
+  static const String rolesEliminar = 'ROLES_ELIMINAR';
   static const String reportes = 'REPORTES_VER';
   static const String logs = 'LOGS_VER';
+  static const String logsEliminar = 'LOGS_ELIMINAR';
   static const String chat = 'CHAT_VER';
 }

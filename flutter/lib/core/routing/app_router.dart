@@ -9,6 +9,8 @@ import '../../presentation/features/catalog_pages.dart';
 import '../../presentation/features/productos/productos_pages.dart';
 import '../../presentation/features/commercial_pages.dart';
 import '../../domain/models/catalog_models.dart';
+import '../../domain/models/admin_models.dart';
+import '../../presentation/features/admin_pages.dart';
 import '../../presentation/shell/shell_scaffold.dart';
 import '../constants/permission_codes.dart';
 import '../providers/auth_providers.dart';
@@ -43,11 +45,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: <RouteBase>[
           GoRoute(
             path: '/',
-            builder: (context, state) => const DashboardScreen(),
+            builder: (context, state) => const DashboardAdminPage(),
           ),
           GoRoute(
             path: '/dashboard',
-            builder: (context, state) => const DashboardScreen(),
+            builder: (context, state) => const DashboardAdminPage(),
           ),
           GoRoute(
             path: '/productos',
@@ -197,6 +199,77 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          GoRoute(
+            path: '/gestion-precios',
+            builder: (context, state) => const PreciosPage(),
+            routes: <RouteBase>[
+              GoRoute(
+                path: ':id/historial',
+                builder: (context, state) => PrecioHistorialPage(
+                  id: int.parse(state.pathParameters['id']!),
+                  precio: state.extra is PrecioProducto
+                      ? state.extra! as PrecioProducto
+                      : null,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/usuarios',
+            builder: (context, state) => const UsuariosPage(),
+            routes: <RouteBase>[
+              GoRoute(
+                path: 'nuevo',
+                builder: (context, state) => const UsuarioFormPage(),
+              ),
+              GoRoute(
+                path: ':id/editar',
+                builder: (context, state) => UsuarioFormPage(
+                  usuario: state.extra is Usuario
+                      ? state.extra! as Usuario
+                      : null,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/roles',
+            builder: (context, state) => const RolesPage(),
+            routes: <RouteBase>[
+              GoRoute(
+                path: 'nuevo',
+                builder: (context, state) => const RolFormPage(),
+              ),
+              GoRoute(
+                path: ':id/editar',
+                builder: (context, state) => RolFormPage(
+                  rol: state.extra is Rol ? state.extra! as Rol : null,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/reportes',
+            builder: (context, state) => const ReportesPage(),
+          ),
+          GoRoute(
+            path: '/reportes/ventas',
+            builder: (context, state) => const ReporteVentasPage(),
+          ),
+          GoRoute(
+            path: '/reportes/inventario',
+            builder: (context, state) =>
+                const ReporteDetallePage(kind: 'inventario'),
+          ),
+          GoRoute(
+            path: '/reportes/movimientos',
+            builder: (context, state) =>
+                const ReporteDetallePage(kind: 'movimientos'),
+          ),
+          GoRoute(
+            path: '/logs',
+            builder: (context, state) => const LogsPageView(),
+          ),
           ...stubRoutes.where(
             (GoRoute route) => !const <String>{
               '/productos',
@@ -207,6 +280,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               '/compras',
               '/movimientos',
               '/gastos',
+              '/gestion-precios',
+              '/usuarios',
+              '/roles',
+              '/reportes',
+              '/logs',
             }.contains(route.path),
           ),
         ],
@@ -224,7 +302,7 @@ final Map<String, String> routePermissions = <String, String>{
   '/compras': PermissionCodes.compras,
   '/movimientos': PermissionCodes.movimientos,
   '/gastos': PermissionCodes.gastos,
-  '/precios': PermissionCodes.precios,
+  '/gestion-precios': PermissionCodes.precios,
   '/usuarios': PermissionCodes.usuarios,
   '/roles': PermissionCodes.roles,
   '/reportes': PermissionCodes.reportes,
