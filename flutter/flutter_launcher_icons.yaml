@@ -1,0 +1,6 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/branding/ferreplus_hardware.png
+  adaptive_icon_background: "#1565C0"
+  adaptive_icon_foreground: assets/branding/ferreplus_hardware.png
