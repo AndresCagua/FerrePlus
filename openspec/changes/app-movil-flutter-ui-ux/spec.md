@@ -102,7 +102,8 @@ The system MUST render six KPI cards on the dashboard using the same data and se
 1. **Total Productos** — `inventory_2`, `#1565C0`, route `/productos`
 2. **Stock Bajo** — `warning_amber`, `#c62828`, route `/productos`
 3. **Ventas Hoy** — `today`, `#2e7d32`, route `/ventas`
-4. **Ventas del Mes** — `date_range`, `#FF8F00`, route `/ventas`
+4. **Ventas del Mes** — `date_range`, `#FF8F00`, route `/ventas`  
+   (#FF8F00 falla contraste 4.5:1 en claro; implementado con kpiAmberAccessible #B45309 por R16)
 5. **Total Clientes** — `people`, `#6a1b9a`, route `/clientes`
 6. **Proveedores** — `local_shipping`, `#00838f`, route `/proveedores`
 
