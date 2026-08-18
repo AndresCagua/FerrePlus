@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/permission_codes.dart';
+import '../../core/errors/failure_message.dart';
 import '../../core/formatters/date_formatter.dart';
 import '../../core/providers/auth_providers.dart';
 import '../../domain/models/catalog_models.dart';
@@ -40,11 +41,11 @@ Future<bool> _confirm(BuildContext context, String title) async =>
         content: const Text('Esta accion no se puede deshacer.'),
         actions: <Widget>[
           TextButton(
-            onPressed: () => context.pop(false),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            onPressed: () => context.pop(true),
+            onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Confirmar'),
           ),
         ],
@@ -225,6 +226,7 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
   final List<DetalleVenta> details = <DetalleVenta>[];
   int? productId, clientId;
   String method = 'EFECTIVO';
+  bool saving = false;
   @override
   void dispose() {
     quantity.dispose();
@@ -239,6 +241,12 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
     (num total, DetalleVenta x) => total + x.cantidad * x.precioUnitario,
   );
   Future<void> _save() async {
+    if (saving ||
+        !ref
+            .read(authNotifierProvider.notifier)
+            .hasPermission(PermissionCodes.ventasCrear))
+      return;
+    setState(() => saving = true);
     try {
       final VentaRequest request = BuildSale().call(
         detalles: details,
@@ -246,6 +254,7 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
         descuento: num.tryParse(discount.text) ?? 0,
         metodoPago: method,
         observaciones: observations.text.trim(),
+        usuarioId: ref.read(authNotifierProvider).user?.id,
       );
       await ref.read(ventasProvider.notifier).create(request);
       if (mounted) context.pop();
@@ -254,6 +263,7 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.toString())));
+      if (mounted) setState(() => saving = false);
     }
   }
 
@@ -401,7 +411,19 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
             Text(
               'Total: ${(subtotal - discountValue + iva).toStringAsFixed(2)}',
             ),
-            FilledButton(onPressed: _save, child: const Text('Guardar venta')),
+            FilledButton(
+              onPressed:
+                  ref
+                          .watch(authNotifierProvider)
+                          .permisos
+                          .contains(PermissionCodes.ventasCrear) &&
+                      !saving
+                  ? _save
+                  : null,
+              child: saving
+                  ? const CircularProgressIndicator()
+                  : const Text('Guardar venta'),
+            ),
           ],
         ),
       ),
@@ -414,15 +436,12 @@ class VentaDetailPage extends ConsumerWidget {
   final int id;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<Venta> value = ref.watch(
-      FutureProvider<Venta>(
-        (Ref ref) => ref.watch(ventaRepositoryProvider).getById(id),
-      ),
-    );
+    final AsyncValue<Venta> value = ref.watch(ventaDetailProvider(id));
     final bool canCancel = ref
         .watch(authNotifierProvider)
         .permisos
         .contains(PermissionCodes.ventasEliminar);
+    final bool mutationInFlight = ref.watch(ventasProvider).isLoading;
     return Scaffold(
       appBar: AppBar(title: const Text('Detalle de venta')),
       body: value.when(
@@ -442,13 +461,27 @@ class VentaDetailPage extends ConsumerWidget {
             ),
             if (canCancel && sale.estado != 'ANULADA')
               FilledButton.tonal(
-                onPressed: () async {
-                  if (await _confirm(context, 'Anular venta')) {
-                    await ref.read(ventasProvider.notifier).anular(id);
-                    if (context.mounted) context.pop();
-                  }
-                },
-                child: const Text('Anular venta'),
+                onPressed: mutationInFlight
+                    ? null
+                    : () async {
+                        if (await _confirm(context, 'Anular venta')) {
+                          try {
+                            await ref.read(ventasProvider.notifier).anular(id);
+                            if (context.mounted) context.pop();
+                          } catch (error) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(userFailureMessage(error)),
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
+                child: mutationInFlight
+                    ? const CircularProgressIndicator()
+                    : const Text('Anular venta'),
               ),
           ],
         ),
@@ -470,6 +503,7 @@ class _ComprasPageState extends ConsumerState<ComprasPage> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Compra>> value = ref.watch(comprasProvider);
     final Set<String> permissions = ref.watch(authNotifierProvider).permisos;
+    final bool mutationInFlight = ref.watch(comprasProvider).isLoading;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Compras'),
@@ -529,16 +563,42 @@ class _ComprasPageState extends ConsumerState<ComprasPage> {
                                   ) &&
                                   x.estado != 'ANULADA')
                                 IconButton(
-                                  onPressed: () async {
-                                    if (await _confirm(
-                                      context,
-                                      'Anular compra',
-                                    ))
-                                      await ref
-                                          .read(comprasProvider.notifier)
-                                          .anular(x.id);
-                                  },
-                                  icon: const Icon(Icons.cancel_outlined),
+                                  onPressed: mutationInFlight
+                                      ? null
+                                      : () async {
+                                          if (await _confirm(
+                                            context,
+                                            'Anular compra',
+                                          ))
+                                            try {
+                                              await ref
+                                                  .read(
+                                                    comprasProvider.notifier,
+                                                  )
+                                                  .anular(x.id);
+                                            } catch (error) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      userFailureMessage(error),
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                        },
+                                  icon: mutationInFlight
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.cancel_outlined),
                                 ),
                             ],
                           ),
@@ -576,6 +636,47 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
   int? supplierId, productId;
   DateTime? invoiceDate;
   String status = 'PENDIENTE';
+  bool saving = false;
+  bool loadingExisting = false;
+  Object? loadError;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.id != null) Future<void>.microtask(_loadExisting);
+  }
+
+  Future<void> _loadExisting() async {
+    if (mounted) {
+      setState(() {
+        loadingExisting = true;
+        loadError = null;
+      });
+    }
+    try {
+      final Compra purchase = await ref
+          .read(compraRepositoryProvider)
+          .getById(widget.id!);
+      if (!mounted) return;
+      invoice.text = purchase.numeroFactura;
+      supplierId = purchase.proveedorId;
+      invoiceDate = purchase.fechaFactura;
+      status = purchase.estado ?? status;
+      discount.text = purchase.descuento.toString();
+      observations.text = purchase.observaciones ?? '';
+      details
+        ..clear()
+        ..addAll(purchase.detalles);
+      setState(() => loadingExisting = false);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          loadingExisting = false;
+          loadError = error;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     invoice.dispose();
@@ -591,6 +692,13 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
     (num t, DetalleCompra x) => t + x.cantidad * x.precioUnitario,
   );
   Future<void> _save() async {
+    final String permission = widget.id == null
+        ? PermissionCodes.comprasCrear
+        : PermissionCodes.comprasEditar;
+    if (saving ||
+        !ref.read(authNotifierProvider.notifier).hasPermission(permission))
+      return;
+    setState(() => saving = true);
     try {
       await ref
           .read(comprasProvider.notifier)
@@ -604,6 +712,7 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
               fechaFactura: invoiceDate,
               estado: status,
               observaciones: observations.text,
+              usuarioId: ref.read(authNotifierProvider).user?.id,
             ),
           );
       if (mounted) context.pop();
@@ -612,6 +721,7 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.toString())));
+      if (mounted) setState(() => saving = false);
     }
   }
 
@@ -626,140 +736,171 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
       appBar: AppBar(
         title: Text(widget.id == null ? 'Nueva compra' : 'Editar compra'),
       ),
-      body: Form(
-        key: keyForm,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: <Widget>[
-            TextFormField(
-              controller: invoice,
-              decoration: const InputDecoration(labelText: 'Numero de factura'),
-              validator: (String? v) =>
-                  v == null || v.trim().isEmpty ? 'Campo requerido' : null,
-            ),
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: 'Proveedor'),
-              value: supplierId,
-              items: suppliers
-                  .map(
-                    (Proveedor x) => DropdownMenuItem<int>(
-                      value: x.id,
-                      child: Text(x.nombre),
+      body: loadingExisting
+          ? const Center(child: CircularProgressIndicator())
+          : loadError != null
+          ? _error(loadError!, _loadExisting)
+          : Form(
+              key: keyForm,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: <Widget>[
+                  TextFormField(
+                    controller: invoice,
+                    decoration: const InputDecoration(
+                      labelText: 'Numero de factura',
                     ),
-                  )
-                  .toList(),
-              onChanged: (int? v) => setState(() => supplierId = v),
-            ),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'Estado'),
-              value: status,
-              items: const <String>['PENDIENTE', 'COMPLETADA', 'ANULADA']
-                  .map(
-                    (String x) =>
-                        DropdownMenuItem<String>(value: x, child: Text(x)),
-                  )
-                  .toList(),
-              onChanged: (String? v) => setState(() => status = v ?? status),
-            ),
-            TextButton(
-              onPressed: () async {
-                final DateTime? value = await _pickDate(context, invoiceDate);
-                if (mounted) setState(() => invoiceDate = value);
-              },
-              child: Text(
-                invoiceDate == null
-                    ? 'Fecha factura'
-                    : DateFormatter.forDisplay(invoiceDate!),
-              ),
-            ),
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: 'Producto'),
-              value: productId,
-              items: products
-                  .map(
-                    (Producto x) => DropdownMenuItem<int>(
-                      value: x.id,
-                      child: Text(x.nombre),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (int? v) => setState(() {
-                productId = v;
-                price.text =
-                    products
-                        .where((Producto x) => x.id == v)
-                        .firstOrNull
-                        ?.precioCompra
-                        .toString() ??
-                    '';
-              }),
-            ),
-            TextField(
-              controller: quantity,
-              decoration: const InputDecoration(labelText: 'Cantidad'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: price,
-              decoration: const InputDecoration(labelText: 'Precio unitario'),
-              keyboardType: TextInputType.number,
-            ),
-            FilledButton(
-              onPressed: () {
-                final Producto? p = products
-                    .where((Producto x) => x.id == productId)
-                    .firstOrNull;
-                final int? q = int.tryParse(quantity.text);
-                final num? unit = num.tryParse(price.text);
-                if (p == null ||
-                    q == null ||
-                    q <= 0 ||
-                    unit == null ||
-                    unit < 0)
-                  return;
-                setState(
-                  () => details.add(
-                    DetalleCompra(
-                      productoId: p.id,
-                      productoNombre: p.nombre,
-                      cantidad: q,
-                      precioUnitario: unit,
-                      subtotal: q * unit,
+                    validator: (String? v) => v == null || v.trim().isEmpty
+                        ? 'Campo requerido'
+                        : null,
+                  ),
+                  DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(labelText: 'Proveedor'),
+                    value: supplierId,
+                    items: suppliers
+                        .map(
+                          (Proveedor x) => DropdownMenuItem<int>(
+                            value: x.id,
+                            child: Text(x.nombre),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (int? v) => setState(() => supplierId = v),
+                  ),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(labelText: 'Estado'),
+                    value: status,
+                    items: const <String>['PENDIENTE', 'COMPLETADA', 'ANULADA']
+                        .map(
+                          (String x) => DropdownMenuItem<String>(
+                            value: x,
+                            child: Text(x),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (String? v) =>
+                        setState(() => status = v ?? status),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final DateTime? value = await _pickDate(
+                        context,
+                        invoiceDate,
+                      );
+                      if (mounted) setState(() => invoiceDate = value);
+                    },
+                    child: Text(
+                      invoiceDate == null
+                          ? 'Fecha factura'
+                          : DateFormatter.forDisplay(invoiceDate!),
                     ),
                   ),
-                );
-              },
-              child: const Text('Agregar linea'),
-            ),
-            ...details.map(
-              (DetalleCompra x) => ListTile(
-                title: Text(x.productoNombre ?? 'Producto'),
-                subtitle: Text('${x.cantidad} x ${x.precioUnitario}'),
-                trailing: Text(x.subtotal!.toStringAsFixed(2)),
+                  DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(labelText: 'Producto'),
+                    value: productId,
+                    items: products
+                        .map(
+                          (Producto x) => DropdownMenuItem<int>(
+                            value: x.id,
+                            child: Text(x.nombre),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (int? v) => setState(() {
+                      productId = v;
+                      price.text =
+                          products
+                              .where((Producto x) => x.id == v)
+                              .firstOrNull
+                              ?.precioCompra
+                              .toString() ??
+                          '';
+                    }),
+                  ),
+                  TextField(
+                    controller: quantity,
+                    decoration: const InputDecoration(labelText: 'Cantidad'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextField(
+                    controller: price,
+                    decoration: const InputDecoration(
+                      labelText: 'Precio unitario',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      final Producto? p = products
+                          .where((Producto x) => x.id == productId)
+                          .firstOrNull;
+                      final int? q = int.tryParse(quantity.text);
+                      final num? unit = num.tryParse(price.text);
+                      if (p == null ||
+                          q == null ||
+                          q <= 0 ||
+                          unit == null ||
+                          unit < 0)
+                        return;
+                      setState(
+                        () => details.add(
+                          DetalleCompra(
+                            productoId: p.id,
+                            productoNombre: p.nombre,
+                            cantidad: q,
+                            precioUnitario: unit,
+                            subtotal: q * unit,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Agregar linea'),
+                  ),
+                  ...details.map(
+                    (DetalleCompra x) => ListTile(
+                      title: Text(x.productoNombre ?? 'Producto'),
+                      subtitle: Text('${x.cantidad} x ${x.precioUnitario}'),
+                      trailing: Text(x.subtotal!.toStringAsFixed(2)),
+                    ),
+                  ),
+                  TextField(
+                    controller: discount,
+                    decoration: const InputDecoration(labelText: 'Descuento'),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  TextField(
+                    controller: observations,
+                    decoration: const InputDecoration(
+                      labelText: 'Observaciones',
+                    ),
+                  ),
+                  Text('Subtotal: ${subtotal.toStringAsFixed(2)}'),
+                  Text('IVA (15%): ${iva.toStringAsFixed(2)}'),
+                  Text('Total: ${(subtotal - d + iva).toStringAsFixed(2)}'),
+                  FilledButton(
+                    onPressed:
+                        !saving &&
+                            ref
+                                .watch(authNotifierProvider)
+                                .permisos
+                                .contains(
+                                  widget.id == null
+                                      ? PermissionCodes.comprasCrear
+                                      : PermissionCodes.comprasEditar,
+                                )
+                        ? () {
+                            if (keyForm.currentState!.validate() &&
+                                details.isNotEmpty)
+                              _save();
+                          }
+                        : null,
+                    child: saving
+                        ? const CircularProgressIndicator()
+                        : const Text('Guardar compra'),
+                  ),
+                ],
               ),
             ),
-            TextField(
-              controller: discount,
-              decoration: const InputDecoration(labelText: 'Descuento'),
-              onChanged: (_) => setState(() {}),
-            ),
-            TextField(
-              controller: observations,
-              decoration: const InputDecoration(labelText: 'Observaciones'),
-            ),
-            Text('Subtotal: ${subtotal.toStringAsFixed(2)}'),
-            Text('IVA (15%): ${iva.toStringAsFixed(2)}'),
-            Text('Total: ${(subtotal - d + iva).toStringAsFixed(2)}'),
-            FilledButton(
-              onPressed: () {
-                if (keyForm.currentState!.validate() && details.isNotEmpty)
-                  _save();
-              },
-              child: const Text('Guardar compra'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -861,6 +1002,7 @@ class _MovimientoFormState extends ConsumerState<MovimientoFormPage> {
       reference = TextEditingController(),
       reason = TextEditingController(),
       price = TextEditingController();
+  bool saving = false;
   @override
   void dispose() {
     quantity.dispose();
@@ -919,24 +1061,48 @@ class _MovimientoFormState extends ConsumerState<MovimientoFormPage> {
             decoration: const InputDecoration(labelText: 'Precio unitario'),
           ),
           FilledButton(
-            onPressed: () async {
-              final int? q = int.tryParse(quantity.text);
-              if (productId == null || q == null || q <= 0) return;
-              await ref
-                  .read(movimientosProvider.notifier)
-                  .create(
-                    MovimientoStockRequest(
-                      productoId: productId!,
-                      cantidad: q,
-                      tipo: type,
-                      referencia: reference.text,
-                      motivo: reason.text,
-                      precioUnitario: num.tryParse(price.text),
-                    ),
-                  );
-              if (context.mounted) context.pop();
-            },
-            child: const Text('Registrar movimiento'),
+            onPressed:
+                !saving &&
+                    ref
+                        .watch(authNotifierProvider)
+                        .permisos
+                        .contains(PermissionCodes.movimientosCrear)
+                ? () async {
+                    final int? q = int.tryParse(quantity.text);
+                    if (saving || productId == null || q == null || q <= 0)
+                      return;
+                    setState(() => saving = true);
+                    try {
+                      await ref
+                          .read(movimientosProvider.notifier)
+                          .create(
+                            MovimientoStockRequest(
+                              productoId: productId!,
+                              cantidad: q,
+                              tipo: type,
+                              referencia: reference.text,
+                              motivo: reason.text,
+                              precioUnitario: num.tryParse(price.text),
+                              usuarioId: ref
+                                  .read(authNotifierProvider)
+                                  .user
+                                  ?.id,
+                            ),
+                          );
+                      if (context.mounted) context.pop();
+                    } catch (error) {
+                      if (context.mounted) {
+                        setState(() => saving = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(userFailureMessage(error))),
+                        );
+                      }
+                    }
+                  }
+                : null,
+            child: saving
+                ? const CircularProgressIndicator()
+                : const Text('Registrar movimiento'),
           ),
         ],
       ),
@@ -950,6 +1116,7 @@ class GastosPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Gasto>> value = ref.watch(gastosProvider);
     final Set<String> permissions = ref.watch(authNotifierProvider).permisos;
+    final bool mutationInFlight = ref.watch(gastosProvider).isLoading;
     return Scaffold(
       appBar: AppBar(title: const Text('Gastos')),
       floatingActionButton: permissions.contains(PermissionCodes.gastosCrear)
@@ -985,13 +1152,40 @@ class GastosPage extends ConsumerWidget {
                           PermissionCodes.gastosEliminar,
                         ))
                           IconButton(
-                            onPressed: () async {
-                              if (await _confirm(context, 'Eliminar gasto'))
-                                await ref
-                                    .read(gastosProvider.notifier)
-                                    .remove(x.id);
-                            },
-                            icon: const Icon(Icons.delete_outline),
+                            onPressed: mutationInFlight
+                                ? null
+                                : () async {
+                                    if (await _confirm(
+                                      context,
+                                      'Eliminar gasto',
+                                    ))
+                                      try {
+                                        await ref
+                                            .read(gastosProvider.notifier)
+                                            .remove(x.id);
+                                      } catch (error) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                userFailureMessage(error),
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                  },
+                            icon: mutationInFlight
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.delete_outline),
                           ),
                       ],
                     ),
@@ -1019,6 +1213,45 @@ class _GastoFormState extends ConsumerState<GastoFormPage> {
       receipt = TextEditingController(),
       observations = TextEditingController();
   DateTime? date;
+  bool saving = false;
+  bool loadingExisting = false;
+  Object? loadError;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.id != null) Future<void>.microtask(_loadExisting);
+  }
+
+  Future<void> _loadExisting() async {
+    if (mounted) {
+      setState(() {
+        loadingExisting = true;
+        loadError = null;
+      });
+    }
+    try {
+      final Gasto expense = await ref
+          .read(gastoRepositoryProvider)
+          .getById(widget.id!);
+      if (!mounted) return;
+      description.text = expense.descripcion;
+      amount.text = expense.monto.toString();
+      category.text = expense.categoria ?? '';
+      method.text = expense.metodoPago ?? '';
+      receipt.text = expense.numeroComprobante ?? '';
+      observations.text = expense.observaciones ?? '';
+      date = expense.fechaGasto;
+      setState(() => loadingExisting = false);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          loadingExisting = false;
+          loadError = error;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     for (final TextEditingController x in <TextEditingController>[
@@ -1038,77 +1271,117 @@ class _GastoFormState extends ConsumerState<GastoFormPage> {
     appBar: AppBar(
       title: Text(widget.id == null ? 'Nuevo gasto' : 'Editar gasto'),
     ),
-    body: Form(
-      key: formKey,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          TextFormField(
-            controller: description,
-            decoration: const InputDecoration(labelText: 'Descripcion'),
-            validator: (String? v) =>
-                v == null || v.trim().isEmpty ? 'Campo requerido' : null,
-          ),
-          TextFormField(
-            controller: amount,
-            decoration: const InputDecoration(labelText: 'Monto'),
-            keyboardType: TextInputType.number,
-            validator: (String? v) =>
-                num.tryParse(v ?? '') == null ? 'Monto invalido' : null,
-          ),
-          TextField(
-            controller: category,
-            decoration: const InputDecoration(labelText: 'Categoria'),
-          ),
-          TextField(
-            controller: method,
-            decoration: const InputDecoration(labelText: 'Metodo de pago'),
-          ),
-          TextField(
-            controller: receipt,
-            decoration: const InputDecoration(
-              labelText: 'Numero de comprobante',
+    body: loadingExisting
+        ? const Center(child: CircularProgressIndicator())
+        : loadError != null
+        ? _error(loadError!, _loadExisting)
+        : Form(
+            key: formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: <Widget>[
+                TextFormField(
+                  controller: description,
+                  decoration: const InputDecoration(labelText: 'Descripcion'),
+                  validator: (String? v) =>
+                      v == null || v.trim().isEmpty ? 'Campo requerido' : null,
+                ),
+                TextFormField(
+                  controller: amount,
+                  decoration: const InputDecoration(labelText: 'Monto'),
+                  keyboardType: TextInputType.number,
+                  validator: (String? v) =>
+                      num.tryParse(v ?? '') == null ? 'Monto invalido' : null,
+                ),
+                TextField(
+                  controller: category,
+                  decoration: const InputDecoration(labelText: 'Categoria'),
+                ),
+                TextField(
+                  controller: method,
+                  decoration: const InputDecoration(
+                    labelText: 'Metodo de pago',
+                  ),
+                ),
+                TextField(
+                  controller: receipt,
+                  decoration: const InputDecoration(
+                    labelText: 'Numero de comprobante',
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final DateTime? value = await _pickDate(context, date);
+                    if (mounted) setState(() => date = value);
+                  },
+                  child: Text(
+                    date == null
+                        ? 'Fecha del gasto'
+                        : DateFormatter.forDisplay(date!),
+                  ),
+                ),
+                TextField(
+                  controller: observations,
+                  decoration: const InputDecoration(labelText: 'Observaciones'),
+                ),
+                FilledButton(
+                  onPressed:
+                      ref
+                              .watch(authNotifierProvider)
+                              .permisos
+                              .contains(
+                                widget.id == null
+                                    ? PermissionCodes.gastosCrear
+                                    : PermissionCodes.gastosEditar,
+                              ) &&
+                          !saving
+                      ? () async {
+                          if (!(formKey.currentState?.validate() ?? false))
+                            return;
+                          setState(() => saving = true);
+                          try {
+                            await ref
+                                .read(gastosProvider.notifier)
+                                .save(
+                                  widget.id,
+                                  GastoRequest(
+                                    descripcion: description.text.trim(),
+                                    monto: num.parse(amount.text),
+                                    categoria: category.text.trim(),
+                                    metodoPago: method.text.trim(),
+                                    numeroComprobante: receipt.text.trim(),
+                                    fechaGasto: date,
+                                    observaciones: observations.text.trim(),
+                                    usuarioId: ref
+                                        .read(authNotifierProvider)
+                                        .user
+                                        ?.id,
+                                  ),
+                                );
+                            if (context.mounted) context.pop();
+                          } catch (error) {
+                            if (context.mounted) {
+                              setState(() => saving = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(userFailureMessage(error)),
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      : null,
+                  child: saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Guardar gasto'),
+                ),
+              ],
             ),
           ),
-          TextButton(
-            onPressed: () async {
-              final DateTime? value = await _pickDate(context, date);
-              if (mounted) setState(() => date = value);
-            },
-            child: Text(
-              date == null
-                  ? 'Fecha del gasto'
-                  : DateFormatter.forDisplay(date!),
-            ),
-          ),
-          TextField(
-            controller: observations,
-            decoration: const InputDecoration(labelText: 'Observaciones'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (!(formKey.currentState?.validate() ?? false)) return;
-              await ref
-                  .read(gastosProvider.notifier)
-                  .save(
-                    widget.id,
-                    GastoRequest(
-                      descripcion: description.text.trim(),
-                      monto: num.parse(amount.text),
-                      categoria: category.text.trim(),
-                      metodoPago: method.text.trim(),
-                      numeroComprobante: receipt.text.trim(),
-                      fechaGasto: date,
-                      observaciones: observations.text.trim(),
-                    ),
-                  );
-              if (context.mounted) context.pop();
-            },
-            child: const Text('Guardar gasto'),
-          ),
-        ],
-      ),
-    ),
   );
 }
 

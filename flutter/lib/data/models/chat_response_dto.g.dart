@@ -32,12 +32,7 @@ _ChatResponseDto _$ChatResponseDtoFromJson(Map<String, dynamic> json) =>
               ?.map((e) => ChatSourceDto.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const <ChatSourceDto>[],
-      conversationId: json['conversationId'] as String?,
     );
 
 Map<String, dynamic> _$ChatResponseDtoToJson(_ChatResponseDto instance) =>
-    <String, dynamic>{
-      'answer': instance.answer,
-      'sources': instance.sources,
-      'conversationId': instance.conversationId,
-    };
+    <String, dynamic>{'answer': instance.answer, 'sources': instance.sources};

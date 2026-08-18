@@ -56,6 +56,7 @@ abstract class VentaRequest with _$VentaRequest {
     String? metodoPago,
     String? estado,
     String? observaciones,
+    int? usuarioId,
     required List<DetalleVenta> detalles,
   }) = _VentaRequest;
   factory VentaRequest.fromJson(Map<String, Object?> json) =>
@@ -109,6 +110,7 @@ abstract class CompraRequest with _$CompraRequest {
     String? estado,
     String? observaciones,
     DateTime? fechaFactura,
+    int? usuarioId,
     required List<DetalleCompra> detalles,
   }) = _CompraRequest;
   factory CompraRequest.fromJson(Map<String, Object?> json) =>
@@ -145,6 +147,7 @@ abstract class MovimientoStockRequest with _$MovimientoStockRequest {
     String? referencia,
     String? motivo,
     num? precioUnitario,
+    int? usuarioId,
   }) = _MovimientoStockRequest;
   factory MovimientoStockRequest.fromJson(Map<String, Object?> json) =>
       _$MovimientoStockRequestFromJson(json);
@@ -177,6 +180,7 @@ abstract class GastoRequest with _$GastoRequest {
     String? numeroComprobante,
     DateTime? fechaGasto,
     String? observaciones,
+    int? usuarioId,
   }) = _GastoRequest;
   factory GastoRequest.fromJson(Map<String, Object?> json) =>
       _$GastoRequestFromJson(json);

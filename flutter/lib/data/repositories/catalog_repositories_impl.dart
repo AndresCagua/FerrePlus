@@ -26,6 +26,15 @@ abstract class _CrudRepository<T> {
     }
   }
 
+  Future<T> getByIdValue(int id) async {
+    try {
+      final Response<Object?> response = await dio.get<Object?>('$path/$id');
+      return decode(_map(response.data));
+    } on DioException catch (error) {
+      throw mapDioFailure(error);
+    }
+  }
+
   Future<T> createValue(T value) async {
     try {
       final Response<Object?> response = await dio.post<Object?>(
@@ -72,6 +81,8 @@ class CategoriaRepositoryImpl extends _CrudRepository<Categoria>
   @override
   Future<Categoria> create(Categoria value) => createValue(value);
   @override
+  Future<Categoria> getById(int id) => getByIdValue(id);
+  @override
   Future<Categoria> update(int id, Categoria value) => updateValue(id, value);
   @override
   Future<void> delete(int id) => deleteValue(id);
@@ -94,6 +105,8 @@ class ProveedorRepositoryImpl extends _CrudRepository<Proveedor>
   };
   @override
   Future<Proveedor> create(Proveedor value) => createValue(value);
+  @override
+  Future<Proveedor> getById(int id) => getByIdValue(id);
   @override
   Future<Proveedor> update(int id, Proveedor value) => updateValue(id, value);
   @override
@@ -118,6 +131,8 @@ class ClienteRepositoryImpl extends _CrudRepository<Cliente>
   @override
   Future<Cliente> create(Cliente value) => createValue(value);
   @override
+  Future<Cliente> getById(int id) => getByIdValue(id);
+  @override
   Future<Cliente> update(int id, Cliente value) => updateValue(id, value);
   @override
   Future<void> delete(int id) => deleteValue(id);
@@ -126,6 +141,15 @@ class ClienteRepositoryImpl extends _CrudRepository<Cliente>
 class ProductoRepositoryImpl implements ProductoRepository {
   ProductoRepositoryImpl(this.dio);
   final Dio dio;
+  @override
+  Future<Producto> getById(int id) async {
+    try {
+      final Response<Object?> response = await dio.get<Object?>('${ApiPaths.productos}/$id');
+      return Producto.fromJson(_map(response.data));
+    } on DioException catch (error) {
+      throw mapDioFailure(error);
+    }
+  }
   @override
   Future<List<Producto>> list({String? query, int? categoria}) async {
     try {

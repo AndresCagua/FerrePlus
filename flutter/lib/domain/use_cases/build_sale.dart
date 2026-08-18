@@ -12,6 +12,7 @@ class BuildSale {
     String? metodoPago,
     String? observaciones,
     String? numeroFactura,
+    int? usuarioId,
     Map<int, int>? stockByProduct,
   }) {
     if (detalles.isEmpty)
@@ -46,6 +47,7 @@ class BuildSale {
       total: taxable + iva,
       metodoPago: metodoPago,
       observaciones: observaciones,
+      usuarioId: usuarioId,
       detalles: detalles,
     );
   }

@@ -11,12 +11,22 @@ import 'package:ferreplus/domain/repositories/commercial_repositories.dart';
 import 'package:ferreplus/presentation/features/catalog_providers.dart';
 import 'package:ferreplus/presentation/features/commercial_pages.dart';
 import 'package:ferreplus/presentation/features/commercial_providers.dart';
+import 'package:ferreplus/core/constants/permission_codes.dart';
+import 'package:ferreplus/core/routing/app_router.dart';
 
 class _Auth extends AuthNotifier {
   @override
   AuthState build() => const AuthState(
     status: AuthStatus.authenticated,
     permisos: <String>{'VENTAS_VER', 'VENTAS_CREAR'},
+  );
+}
+
+class _ReadOnlySalesAuth extends AuthNotifier {
+  @override
+  AuthState build() => const AuthState(
+    status: AuthStatus.authenticated,
+    permisos: <String>{PermissionCodes.ventas},
   );
 }
 
@@ -29,6 +39,8 @@ class _Products implements ProductoRepository {
     const Producto(id: 1, nombre: 'Martillo', stockActual: 5, precioVenta: 100),
   ];
   @override
+  Future<Producto> getById(int id) async => const Producto(id: 1, nombre: 'Martillo');
+  @override
   Future<Producto> create(Producto value) async => value;
   @override
   Future<Producto> update(int id, Producto value) async => value;
@@ -39,6 +51,8 @@ class _Products implements ProductoRepository {
 class _Clients implements ClienteRepository {
   @override
   Future<List<Cliente>> list() async => <Cliente>[];
+  @override
+  Future<Cliente> getById(int id) async => const Cliente(id: 1, nombre: 'Cliente');
   @override
   Future<Cliente> create(Cliente value) async => value;
   @override
@@ -111,5 +125,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('COMPLETADA'), findsOneWidget);
     expect(find.text('11.50'), findsOneWidget);
+  });
+
+  testWidgets('bloquea guardar venta sin VENTAS_CREAR', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authNotifierProvider.overrideWith(_ReadOnlySalesAuth.new),
+          ventaRepositoryProvider.overrideWithValue(_Sales()),
+        ],
+        child: const MaterialApp(home: VentaFormPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final FilledButton button = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Guardar venta'),
+    );
+    expect(button.onPressed, isNull);
+  });
+
+  test('protege dashboard con DASHBOARD_VER', () {
+    expect(routePermissions['/'], PermissionCodes.dashboard);
+    expect(routePermissions['/dashboard'], PermissionCodes.dashboard);
   });
 }

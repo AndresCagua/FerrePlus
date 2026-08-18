@@ -32,6 +32,7 @@ final preciosProvider =
 
 class PreciosNotifier extends AsyncNotifier<List<PrecioProducto>> {
   late final PrecioRepository repository;
+  bool mutationInFlight = false;
   @override
   Future<List<PrecioProducto>> build() {
     repository = ref.watch(precioRepositoryProvider);
@@ -44,8 +45,18 @@ class PreciosNotifier extends AsyncNotifier<List<PrecioProducto>> {
   }
 
   Future<void> updatePrice(int id, ActualizarPrecioVentaRequest r) async {
-    await repository.actualizarVenta(id, r);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.actualizarVenta(id, r);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<PrecioProducto>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }
 
@@ -55,6 +66,7 @@ final usuariosProvider = AsyncNotifierProvider<UsuariosNotifier, List<Usuario>>(
 
 class UsuariosNotifier extends AsyncNotifier<List<Usuario>> {
   late final UsuarioRepository repository;
+  bool mutationInFlight = false;
   @override
   Future<List<Usuario>> build() {
     repository = ref.watch(usuarioRepositoryProvider);
@@ -67,20 +79,48 @@ class UsuariosNotifier extends AsyncNotifier<List<Usuario>> {
   }
 
   Future<void> save(int? id, UsuarioRequest r) async {
-    if (id == null)
-      await repository.create(r);
-    else
-      await repository.update(id, r);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      if (id == null)
+        await repository.create(r);
+      else
+        await repository.update(id, r);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Usuario>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<void> remove(int id) async {
-    await repository.delete(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.delete(id);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Usuario>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
-  Future<void> changePassword(int id, CambioPasswordRequest r) =>
-      repository.changePassword(id, r);
+  Future<void> changePassword(int id, CambioPasswordRequest r) async {
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.changePassword(id, r);
+    } finally {
+      mutationInFlight = false;
+    }
+  }
 }
 
 final rolesProvider = AsyncNotifierProvider<RolesNotifier, List<Rol>>(
@@ -89,6 +129,7 @@ final rolesProvider = AsyncNotifierProvider<RolesNotifier, List<Rol>>(
 
 class RolesNotifier extends AsyncNotifier<List<Rol>> {
   late final RolRepository repository;
+  bool mutationInFlight = false;
   @override
   Future<List<Rol>> build() {
     repository = ref.watch(rolRepositoryProvider);
@@ -101,16 +142,36 @@ class RolesNotifier extends AsyncNotifier<List<Rol>> {
   }
 
   Future<void> save(int? id, RolRequest r) async {
-    if (id == null)
-      await repository.create(r);
-    else
-      await repository.update(id, r);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      if (id == null)
+        await repository.create(r);
+      else
+        await repository.update(id, r);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Rol>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<void> remove(int id) async {
-    await repository.delete(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.delete(id);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Rol>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }
 
@@ -158,6 +219,7 @@ class LogsNotifier extends AsyncNotifier<LogsPage> {
   DateTime? desde, hasta;
   int? usuarioId;
   String? entidad, accion;
+  bool mutationInFlight = false;
   @override
   Future<LogsPage> build() {
     repository = ref.watch(logRepositoryProvider);
@@ -196,6 +258,19 @@ class LogsNotifier extends AsyncNotifier<LogsPage> {
   Future<void> goTo(int value) async {
     page = value;
     await reload();
+  }
+
+  Future<LogsEliminados> deleteRange(DateTime from, DateTime to) async {
+    if (mutationInFlight) return const LogsEliminados(0);
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      final LogsEliminados result = await repository.deleteRange(from, to);
+      await reload();
+      return result;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }
 

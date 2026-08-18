@@ -13,6 +13,7 @@ class BuildPurchase {
     DateTime? fechaFactura,
     String? estado,
     String? observaciones,
+    int? usuarioId,
   }) {
     if (numeroFactura.trim().isEmpty || detalles.isEmpty)
       throw ArgumentError('Factura y al menos un detalle son obligatorios.');
@@ -38,6 +39,7 @@ class BuildPurchase {
       fechaFactura: fechaFactura,
       estado: estado,
       observaciones: observaciones,
+      usuarioId: usuarioId,
       detalles: detalles,
     );
   }

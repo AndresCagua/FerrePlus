@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/permission_codes.dart';
+import '../../core/errors/failure_message.dart';
 import '../../core/providers/auth_providers.dart';
 import '../../domain/models/admin_models.dart';
 import '../../domain/models/commercial_models.dart';
@@ -35,6 +36,7 @@ class PreciosPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<PrecioProducto>> state = ref.watch(preciosProvider);
+    final bool mutationInFlight = state.isLoading;
     return Scaffold(
       appBar: AppBar(title: const Text('Precios')),
       body: state.when(
@@ -63,8 +65,9 @@ class PreciosPage extends ConsumerWidget {
                           ? IconButton(
                               tooltip: 'Actualizar precio',
                               icon: const Icon(Icons.edit),
-                              onPressed: () =>
-                                  _showPriceDialog(context, ref, price),
+                              onPressed: mutationInFlight
+                                  ? null
+                                  : () => _showPriceDialog(context, ref, price),
                             )
                           : null,
                       onTap: () => context.push(
@@ -89,6 +92,7 @@ Future<void> _showPriceDialog(
   final TextEditingController value = TextEditingController();
   final TextEditingController reference = TextEditingController();
   String mode = 'precio';
+  bool saving = false;
   await showDialog<void>(
     context: context,
     builder: (BuildContext dialogContext) => StatefulBuilder(
@@ -147,24 +151,45 @@ Future<void> _showPriceDialog(
                 child: const Text('Cancelar'),
               ),
               FilledButton(
-                onPressed: () async {
-                  if (!(key.currentState?.validate() ?? false)) return;
-                  final double parsed = double.parse(value.text);
-                  final ActualizarPrecioVentaRequest request = mode == 'precio'
-                      ? ActualizarPrecioVentaRequest(
-                          nuevoPrecio: parsed,
-                          referencia: reference.text.trim(),
-                        )
-                      : ActualizarPrecioVentaRequest(
-                          margenPorcentaje: parsed,
-                          referencia: reference.text.trim(),
-                        );
-                  await ref
-                      .read(preciosProvider.notifier)
-                      .updatePrice(price.id, request);
-                  if (dialogContext.mounted) dialogContext.pop();
-                },
-                child: const Text('Actualizar'),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        if (!(key.currentState?.validate() ?? false)) return;
+                        set(() => saving = true);
+                        final double parsed = double.parse(value.text);
+                        final ActualizarPrecioVentaRequest request =
+                            mode == 'precio'
+                            ? ActualizarPrecioVentaRequest(
+                                nuevoPrecio: parsed,
+                                referencia: reference.text.trim(),
+                              )
+                            : ActualizarPrecioVentaRequest(
+                                margenPorcentaje: parsed,
+                                referencia: reference.text.trim(),
+                              );
+                        try {
+                          await ref
+                              .read(preciosProvider.notifier)
+                              .updatePrice(price.id, request);
+                          if (dialogContext.mounted) dialogContext.pop();
+                        } catch (error) {
+                          if (dialogContext.mounted) {
+                            set(() => saving = false);
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              SnackBar(
+                                content: Text(userFailureMessage(error)),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Actualizar'),
               ),
             ],
           ),
@@ -271,7 +296,8 @@ class UsuariosPage extends ConsumerWidget {
 }
 
 class UsuarioFormPage extends ConsumerStatefulWidget {
-  const UsuarioFormPage({this.usuario, super.key});
+  const UsuarioFormPage({this.id, this.usuario, super.key});
+  final int? id;
   final Usuario? usuario;
   @override
   ConsumerState<UsuarioFormPage> createState() => _UsuarioFormState();
@@ -283,6 +309,10 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
   bool active = true;
   int? roleId;
   final List<UsuarioPermiso> overrides = <UsuarioPermiso>[];
+  bool saving = false;
+  bool loadingExisting = false;
+  Object? loadError;
+  Usuario? loadedUsuario;
   @override
   void initState() {
     super.initState();
@@ -294,6 +324,39 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
     active = user?.activo ?? true;
     roleId = user?.rolId;
     overrides.addAll(user?.overrides ?? const <UsuarioPermiso>[]);
+    if (widget.id != null && user == null) {
+      Future<void>.microtask(_loadExisting);
+    }
+  }
+
+  Future<void> _loadExisting() async {
+    if (mounted) setState(() => loadingExisting = true);
+    try {
+      final Usuario user = await ref
+          .read(usuarioRepositoryProvider)
+          .getById(widget.id!);
+      if (!mounted) return;
+      loadedUsuario = user;
+      name.text = user.nombre;
+      email.text = user.email;
+      phone.text = user.telefono ?? '';
+      active = user.activo;
+      roleId = user.rolId;
+      overrides
+        ..clear()
+        ..addAll(user.overrides);
+      setState(() {
+        loadingExisting = false;
+        loadError = null;
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          loadingExisting = false;
+          loadError = error;
+        });
+      }
+    }
   }
 
   @override
@@ -306,6 +369,14 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
   }
 
   Future<void> save() async {
+    final bool editing = widget.id != null;
+    final String permission = !editing
+        ? PermissionCodes.usuariosCrear
+        : PermissionCodes.usuariosEditar;
+    if (saving ||
+        !ref.read(authNotifierProvider.notifier).hasPermission(permission)) {
+      return;
+    }
     if (!(formKey.currentState?.validate() ?? false) || roleId == null) return;
     final UsuarioRequest request = UsuarioRequest(
       nombre: name.text.trim(),
@@ -316,8 +387,20 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
       password: password.text.trim().isEmpty ? null : password.text.trim(),
       overrides: List<UsuarioPermiso>.of(overrides),
     );
-    await ref.read(usuariosProvider.notifier).save(widget.usuario?.id, request);
-    if (mounted) context.pop();
+    setState(() => saving = true);
+    try {
+      await ref
+          .read(usuariosProvider.notifier)
+          .save(editing ? widget.id : null, request);
+      if (mounted) context.pop();
+    } catch (error) {
+      if (mounted) {
+        setState(() => saving = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userFailureMessage(error))));
+      }
+    }
   }
 
   @override
@@ -325,85 +408,110 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
     final AsyncValue<List<Rol>> roles = ref.watch(rolesProvider);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.usuario == null ? 'Nuevo usuario' : 'Editar usuario',
-        ),
+        title: Text(widget.id == null ? 'Nuevo usuario' : 'Editar usuario'),
       ),
-      body: Form(
-        key: formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: <Widget>[
-            _field(name, 'Nombre', required: true),
-            _field(email, 'Email', required: true, email: true),
-            _field(phone, 'Telefono'),
-            SwitchListTile(
-              title: const Text('Activo'),
-              value: active,
-              onChanged: (bool v) => setState(() => active = v),
-            ),
-            roles.when(
-              loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace s) =>
-                  Text('No se pudieron cargar roles: $e'),
-              data: (List<Rol> values) => DropdownButtonFormField<int>(
-                initialValue: roleId,
-                decoration: const InputDecoration(labelText: 'Rol'),
-                items: values
-                    .map(
-                      (Rol r) => DropdownMenuItem<int>(
-                        value: r.id,
-                        child: Text(r.nombre),
+      body: loadingExisting
+          ? const Center(child: CircularProgressIndicator())
+          : loadError != null
+          ? errorView(loadError!, _loadExisting)
+          : Form(
+              key: formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: <Widget>[
+                  _field(name, 'Nombre', required: true),
+                  _field(email, 'Email', required: true, email: true),
+                  _field(phone, 'Telefono'),
+                  SwitchListTile(
+                    title: const Text('Activo'),
+                    value: active,
+                    onChanged: (bool v) => setState(() => active = v),
+                  ),
+                  roles.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (Object e, StackTrace s) =>
+                        Text('No se pudieron cargar roles: $e'),
+                    data: (List<Rol> values) => DropdownButtonFormField<int>(
+                      initialValue: roleId,
+                      decoration: const InputDecoration(labelText: 'Rol'),
+                      items: values
+                          .map(
+                            (Rol r) => DropdownMenuItem<int>(
+                              value: r.id,
+                              child: Text(r.nombre),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (int? v) => setState(() => roleId = v),
+                      validator: (int? v) =>
+                          v == null ? 'Seleccione un rol' : null,
+                    ),
+                  ),
+                  _field(
+                    password,
+                    widget.id == null
+                        ? 'Contrasena (requerida)'
+                        : 'Nueva contrasena (opcional)',
+                    required: widget.id == null,
+                    obscure: true,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Overrides de permisos',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  ...overrides.asMap().entries.map(
+                    (MapEntry<int, UsuarioPermiso> entry) =>
+                        _overrideRow(entry.key, entry.value),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(
+                      () => overrides.add(
+                        const UsuarioPermiso(
+                          permisoCodigo: '',
+                          concedido: true,
+                        ),
                       ),
-                    )
-                    .toList(),
-                onChanged: (int? v) => setState(() => roleId = v),
-                validator: (int? v) => v == null ? 'Seleccione un rol' : null,
+                    ),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Agregar override'),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed:
+                        !saving &&
+                            can(
+                              ref,
+                              widget.id == null
+                                  ? PermissionCodes.usuariosCrear
+                                  : PermissionCodes.usuariosEditar,
+                            )
+                        ? save
+                        : null,
+                    child: saving
+                        ? const CircularProgressIndicator()
+                        : const Text('Guardar'),
+                  ),
+                  if (widget.id != null) ...<Widget>[
+                    if (can(ref, PermissionCodes.usuariosEditar))
+                      OutlinedButton(
+                        onPressed: () =>
+                            _changePassword(context, ref, widget.id!),
+                        child: const Text('Cambiar contrasena'),
+                      ),
+                    if (can(ref, PermissionCodes.usuariosEliminar))
+                      TextButton(
+                        onPressed: () => _deleteUser(
+                          context,
+                          ref,
+                          loadedUsuario ?? widget.usuario!,
+                        ),
+                        child: const Text('Eliminar usuario'),
+                      ),
+                  ],
+                ],
               ),
             ),
-            _field(
-              password,
-              widget.usuario == null
-                  ? 'Contrasena (requerida)'
-                  : 'Nueva contrasena (opcional)',
-              required: widget.usuario == null,
-              obscure: true,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Overrides de permisos',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            ...overrides.asMap().entries.map(
-              (MapEntry<int, UsuarioPermiso> entry) =>
-                  _overrideRow(entry.key, entry.value),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => setState(
-                () => overrides.add(
-                  const UsuarioPermiso(permisoCodigo: '', concedido: true),
-                ),
-              ),
-              icon: const Icon(Icons.add),
-              label: const Text('Agregar override'),
-            ),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: save, child: const Text('Guardar')),
-            if (widget.usuario != null) ...<Widget>[
-              OutlinedButton(
-                onPressed: () =>
-                    _changePassword(context, ref, widget.usuario!.id),
-                child: const Text('Cambiar contrasena'),
-              ),
-              if (can(ref, PermissionCodes.usuariosEliminar))
-                TextButton(
-                  onPressed: () => _deleteUser(context, ref, widget.usuario!),
-                  child: const Text('Eliminar usuario'),
-                ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 
@@ -464,42 +572,76 @@ Future<void> _changePassword(
   final GlobalKey<FormState> key = GlobalKey<FormState>();
   final TextEditingController current = TextEditingController();
   final TextEditingController next = TextEditingController();
+  bool saving = false;
   await showDialog<void>(
     context: context,
-    builder: (BuildContext dialog) => AlertDialog(
-      title: const Text('Cambiar contrasena'),
-      content: Form(
-        key: key,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            _field(current, 'Contrasena actual', required: true, obscure: true),
-            _field(next, 'Nueva contrasena', required: true, obscure: true),
-          ],
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => dialog.pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: () async {
-            if (!(key.currentState?.validate() ?? false)) return;
-            await ref
-                .read(usuariosProvider.notifier)
-                .changePassword(
-                  id,
-                  CambioPasswordRequest(
-                    passwordActual: current.text,
-                    nuevoPassword: next.text,
+    builder: (BuildContext dialog) => StatefulBuilder(
+      builder: (BuildContext context, void Function(void Function()) set) =>
+          AlertDialog(
+            title: const Text('Cambiar contrasena'),
+            content: Form(
+              key: key,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  _field(
+                    current,
+                    'Contrasena actual',
+                    required: true,
+                    obscure: true,
                   ),
-                );
-            if (dialog.mounted) dialog.pop();
-          },
-          child: const Text('Cambiar'),
-        ),
-      ],
+                  _field(
+                    next,
+                    'Nueva contrasena',
+                    required: true,
+                    obscure: true,
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => dialog.pop(),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        if (!(key.currentState?.validate() ?? false)) return;
+                        set(() => saving = true);
+                        try {
+                          await ref
+                              .read(usuariosProvider.notifier)
+                              .changePassword(
+                                id,
+                                CambioPasswordRequest(
+                                  passwordActual: current.text,
+                                  nuevoPassword: next.text,
+                                ),
+                              );
+                          if (dialog.mounted) dialog.pop();
+                        } catch (error) {
+                          if (dialog.mounted) {
+                            set(() => saving = false);
+                            ScaffoldMessenger.of(dialog).showSnackBar(
+                              SnackBar(
+                                content: Text(userFailureMessage(error)),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Cambiar'),
+              ),
+            ],
+          ),
     ),
   );
   current.dispose();
@@ -511,25 +653,52 @@ Future<void> _deleteUser(
   WidgetRef ref,
   Usuario user,
 ) async {
+  bool deleting = false;
   final bool? confirmed = await showDialog<bool>(
     context: context,
-    builder: (BuildContext dialog) => AlertDialog(
-      title: const Text('Confirmar eliminacion'),
-      content: Text('Eliminar a ${user.nombre}?'),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => dialog.pop(false),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: () => dialog.pop(true),
-          child: const Text('Eliminar'),
-        ),
-      ],
+    builder: (BuildContext dialog) => StatefulBuilder(
+      builder: (BuildContext context, void Function(void Function()) set) {
+        return AlertDialog(
+          title: const Text('Confirmar eliminacion'),
+          content: Text('Eliminar a ${user.nombre}?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: deleting ? null : () => dialog.pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: deleting
+                  ? null
+                  : () async {
+                      set(() => deleting = true);
+                      try {
+                        await ref
+                            .read(usuariosProvider.notifier)
+                            .remove(user.id);
+                        if (dialog.mounted) dialog.pop(true);
+                      } catch (error) {
+                        if (dialog.mounted) {
+                          set(() => deleting = false);
+                          ScaffoldMessenger.of(dialog).showSnackBar(
+                            SnackBar(content: Text(userFailureMessage(error))),
+                          );
+                        }
+                      }
+                    },
+              child: deleting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
     ),
   );
   if (confirmed == true) {
-    await ref.read(usuariosProvider.notifier).remove(user.id);
     if (context.mounted) context.pop();
   }
 }
@@ -539,6 +708,7 @@ class RolesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Rol>> state = ref.watch(rolesProvider);
+    final bool mutationInFlight = state.isLoading;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Roles'),
@@ -565,8 +735,16 @@ class RolesPage extends ConsumerWidget {
               trailing: can(ref, PermissionCodes.rolesEliminar)
                   ? IconButton(
                       tooltip: 'Eliminar rol',
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _deleteRole(context, ref, role),
+                      icon: mutationInFlight
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.delete_outline),
+                      onPressed: mutationInFlight
+                          ? null
+                          : () => _deleteRole(context, ref, role),
                     )
                   : null,
               onTap: can(ref, PermissionCodes.rolesEditar)
@@ -581,30 +759,54 @@ class RolesPage extends ConsumerWidget {
 }
 
 Future<void> _deleteRole(BuildContext context, WidgetRef ref, Rol role) async {
-  final bool? confirmed = await showDialog<bool>(
+  bool deleting = false;
+  await showDialog<void>(
     context: context,
-    builder: (BuildContext dialog) => AlertDialog(
-      title: const Text('Confirmar eliminacion'),
-      content: Text('Eliminar el rol ${role.nombre}?'),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => dialog.pop(false),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: () => dialog.pop(true),
-          child: const Text('Eliminar'),
-        ),
-      ],
+    builder: (BuildContext dialog) => StatefulBuilder(
+      builder: (BuildContext context, void Function(void Function()) set) {
+        return AlertDialog(
+          title: const Text('Confirmar eliminacion'),
+          content: Text('Eliminar el rol ${role.nombre}?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: deleting ? null : () => dialog.pop(),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: deleting
+                  ? null
+                  : () async {
+                      set(() => deleting = true);
+                      try {
+                        await ref.read(rolesProvider.notifier).remove(role.id);
+                        if (dialog.mounted) dialog.pop();
+                      } catch (error) {
+                        if (dialog.mounted) {
+                          set(() => deleting = false);
+                          ScaffoldMessenger.of(dialog).showSnackBar(
+                            SnackBar(content: Text(userFailureMessage(error))),
+                          );
+                        }
+                      }
+                    },
+              child: deleting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
     ),
   );
-  if (confirmed == true) {
-    await ref.read(rolesProvider.notifier).remove(role.id);
-  }
 }
 
 class RolFormPage extends ConsumerStatefulWidget {
-  const RolFormPage({this.rol, super.key});
+  const RolFormPage({this.id, this.rol, super.key});
+  final int? id;
   final Rol? rol;
   @override
   ConsumerState<RolFormPage> createState() => _RolFormState();
@@ -614,12 +816,46 @@ class _RolFormState extends ConsumerState<RolFormPage> {
   final GlobalKey<FormState> key = GlobalKey<FormState>();
   late final TextEditingController name, description;
   final Set<String> selected = <String>{};
+  bool saving = false;
+  bool loadingExisting = false;
+  Object? loadError;
+  Rol? loadedRol;
   @override
   void initState() {
     super.initState();
     name = TextEditingController(text: widget.rol?.nombre);
     description = TextEditingController(text: widget.rol?.descripcion);
     selected.addAll(widget.rol?.permisos ?? const <String>[]);
+    if (widget.id != null && widget.rol == null) {
+      Future<void>.microtask(_loadExisting);
+    }
+  }
+
+  Future<void> _loadExisting() async {
+    if (mounted) setState(() => loadingExisting = true);
+    try {
+      final Rol role = await ref
+          .read(rolRepositoryProvider)
+          .getById(widget.id!);
+      if (!mounted) return;
+      loadedRol = role;
+      name.text = role.nombre;
+      description.text = role.descripcion ?? '';
+      selected
+        ..clear()
+        ..addAll(role.permisos);
+      setState(() {
+        loadingExisting = false;
+        loadError = null;
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          loadingExisting = false;
+          loadError = error;
+        });
+      }
+    }
   }
 
   @override
@@ -630,18 +866,36 @@ class _RolFormState extends ConsumerState<RolFormPage> {
   }
 
   Future<void> save() async {
+    final bool editing = widget.id != null;
+    final String permission = !editing
+        ? PermissionCodes.rolesCrear
+        : PermissionCodes.rolesEditar;
+    if (saving ||
+        !ref.read(authNotifierProvider.notifier).hasPermission(permission)) {
+      return;
+    }
     if (!(key.currentState?.validate() ?? false)) return;
-    await ref
-        .read(rolesProvider.notifier)
-        .save(
-          widget.rol?.id,
-          RolRequest(
-            nombre: name.text.trim(),
-            descripcion: description.text.trim(),
-            permisos: selected.toList()..sort(),
-          ),
-        );
-    if (mounted) context.pop();
+    setState(() => saving = true);
+    try {
+      await ref
+          .read(rolesProvider.notifier)
+          .save(
+            editing ? widget.id : null,
+            RolRequest(
+              nombre: name.text.trim(),
+              descripcion: description.text.trim(),
+              permisos: selected.toList()..sort(),
+            ),
+          );
+      if (mounted) context.pop();
+    } catch (error) {
+      if (mounted) {
+        setState(() => saving = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userFailureMessage(error))));
+      }
+    }
   }
 
   @override
@@ -650,29 +904,48 @@ class _RolFormState extends ConsumerState<RolFormPage> {
     final AsyncValue<List<Permiso>> permissions = ref.watch(permisosProvider);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.rol == null ? 'Nuevo rol' : 'Editar rol'),
+        title: Text(widget.id == null ? 'Nuevo rol' : 'Editar rol'),
       ),
-      body: Form(
-        key: key,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: <Widget>[
-            _field(name, 'Nombre', required: true),
-            _field(description, 'Descripcion'),
-            const SizedBox(height: 12),
-            modules.when(
-              loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace s) => Text('$e'),
-              data: (List<Modulo> values) => permissions.when(
-                loading: () => const LinearProgressIndicator(),
-                error: (Object e, StackTrace s) => Text('$e'),
-                data: (List<Permiso> all) => _permissionMatrix(values, all),
+      body: loadingExisting
+          ? const Center(child: CircularProgressIndicator())
+          : loadError != null
+          ? errorView(loadError!, _loadExisting)
+          : Form(
+              key: key,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: <Widget>[
+                  _field(name, 'Nombre', required: true),
+                  _field(description, 'Descripcion'),
+                  const SizedBox(height: 12),
+                  modules.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (Object e, StackTrace s) => Text('$e'),
+                    data: (List<Modulo> values) => permissions.when(
+                      loading: () => const LinearProgressIndicator(),
+                      error: (Object e, StackTrace s) => Text('$e'),
+                      data: (List<Permiso> all) =>
+                          _permissionMatrix(values, all),
+                    ),
+                  ),
+                  FilledButton(
+                    onPressed:
+                        !saving &&
+                            can(
+                              ref,
+                              widget.id == null
+                                  ? PermissionCodes.rolesCrear
+                                  : PermissionCodes.rolesEditar,
+                            )
+                        ? save
+                        : null,
+                    child: saving
+                        ? const CircularProgressIndicator()
+                        : const Text('Guardar'),
+                  ),
+                ],
               ),
             ),
-            FilledButton(onPressed: save, child: const Text('Guardar')),
-          ],
-        ),
-      ),
     );
   }
 
@@ -996,8 +1269,16 @@ class _LogsState extends ConsumerState<LogsPageView> {
           if (can(ref, PermissionCodes.logsEliminar))
             IconButton(
               tooltip: 'Borrar por rango',
-              icon: const Icon(Icons.delete_sweep),
-              onPressed: _deleteRange,
+              icon: state.isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.delete_sweep),
+              onPressed: ref.watch(logsProvider).isLoading
+                  ? null
+                  : _deleteRange,
             ),
         ],
       ),
@@ -1136,14 +1417,21 @@ class _LogsState extends ConsumerState<LogsPageView> {
       ),
     );
     if (yes == true) {
-      final LogsEliminados result = await ref
-          .read(logRepositoryProvider)
-          .deleteRange(from!, to!);
-      await ref.read(logsProvider.notifier).reload();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${result.eliminados} logs eliminados')),
-        );
+      try {
+        final LogsEliminados result = await ref
+            .read(logsProvider.notifier)
+            .deleteRange(from!, to!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${result.eliminados} logs eliminados')),
+          );
+        }
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(userFailureMessage(error))));
+        }
       }
     }
   }

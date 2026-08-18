@@ -62,7 +62,7 @@ class VentaRepositoryImpl implements VentaRepository {
     dio,
     ApiPaths.ventas,
     _decodeSale,
-    query: _dateAndStatusQuery(desde, hasta, estado, clienteId, 'clienteId'),
+    // El endpoint actual devuelve todas las ventas; los filtros se aplican en el notifier.
   );
 
   @override
@@ -108,13 +108,7 @@ class CompraRepositoryImpl implements CompraRepository {
     dio,
     ApiPaths.compras,
     _decodePurchase,
-    query: _dateAndStatusQuery(
-      desde,
-      hasta,
-      estado,
-      proveedorId,
-      'proveedorId',
-    ),
+    // El endpoint actual devuelve todas las compras; los filtros se aplican en el notifier.
   );
   @override
   Future<Compra> getById(int id) async =>
@@ -185,6 +179,7 @@ class MovimientoRepositoryImpl implements MovimientoRepository {
         'referencia': request.referencia,
         'motivo': request.motivo,
         'precioUnitario': request.precioUnitario,
+        'usuarioId': request.usuarioId,
       }, _decodeMovement);
 }
 
@@ -232,6 +227,7 @@ Map<String, Object?> _saleRequest(VentaRequest request) => <String, Object?>{
   'metodoPago': request.metodoPago,
   'estado': request.estado,
   'observaciones': request.observaciones,
+  'usuarioId': request.usuarioId,
   'detalles': request.detalles
       .map(
         (DetalleVenta item) => detailPayload(
@@ -253,6 +249,7 @@ Map<String, Object?> _purchaseRequest(CompraRequest request) =>
       'total': request.total,
       'estado': request.estado,
       'observaciones': request.observaciones,
+      'usuarioId': request.usuarioId,
       'fechaFactura': request.fechaFactura == null
           ? null
           : dateOnly(request.fechaFactura!),
@@ -277,20 +274,9 @@ Map<String, Object?> _expenseRequest(GastoRequest request) => <String, Object?>{
       ? null
       : dateOnly(request.fechaGasto!),
   'observaciones': request.observaciones,
+  'usuarioId': request.usuarioId,
 };
 
-Map<String, Object?> _dateAndStatusQuery(
-  DateTime? desde,
-  DateTime? hasta,
-  String? estado,
-  int? relationId,
-  String relationKey,
-) => <String, Object?>{
-  'desde': desde == null ? null : dateOnly(desde),
-  'hasta': hasta == null ? null : dateOnly(hasta),
-  'estado': estado,
-  relationKey: relationId,
-}..removeWhere((String key, Object? value) => value == null);
 Map<String, Object?> _movement(Map<String, Object?> json) {
   final Map<String, Object?> result = Map<String, Object?>.from(json);
   final Object? product = result['producto'];

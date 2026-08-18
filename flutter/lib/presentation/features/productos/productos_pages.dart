@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/permission_codes.dart';
 import '../../../core/providers/auth_providers.dart';
+import '../../../core/errors/failure_message.dart';
 import '../../../domain/models/catalog_models.dart';
-import '../../shared/catalog_widgets.dart';
+import '../../shared/widgets/confirm_dialog.dart';
+import '../../shared/widgets/permission_visibility.dart';
 import '../catalog_providers.dart';
 
 class ProductosPage extends ConsumerStatefulWidget {
@@ -82,6 +84,7 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
     Producto product,
     Set<String> permissions,
   ) {
+    final bool mutationInFlight = ref.watch(productosProvider).isLoading;
     final bool low =
         product.stockMinimo != null &&
         product.stockActual <= product.stockMinimo!;
@@ -116,14 +119,32 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
               allowed: permissions.contains(PermissionCodes.productosEliminar),
               child: IconButton(
                 tooltip: 'Eliminar producto',
-                onPressed: () async {
-                  if (await confirmDelete(context, product.nombre)) {
-                    await ref
-                        .read(productosProvider.notifier)
-                        .remove(product.id);
-                  }
-                },
-                icon: const Icon(Icons.delete_outline),
+                onPressed: mutationInFlight
+                    ? null
+                    : () async {
+                        if (await confirmDelete(context, product.nombre)) {
+                          try {
+                            await ref
+                                .read(productosProvider.notifier)
+                                .remove(product.id);
+                          } catch (error) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(userFailureMessage(error)),
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
+                icon: mutationInFlight
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.delete_outline),
               ),
             ),
           ],
@@ -153,6 +174,9 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
       <String, TextEditingController>{};
   int? selectedCategoriaId;
   int? selectedProveedorId;
+  bool saving = false;
+  bool loadingExisting = false;
+  Object? loadError;
   @override
   void initState() {
     super.initState();
@@ -171,6 +195,31 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
       fields[name] = TextEditingController();
     }
     _populate(widget.product);
+    if (widget.id != null && widget.product == null) {
+      Future<void>.microtask(_loadExisting);
+    }
+  }
+
+  Future<void> _loadExisting() async {
+    if (mounted) setState(() => loadingExisting = true);
+    try {
+      final Producto product = await ref
+          .read(productoRepositoryProvider)
+          .getById(widget.id!);
+      if (!mounted) return;
+      _populate(product);
+      setState(() {
+        loadingExisting = false;
+        loadError = null;
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          loadingExisting = false;
+          loadError = error;
+        });
+      }
+    }
   }
 
   void _populate(Producto? product) {
@@ -203,6 +252,13 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
   }
 
   Future<void> save() async {
+    final String permission = widget.id == null
+        ? PermissionCodes.productosCrear
+        : PermissionCodes.productosEditar;
+    if (!ref.read(authNotifierProvider).permisos.contains(permission) ||
+        saving) {
+      return;
+    }
     if (!(formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -221,13 +277,23 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
       categoria: _selectedCategoria(ref),
       proveedor: _selectedProveedor(ref),
     );
-    await ref.read(productosProvider.notifier).save(product);
-    if (mounted) {
-      final GoRouter? router = GoRouter.maybeOf(context);
-      if (router != null) {
-        router.pop();
-      } else {
-        Navigator.of(context).pop();
+    setState(() => saving = true);
+    try {
+      await ref.read(productosProvider.notifier).save(product);
+      if (mounted) {
+        final GoRouter? router = GoRouter.maybeOf(context);
+        if (router != null) {
+          router.pop();
+        } else {
+          Navigator.of(context).pop();
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => saving = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userFailureMessage(error))));
       }
     }
   }
@@ -262,7 +328,22 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
       appBar: AppBar(
         title: Text(widget.id == null ? 'Nuevo producto' : 'Editar producto'),
       ),
-      body: !allowed
+      body: loadingExisting
+          ? const Center(child: CircularProgressIndicator())
+          : loadError != null
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Text('No se pudo cargar el producto.'),
+                  FilledButton(
+                    onPressed: _loadExisting,
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            )
+          : !allowed
           ? const Center(child: Text('No tienes permiso para esta accion.'))
           : Form(
               key: formKey,
@@ -309,7 +390,16 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
                         setState(() => selectedProveedorId = value),
                   ),
                   const SizedBox(height: 12),
-                  FilledButton(onPressed: save, child: const Text('Guardar')),
+                  FilledButton(
+                    onPressed: saving ? null : save,
+                    child: saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Guardar'),
+                  ),
                 ],
               ),
             ),

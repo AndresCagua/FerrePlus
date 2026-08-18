@@ -143,4 +143,41 @@ void main() {
     ).called(1);
     verify(() => dio.delete<Object?>('/api/gastos/1')).called(1);
   });
+
+  test('request payload models include usuarioId when authenticated', () {
+    const int usuarioId = 42;
+    final Map<String, Object?> sale = const VentaRequest(
+      subtotal: 10,
+      descuento: 0,
+      iva: 1.5,
+      total: 11.5,
+      detalles: <DetalleVenta>[],
+      usuarioId: usuarioId,
+    ).toJson();
+    final Map<String, Object?> purchase = const CompraRequest(
+      numeroFactura: 'F-1',
+      subtotal: 10,
+      descuento: 0,
+      iva: 1.5,
+      total: 11.5,
+      detalles: <DetalleCompra>[],
+      usuarioId: usuarioId,
+    ).toJson();
+    final Map<String, Object?> movement = const MovimientoStockRequest(
+      productoId: 2,
+      cantidad: 1,
+      tipo: 'AJUSTE',
+      usuarioId: usuarioId,
+    ).toJson();
+    final Map<String, Object?> expense = const GastoRequest(
+      descripcion: 'Luz',
+      monto: 10,
+      usuarioId: usuarioId,
+    ).toJson();
+
+    expect(sale['usuarioId'], usuarioId);
+    expect(purchase['usuarioId'], usuarioId);
+    expect(movement['usuarioId'], usuarioId);
+    expect(expense['usuarioId'], usuarioId);
+  });
 }

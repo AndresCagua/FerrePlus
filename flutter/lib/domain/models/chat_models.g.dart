@@ -41,12 +41,7 @@ _ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) =>
               ?.map((e) => ChatSource.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const <ChatSource>[],
-      conversationId: json['conversationId'] as String?,
     );
 
 Map<String, dynamic> _$ChatResponseToJson(_ChatResponse instance) =>
-    <String, dynamic>{
-      'answer': instance.answer,
-      'sources': instance.sources,
-      'conversationId': instance.conversationId,
-    };
+    <String, dynamic>{'answer': instance.answer, 'sources': instance.sources};

@@ -32,6 +32,31 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Usuario> register(String email, String password, String nombre) async {
+    try {
+      final Response<Object?> response = await _dio.post<Object?>(
+        ApiPaths.register,
+        data: <String, Object?>{
+          'nombre': nombre,
+          'email': email,
+          'password': password,
+        },
+      );
+      final Map<String, Object?> json =
+          Map<String, Object?>.from(response.data! as Map<Object?, Object?>);
+      return Usuario.fromJson(json);
+    } on DioException catch (exception) {
+      if (exception.response?.statusCode == 400 ||
+          exception.response?.statusCode == 409) {
+        throw const ValidationFailure(
+          'El registro inicial no esta disponible: ya existen usuarios o los datos no son validos.',
+        );
+      }
+      throw mapDioFailure(exception);
+    }
+  }
+
+  @override
   Future<Usuario> getCurrentUser() async {
     try {
       final Response<Object?> response = await _dio.get<Object?>(ApiPaths.currentUser);

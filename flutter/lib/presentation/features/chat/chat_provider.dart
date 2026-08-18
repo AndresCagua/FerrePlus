@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/providers/auth_providers.dart';
 import '../../../data/repositories/chat_repository_impl.dart';
@@ -82,8 +83,6 @@ class ChatNotifier extends Notifier<ChatState> {
       final String answer = response.answer.trim().isEmpty
           ? 'No hay una respuesta disponible para esta consulta.'
           : response.answer;
-      final String effectiveConversationId =
-          response.conversationId ?? conversationId;
       final ChatMessage assistantMessage = ChatMessage(
         role: 'assistant',
         content: answer,
@@ -92,7 +91,7 @@ class ChatNotifier extends Notifier<ChatState> {
       );
       state = state.copyWith(
         messages: <ChatMessage>[...state.messages, assistantMessage],
-        conversationId: effectiveConversationId,
+        conversationId: conversationId,
         isSending: false,
       );
     } catch (error) {
@@ -122,6 +121,5 @@ class ChatNotifier extends Notifier<ChatState> {
 
   void clearError() => state = state.copyWith(clearError: true);
 
-  String _newConversationId() =>
-      'mobile-${DateTime.now().microsecondsSinceEpoch}';
+  String _newConversationId() => const Uuid().v4();
 }

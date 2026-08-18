@@ -31,6 +31,9 @@ final movimientosProvider =
 final gastosProvider = AsyncNotifierProvider<GastosNotifier, List<Gasto>>(
   GastosNotifier.new,
 );
+final ventaDetailProvider = FutureProvider.family<Venta, int>(
+  (ref, id) => ref.watch(ventaRepositoryProvider).getById(id),
+);
 final posNotifierProvider = NotifierProvider<PosNotifier, PosDraft>(
   PosNotifier.new,
 );
@@ -90,6 +93,7 @@ class PosNotifier extends Notifier<PosDraft> {
 
 class VentasNotifier extends AsyncNotifier<List<Venta>> {
   late final VentaRepository repository;
+  bool mutationInFlight = false;
   DateTime? desde;
   DateTime? hasta;
   String? estado;
@@ -97,25 +101,30 @@ class VentasNotifier extends AsyncNotifier<List<Venta>> {
   @override
   Future<List<Venta>> build() {
     repository = ref.watch(ventaRepositoryProvider);
-    return repository.list(
-      desde: desde,
-      hasta: hasta,
-      estado: estado,
-      clienteId: clienteId,
-    );
+    return repository.list();
   }
 
   Future<void> reload() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => repository.list(
-        desde: desde,
-        hasta: hasta,
-        estado: estado,
-        clienteId: clienteId,
-      ),
+      () async => _filterSales(await repository.list()),
     );
   }
+
+  List<Venta> _filterSales(List<Venta> values) => values
+      .where((Venta sale) {
+        final DateTime? date = sale.fechaCreacion;
+        final DateTime? exclusiveEnd = hasta == null
+            ? null
+            : DateTime(hasta!.year, hasta!.month, hasta!.day + 1);
+        return (estado == null || sale.estado == estado) &&
+            (clienteId == null || sale.clienteId == clienteId) &&
+            (desde == null || date == null || !date.isBefore(desde!)) &&
+            (exclusiveEnd == null ||
+                date == null ||
+                date.isBefore(exclusiveEnd));
+      })
+      .toList(growable: false);
 
   Future<void> filter({
     DateTime? from,
@@ -131,13 +140,33 @@ class VentasNotifier extends AsyncNotifier<List<Venta>> {
   }
 
   Future<void> create(VentaRequest request) async {
-    await repository.create(request);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.create(request);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Venta>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<void> anular(int id) async {
-    await repository.anular(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.anular(id);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Venta>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<List<Venta>> report(DateTime from, DateTime to) =>
@@ -146,6 +175,7 @@ class VentasNotifier extends AsyncNotifier<List<Venta>> {
 
 class ComprasNotifier extends AsyncNotifier<List<Compra>> {
   late final CompraRepository repository;
+  bool mutationInFlight = false;
   DateTime? desde;
   DateTime? hasta;
   String? estado;
@@ -153,25 +183,30 @@ class ComprasNotifier extends AsyncNotifier<List<Compra>> {
   @override
   Future<List<Compra>> build() {
     repository = ref.watch(compraRepositoryProvider);
-    return repository.list(
-      desde: desde,
-      hasta: hasta,
-      estado: estado,
-      proveedorId: proveedorId,
-    );
+    return repository.list();
   }
 
   Future<void> reload() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => repository.list(
-        desde: desde,
-        hasta: hasta,
-        estado: estado,
-        proveedorId: proveedorId,
-      ),
+      () async => _filterPurchases(await repository.list()),
     );
   }
+
+  List<Compra> _filterPurchases(List<Compra> values) => values
+      .where((Compra purchase) {
+        final DateTime? date = purchase.fechaFactura ?? purchase.fechaCreacion;
+        final DateTime? exclusiveEnd = hasta == null
+            ? null
+            : DateTime(hasta!.year, hasta!.month, hasta!.day + 1);
+        return (estado == null || purchase.estado == estado) &&
+            (proveedorId == null || purchase.proveedorId == proveedorId) &&
+            (desde == null || date == null || !date.isBefore(desde!)) &&
+            (exclusiveEnd == null ||
+                date == null ||
+                date.isBefore(exclusiveEnd));
+      })
+      .toList(growable: false);
 
   Future<void> filter({
     DateTime? from,
@@ -187,17 +222,37 @@ class ComprasNotifier extends AsyncNotifier<List<Compra>> {
   }
 
   Future<void> save(int? id, CompraRequest request) async {
-    if (id == null) {
-      await repository.create(request);
-    } else {
-      await repository.update(id, request);
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      if (id == null) {
+        await repository.create(request);
+      } else {
+        await repository.update(id, request);
+      }
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Compra>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
     }
-    await reload();
   }
 
   Future<void> anular(int id) async {
-    await repository.anular(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.anular(id);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Compra>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<List<Compra>> report(DateTime from, DateTime to) =>
@@ -206,6 +261,7 @@ class ComprasNotifier extends AsyncNotifier<List<Compra>> {
 
 class MovimientosNotifier extends AsyncNotifier<List<MovimientoStock>> {
   late final MovimientoRepository repository;
+  bool mutationInFlight = false;
   int? productoId;
   String? tipo;
   DateTime? desde;
@@ -242,13 +298,24 @@ class MovimientosNotifier extends AsyncNotifier<List<MovimientoStock>> {
   }
 
   Future<void> create(MovimientoStockRequest request) async {
-    await repository.create(request);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.create(request);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<MovimientoStock>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }
 
 class GastosNotifier extends AsyncNotifier<List<Gasto>> {
   late final GastoRepository repository;
+  bool mutationInFlight = false;
   @override
   Future<List<Gasto>> build() {
     repository = ref.watch(gastoRepositoryProvider);
@@ -261,16 +328,36 @@ class GastosNotifier extends AsyncNotifier<List<Gasto>> {
   }
 
   Future<void> save(int? id, GastoRequest request) async {
-    if (id == null) {
-      await repository.create(request);
-    } else {
-      await repository.update(id, request);
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      if (id == null) {
+        await repository.create(request);
+      } else {
+        await repository.update(id, request);
+      }
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Gasto>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
     }
-    await reload();
   }
 
   Future<void> remove(int id) async {
-    await repository.delete(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.delete(id);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Gasto>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }

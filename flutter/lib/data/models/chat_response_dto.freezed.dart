@@ -293,7 +293,7 @@ as Map<String, Object?>,
 /// @nodoc
 mixin _$ChatResponseDto {
 
- String get answer; List<ChatSourceDto> get sources; String? get conversationId;
+ String get answer; List<ChatSourceDto> get sources;
 /// Create a copy of ChatResponseDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -306,16 +306,16 @@ $ChatResponseDtoCopyWith<ChatResponseDto> get copyWith => _$ChatResponseDtoCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatResponseDto&&(identical(other.answer, answer) || other.answer == answer)&&const DeepCollectionEquality().equals(other.sources, sources)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatResponseDto&&(identical(other.answer, answer) || other.answer == answer)&&const DeepCollectionEquality().equals(other.sources, sources));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,answer,const DeepCollectionEquality().hash(sources),conversationId);
+int get hashCode => Object.hash(runtimeType,answer,const DeepCollectionEquality().hash(sources));
 
 @override
 String toString() {
-  return 'ChatResponseDto(answer: $answer, sources: $sources, conversationId: $conversationId)';
+  return 'ChatResponseDto(answer: $answer, sources: $sources)';
 }
 
 
@@ -326,7 +326,7 @@ abstract mixin class $ChatResponseDtoCopyWith<$Res>  {
   factory $ChatResponseDtoCopyWith(ChatResponseDto value, $Res Function(ChatResponseDto) _then) = _$ChatResponseDtoCopyWithImpl;
 @useResult
 $Res call({
- String answer, List<ChatSourceDto> sources, String? conversationId
+ String answer, List<ChatSourceDto> sources
 });
 
 
@@ -343,12 +343,11 @@ class _$ChatResponseDtoCopyWithImpl<$Res>
 
 /// Create a copy of ChatResponseDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? answer = null,Object? sources = null,Object? conversationId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? answer = null,Object? sources = null,}) {
   return _then(_self.copyWith(
 answer: null == answer ? _self.answer : answer // ignore: cast_nullable_to_non_nullable
 as String,sources: null == sources ? _self.sources : sources // ignore: cast_nullable_to_non_nullable
-as List<ChatSourceDto>,conversationId: freezed == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
-as String?,
+as List<ChatSourceDto>,
   ));
 }
 
@@ -433,10 +432,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String answer,  List<ChatSourceDto> sources,  String? conversationId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String answer,  List<ChatSourceDto> sources)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatResponseDto() when $default != null:
-return $default(_that.answer,_that.sources,_that.conversationId);case _:
+return $default(_that.answer,_that.sources);case _:
   return orElse();
 
 }
@@ -454,10 +453,10 @@ return $default(_that.answer,_that.sources,_that.conversationId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String answer,  List<ChatSourceDto> sources,  String? conversationId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String answer,  List<ChatSourceDto> sources)  $default,) {final _that = this;
 switch (_that) {
 case _ChatResponseDto():
-return $default(_that.answer,_that.sources,_that.conversationId);case _:
+return $default(_that.answer,_that.sources);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -474,10 +473,10 @@ return $default(_that.answer,_that.sources,_that.conversationId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String answer,  List<ChatSourceDto> sources,  String? conversationId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String answer,  List<ChatSourceDto> sources)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatResponseDto() when $default != null:
-return $default(_that.answer,_that.sources,_that.conversationId);case _:
+return $default(_that.answer,_that.sources);case _:
   return null;
 
 }
@@ -489,7 +488,7 @@ return $default(_that.answer,_that.sources,_that.conversationId);case _:
 @JsonSerializable()
 
 class _ChatResponseDto implements ChatResponseDto {
-  const _ChatResponseDto({this.answer = '', final  List<ChatSourceDto> sources = const <ChatSourceDto>[], this.conversationId}): _sources = sources;
+  const _ChatResponseDto({this.answer = '', final  List<ChatSourceDto> sources = const <ChatSourceDto>[]}): _sources = sources;
   factory _ChatResponseDto.fromJson(Map<String, dynamic> json) => _$ChatResponseDtoFromJson(json);
 
 @override@JsonKey() final  String answer;
@@ -500,7 +499,6 @@ class _ChatResponseDto implements ChatResponseDto {
   return EqualUnmodifiableListView(_sources);
 }
 
-@override final  String? conversationId;
 
 /// Create a copy of ChatResponseDto
 /// with the given fields replaced by the non-null parameter values.
@@ -515,16 +513,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatResponseDto&&(identical(other.answer, answer) || other.answer == answer)&&const DeepCollectionEquality().equals(other._sources, _sources)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatResponseDto&&(identical(other.answer, answer) || other.answer == answer)&&const DeepCollectionEquality().equals(other._sources, _sources));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,answer,const DeepCollectionEquality().hash(_sources),conversationId);
+int get hashCode => Object.hash(runtimeType,answer,const DeepCollectionEquality().hash(_sources));
 
 @override
 String toString() {
-  return 'ChatResponseDto(answer: $answer, sources: $sources, conversationId: $conversationId)';
+  return 'ChatResponseDto(answer: $answer, sources: $sources)';
 }
 
 
@@ -535,7 +533,7 @@ abstract mixin class _$ChatResponseDtoCopyWith<$Res> implements $ChatResponseDto
   factory _$ChatResponseDtoCopyWith(_ChatResponseDto value, $Res Function(_ChatResponseDto) _then) = __$ChatResponseDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String answer, List<ChatSourceDto> sources, String? conversationId
+ String answer, List<ChatSourceDto> sources
 });
 
 
@@ -552,12 +550,11 @@ class __$ChatResponseDtoCopyWithImpl<$Res>
 
 /// Create a copy of ChatResponseDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? answer = null,Object? sources = null,Object? conversationId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? answer = null,Object? sources = null,}) {
   return _then(_ChatResponseDto(
 answer: null == answer ? _self.answer : answer // ignore: cast_nullable_to_non_nullable
 as String,sources: null == sources ? _self._sources : sources // ignore: cast_nullable_to_non_nullable
-as List<ChatSourceDto>,conversationId: freezed == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
-as String?,
+as List<ChatSourceDto>,
   ));
 }
 

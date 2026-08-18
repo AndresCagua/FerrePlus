@@ -32,7 +32,6 @@ abstract class ChatResponse with _$ChatResponse {
   const factory ChatResponse({
     @Default('') String answer,
     @Default(<ChatSource>[]) List<ChatSource> sources,
-    String? conversationId,
   }) = _ChatResponse;
 
   factory ChatResponse.fromJson(Map<String, Object?> json) =>

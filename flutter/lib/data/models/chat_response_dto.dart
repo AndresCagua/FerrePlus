@@ -21,7 +21,6 @@ abstract class ChatResponseDto with _$ChatResponseDto {
   const factory ChatResponseDto({
     @Default('') String answer,
     @Default(<ChatSourceDto>[]) List<ChatSourceDto> sources,
-    String? conversationId,
   }) = _ChatResponseDto;
 
   factory ChatResponseDto.fromJson(Map<String, Object?> json) =>

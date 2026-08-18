@@ -36,6 +36,7 @@ final productosProvider =
 
 class CategoriasNotifier extends AsyncNotifier<List<Categoria>> {
   late final CategoriaRepository repository;
+  bool mutationInFlight = false;
   @override
   Future<List<Categoria>> build() {
     repository = ref.watch(categoriaRepositoryProvider);
@@ -48,20 +49,39 @@ class CategoriasNotifier extends AsyncNotifier<List<Categoria>> {
   }
 
   Future<void> save(Categoria value) async {
-    await (value.id == 0
-        ? repository.create(value)
-        : repository.update(value.id, value));
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await (value.id == 0 ? repository.create(value) : repository.update(value.id, value));
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Categoria>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<void> remove(int id) async {
-    await repository.delete(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await repository.delete(id);
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Categoria>>(error, stack);
+      rethrow;
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }
 
 class ProveedoresNotifier extends AsyncNotifier<List<Proveedor>> {
   late final ProveedorRepository repository;
+  bool mutationInFlight = false;
   @override
   Future<List<Proveedor>> build() {
     repository = ref.watch(proveedorRepositoryProvider);
@@ -74,20 +94,32 @@ class ProveedoresNotifier extends AsyncNotifier<List<Proveedor>> {
   }
 
   Future<void> save(Proveedor value) async {
-    await (value.id == 0
-        ? repository.create(value)
-        : repository.update(value.id, value));
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await (value.id == 0 ? repository.create(value) : repository.update(value.id, value));
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Proveedor>>(error, stack);
+      rethrow;
+    } finally { mutationInFlight = false; }
   }
 
   Future<void> remove(int id) async {
-    await repository.delete(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try { await repository.delete(id); await reload(); } catch (error, stack) {
+      state = AsyncError<List<Proveedor>>(error, stack);
+      rethrow;
+    } finally { mutationInFlight = false; }
   }
 }
 
 class ClientesNotifier extends AsyncNotifier<List<Cliente>> {
   late final ClienteRepository repository;
+  bool mutationInFlight = false;
   @override
   Future<List<Cliente>> build() {
     repository = ref.watch(clienteRepositoryProvider);
@@ -100,20 +132,32 @@ class ClientesNotifier extends AsyncNotifier<List<Cliente>> {
   }
 
   Future<void> save(Cliente value) async {
-    await (value.id == 0
-        ? repository.create(value)
-        : repository.update(value.id, value));
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await (value.id == 0 ? repository.create(value) : repository.update(value.id, value));
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Cliente>>(error, stack);
+      rethrow;
+    } finally { mutationInFlight = false; }
   }
 
   Future<void> remove(int id) async {
-    await repository.delete(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try { await repository.delete(id); await reload(); } catch (error, stack) {
+      state = AsyncError<List<Cliente>>(error, stack);
+      rethrow;
+    } finally { mutationInFlight = false; }
   }
 }
 
 class ProductosNotifier extends AsyncNotifier<List<Producto>> {
   late final ProductoRepository repository;
+  bool mutationInFlight = false;
   String? query;
   int? categoria;
   @override
@@ -136,14 +180,25 @@ class ProductosNotifier extends AsyncNotifier<List<Producto>> {
   }
 
   Future<void> save(Producto value) async {
-    await (value.id == 0
-        ? repository.create(value)
-        : repository.update(value.id, value));
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try {
+      await (value.id == 0 ? repository.create(value) : repository.update(value.id, value));
+      await reload();
+    } catch (error, stack) {
+      state = AsyncError<List<Producto>>(error, stack);
+      rethrow;
+    } finally { mutationInFlight = false; }
   }
 
   Future<void> remove(int id) async {
-    await repository.delete(id);
-    await reload();
+    if (mutationInFlight) return;
+    mutationInFlight = true;
+    state = const AsyncLoading();
+    try { await repository.delete(id); await reload(); } catch (error, stack) {
+      state = AsyncError<List<Producto>>(error, stack);
+      rethrow;
+    } finally { mutationInFlight = false; }
   }
 }

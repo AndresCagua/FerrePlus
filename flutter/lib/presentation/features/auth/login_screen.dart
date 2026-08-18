@@ -51,6 +51,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 if (auth.error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(auth.error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
                 const SizedBox(height: 20),
                 FilledButton(onPressed: loading ? null : _submit, child: loading ? const CircularProgressIndicator() : const Text('Ingresar')),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: loading ? null : () => context.go('/auth/registro'),
+                  child: const Text('Registrar primer usuario'),
+                ),
               ]),
             ),
           ),

@@ -81,6 +81,7 @@ _VentaRequest _$VentaRequestFromJson(Map<String, dynamic> json) =>
       metodoPago: json['metodoPago'] as String?,
       estado: json['estado'] as String?,
       observaciones: json['observaciones'] as String?,
+      usuarioId: (json['usuarioId'] as num?)?.toInt(),
       detalles: (json['detalles'] as List<dynamic>)
           .map((e) => DetalleVenta.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -97,6 +98,7 @@ Map<String, dynamic> _$VentaRequestToJson(_VentaRequest instance) =>
       'metodoPago': instance.metodoPago,
       'estado': instance.estado,
       'observaciones': instance.observaciones,
+      'usuarioId': instance.usuarioId,
       'detalles': instance.detalles,
     };
 
@@ -175,6 +177,7 @@ _CompraRequest _$CompraRequestFromJson(Map<String, dynamic> json) =>
       fechaFactura: json['fechaFactura'] == null
           ? null
           : DateTime.parse(json['fechaFactura'] as String),
+      usuarioId: (json['usuarioId'] as num?)?.toInt(),
       detalles: (json['detalles'] as List<dynamic>)
           .map((e) => DetalleCompra.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -191,6 +194,7 @@ Map<String, dynamic> _$CompraRequestToJson(_CompraRequest instance) =>
       'estado': instance.estado,
       'observaciones': instance.observaciones,
       'fechaFactura': instance.fechaFactura?.toIso8601String(),
+      'usuarioId': instance.usuarioId,
       'detalles': instance.detalles,
     };
 
@@ -239,6 +243,7 @@ _MovimientoStockRequest _$MovimientoStockRequestFromJson(
   referencia: json['referencia'] as String?,
   motivo: json['motivo'] as String?,
   precioUnitario: json['precioUnitario'] as num?,
+  usuarioId: (json['usuarioId'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$MovimientoStockRequestToJson(
@@ -250,6 +255,7 @@ Map<String, dynamic> _$MovimientoStockRequestToJson(
   'referencia': instance.referencia,
   'motivo': instance.motivo,
   'precioUnitario': instance.precioUnitario,
+  'usuarioId': instance.usuarioId,
 };
 
 _Gasto _$GastoFromJson(Map<String, dynamic> json) => _Gasto(
@@ -293,6 +299,7 @@ _GastoRequest _$GastoRequestFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['fechaGasto'] as String),
       observaciones: json['observaciones'] as String?,
+      usuarioId: (json['usuarioId'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$GastoRequestToJson(_GastoRequest instance) =>
@@ -304,4 +311,5 @@ Map<String, dynamic> _$GastoRequestToJson(_GastoRequest instance) =>
       'numeroComprobante': instance.numeroComprobante,
       'fechaGasto': instance.fechaGasto?.toIso8601String(),
       'observaciones': instance.observaciones,
+      'usuarioId': instance.usuarioId,
     };

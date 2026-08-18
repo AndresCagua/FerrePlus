@@ -78,7 +78,6 @@ void main() {
       final FakeChatRepository repository = FakeChatRepository(
         response: const ChatResponse(
           answer: 'Primera respuesta',
-          conversationId: 'server-1',
         ),
       );
       final ProviderContainer container = ProviderContainer(
@@ -88,14 +87,20 @@ void main() {
 
       await container.read(chatProvider.notifier).send('Primera pregunta');
       expect(repository.requests.single.conversationId, isNotNull);
-      expect(container.read(chatProvider).conversationId, 'server-1');
+      expect(
+        container.read(chatProvider).conversationId,
+        matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')),
+      );
       expect(container.read(chatProvider).messages, hasLength(2));
 
       repository.failure = StateError('offline');
       await container.read(chatProvider.notifier).send('Segunda pregunta');
       expect(container.read(chatProvider).messages, hasLength(3));
       expect(container.read(chatProvider).error, isNotNull);
-      expect(repository.requests.last.conversationId, 'server-1');
+      expect(
+        repository.requests.last.conversationId,
+        container.read(chatProvider).conversationId,
+      );
     },
   );
 }

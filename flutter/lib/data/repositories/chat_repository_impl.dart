@@ -24,7 +24,6 @@ class ChatRepositoryImpl implements ChatRepository {
       final ChatResponseDto dto = ChatResponseDto.fromJson(body);
       return ChatResponse(
         answer: dto.answer,
-        conversationId: dto.conversationId,
         sources: dto.sources
             .map(
               (ChatSourceDto source) => ChatSource(

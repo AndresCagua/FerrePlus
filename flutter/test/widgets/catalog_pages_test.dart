@@ -13,6 +13,7 @@ class ProductRepositoryFake implements ProductoRepository {
   ProductRepositoryFake(this.items);
   List<Producto> items;
   bool throwOnList = false;
+  bool throwOnUpdate = false;
   int? deletedId;
   Producto? created;
   Producto? updated;
@@ -22,6 +23,8 @@ class ProductRepositoryFake implements ProductoRepository {
     if (throwOnList) throw StateError('fallo de red');
     return items;
   }
+  @override
+  Future<Producto> getById(int id) async => items.firstWhere((Producto item) => item.id == id);
 
   @override
   Future<Producto> create(Producto value) async {
@@ -32,6 +35,7 @@ class ProductRepositoryFake implements ProductoRepository {
 
   @override
   Future<Producto> update(int id, Producto value) async {
+    if (throwOnUpdate) throw StateError('fallo al guardar');
     updated = value;
     items = <Producto>[value];
     return value;
@@ -50,6 +54,8 @@ class CategoriesFake implements CategoriaRepository {
     const Categoria(id: 4, nombre: 'Herramientas'),
   ];
   @override
+  Future<Categoria> getById(int id) async => const Categoria(id: 4, nombre: 'Herramientas');
+  @override
   Future<Categoria> create(Categoria value) async => value;
   @override
   Future<Categoria> update(int id, Categoria value) async => value;
@@ -62,6 +68,8 @@ class SuppliersFake implements ProveedorRepository {
   Future<List<Proveedor>> list() async => <Proveedor>[
     const Proveedor(id: 8, nombre: 'Acme'),
   ];
+  @override
+  Future<Proveedor> getById(int id) async => const Proveedor(id: 8, nombre: 'Acme');
   @override
   Future<Proveedor> create(Proveedor value) async => value;
   @override
@@ -173,7 +181,11 @@ void main() {
       find.widgetWithText(TextFormField, 'Martillo existente'),
       findsOneWidget,
     );
-    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.scrollUntilVisible(
+      find.text('Guardar'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     expect(find.text('Herramientas'), findsOneWidget);
     expect(find.text('Acme'), findsOneWidget);
@@ -201,5 +213,28 @@ void main() {
     await tester.tap(find.text('Eliminar'));
     await tester.pumpAndSettle();
     expect(products.deletedId, 9);
+  });
+
+  testWidgets('muestra SnackBar cuando falla el guardado', (
+    WidgetTester tester,
+  ) async {
+    final ProductRepositoryFake products = ProductRepositoryFake(<Producto>[
+      const Producto(id: 1, nombre: 'Taladro', stockActual: 2),
+    ])..throwOnUpdate = true;
+    await tester.pumpWidget(
+      buildTestApp(
+        child: const ProductoFormPage(id: 1, product: Producto(id: 1, nombre: 'Taladro', stockActual: 2)),
+        products: products,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Guardar'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+    expect(find.text('No se pudo completar la operacion. Intenta nuevamente.'), findsOneWidget);
   });
 }
