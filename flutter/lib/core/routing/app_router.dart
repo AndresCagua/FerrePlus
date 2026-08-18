@@ -12,6 +12,7 @@ import '../../presentation/features/catalog_pages.dart';
 import '../../presentation/features/chat/pages/chat_page.dart';
 import '../../presentation/features/commercial_pages.dart';
 import '../../presentation/features/dashboard/dashboard_screen.dart';
+import '../../presentation/features/mas/mas_page.dart';
 import '../../presentation/features/productos/productos_pages.dart';
 import '../../presentation/shell/shell_scaffold.dart';
 import '../constants/permission_codes.dart';
@@ -78,47 +79,28 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
                   const DashboardScreen(),
             ),
           ]),
-          _branch(_productRoutes()),
-          _branch(_categoryRoutes()),
-          _branch(_supplierRoutes()),
-          _branch(_customerRoutes()),
-          _branch(_salesRoutes()),
-          _branch(_purchaseRoutes()),
-          _branch(_movementRoutes()),
-          _branch(_expenseRoutes()),
-          _branch(_priceRoutes()),
-          _branch(_userRoutes()),
-          _branch(_roleRoutes()),
           _branch(<GoRoute>[
-            GoRoute(
-              path: '/reportes',
-              builder: (BuildContext context, GoRouterState state) =>
-                  const ReportesPage(),
-            ),
-            GoRoute(
-              path: '/reportes/ventas',
-              builder: (BuildContext context, GoRouterState state) =>
-                  const ReporteVentasPage(),
-            ),
-            GoRoute(
-              path: '/reportes/inventario',
-              builder: (BuildContext context, GoRouterState state) =>
-                  const ReporteDetallePage(kind: 'inventario'),
-            ),
-            GoRoute(
-              path: '/reportes/movimientos',
-              builder: (BuildContext context, GoRouterState state) =>
-                  const ReporteDetallePage(kind: 'movimientos'),
-            ),
+            ..._productRoutes(),
+            ..._categoryRoutes(),
+            ..._priceRoutes(),
           ]),
           _branch(<GoRoute>[
-            GoRoute(
-              path: '/logs',
-              builder: (BuildContext context, GoRouterState state) =>
-                  const LogsPageView(),
-            ),
+            ..._salesRoutes(),
+            ..._purchaseRoutes(),
+            ..._movementRoutes(),
+            ..._expenseRoutes(),
+            ..._customerRoutes(),
+            ..._supplierRoutes(),
           ]),
+          _branch(_reportRoutes()),
           _branch(<GoRoute>[
+            GoRoute(
+              path: '/mas',
+              builder: (BuildContext context, GoRouterState state) =>
+                  const MasPage(),
+            ),
+            ..._userRoutes(),
+            ..._roleRoutes(),
             GoRoute(
               path: '/chat',
               builder: (BuildContext context, GoRouterState state) =>
@@ -156,6 +138,36 @@ List<GoRoute> _productRoutes() => <GoRoute>[
             ),
       ),
     ],
+  ),
+];
+
+List<GoRoute> _reportRoutes() => <GoRoute>[
+  GoRoute(
+    path: '/reportes',
+    builder: (BuildContext context, GoRouterState state) =>
+        const ReportesPage(),
+    routes: <GoRoute>[
+      GoRoute(
+        path: 'ventas',
+        builder: (BuildContext context, GoRouterState state) =>
+            const ReporteVentasPage(),
+      ),
+      GoRoute(
+        path: 'inventario',
+        builder: (BuildContext context, GoRouterState state) =>
+            const ReporteDetallePage(kind: 'inventario'),
+      ),
+      GoRoute(
+        path: 'movimientos',
+        builder: (BuildContext context, GoRouterState state) =>
+            const ReporteDetallePage(kind: 'movimientos'),
+      ),
+    ],
+  ),
+  GoRoute(
+    path: '/logs',
+    builder: (BuildContext context, GoRouterState state) =>
+        const LogsPageView(),
   ),
 ];
 
