@@ -4,7 +4,13 @@ import '../../theme/app_component_theme.dart';
 import '../../theme/app_spacing.dart';
 
 class PageScaffold extends StatelessWidget {
-  const PageScaffold({required this.title, required this.child, this.actions, this.showAppBar = true, super.key});
+  const PageScaffold({
+    required this.title,
+    required this.child,
+    this.actions,
+    this.showAppBar = true,
+    super.key,
+  });
   final String title;
   final Widget child;
   final List<Widget>? actions;
@@ -12,7 +18,9 @@ class PageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppComponentTheme components = Theme.of(context).extension<AppComponentTheme>()!;
+    final AppComponentTheme components =
+        Theme.of(context).extension<AppComponentTheme>() ??
+        AppComponentTheme.standard;
     return Scaffold(
       appBar: showAppBar ? AppBarBuilder(title: title, actions: actions) : null,
       body: SafeArea(
@@ -34,7 +42,8 @@ class AppBarBuilder extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
 
   @override
-  Widget build(BuildContext context) => AppBar(title: Text(title), actions: actions);
+  Widget build(BuildContext context) =>
+      AppBar(title: Text(title), actions: actions);
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);

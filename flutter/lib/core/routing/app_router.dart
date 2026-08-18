@@ -11,6 +11,7 @@ import '../../presentation/features/auth/login_screen.dart';
 import '../../presentation/features/catalog_pages.dart';
 import '../../presentation/features/chat/pages/chat_page.dart';
 import '../../presentation/features/commercial_pages.dart';
+import '../../presentation/features/dashboard/dashboard_screen.dart';
 import '../../presentation/features/productos/productos_pages.dart';
 import '../../presentation/shell/shell_scaffold.dart';
 import '../constants/permission_codes.dart';
@@ -69,12 +70,12 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
             GoRoute(
               path: '/',
               builder: (BuildContext context, GoRouterState state) =>
-                  const DashboardAdminPage(),
+                  const DashboardScreen(),
             ),
             GoRoute(
               path: '/dashboard',
               builder: (BuildContext context, GoRouterState state) =>
-                  const DashboardAdminPage(),
+                  const DashboardScreen(),
             ),
           ]),
           _branch(_productRoutes()),

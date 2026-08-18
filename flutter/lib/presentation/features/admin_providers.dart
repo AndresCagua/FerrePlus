@@ -4,6 +4,7 @@ import '../../core/providers/auth_providers.dart';
 import '../../data/repositories/admin_repositories_impl.dart';
 import '../../domain/models/admin_models.dart';
 import '../../domain/models/commercial_models.dart';
+import 'dashboard/dashboard_period.dart';
 import '../../domain/repositories/admin_repositories.dart';
 
 final precioRepositoryProvider = Provider<PrecioRepository>(
@@ -195,19 +196,6 @@ final reportSalesProvider = FutureProvider.family<List<Venta>, DateRange>(
   (ref, range) =>
       ref.watch(reporteRepositoryProvider).ventas(range.desde, range.hasta),
 );
-
-class DateRange {
-  const DateRange(this.desde, this.hasta);
-  final DateTime desde;
-  final DateTime hasta;
-
-  @override
-  bool operator ==(Object other) =>
-      other is DateRange && other.desde == desde && other.hasta == hasta;
-
-  @override
-  int get hashCode => Object.hash(desde, hasta);
-}
 
 final logsProvider = AsyncNotifierProvider<LogsNotifier, LogsPage>(
   LogsNotifier.new,
