@@ -1,3 +1,5 @@
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 
 import 'app_elevation.dart';
@@ -70,5 +72,22 @@ class AppComponentTheme extends ThemeExtension<AppComponentTheme> {
       );
 
   @override
-  AppComponentTheme lerp(covariant AppComponentTheme? other, double t) => other == null ? this : standard;
+  AppComponentTheme lerp(covariant AppComponentTheme? other, double t) {
+    if (other == null) return this;
+    return AppComponentTheme(
+      cardPadding: EdgeInsets.lerp(cardPadding, other.cardPadding, t)!,
+      cardRadius: lerpDouble(cardRadius, other.cardRadius, t)!,
+      cardElevation: lerpDouble(cardElevation, other.cardElevation, t)!,
+      appBarPadding: EdgeInsets.lerp(appBarPadding, other.appBarPadding, t)!,
+      appBarElevation: lerpDouble(appBarElevation, other.appBarElevation, t)!,
+      buttonHeight: lerpDouble(buttonHeight, other.buttonHeight, t)!,
+      buttonPadding: EdgeInsets.lerp(buttonPadding, other.buttonPadding, t)!,
+      buttonRadius: lerpDouble(buttonRadius, other.buttonRadius, t)!,
+      inputRadius: lerpDouble(inputRadius, other.inputRadius, t)!,
+      navigationBarHeight: lerpDouble(navigationBarHeight, other.navigationBarHeight, t)!,
+      dialogRadius: lerpDouble(dialogRadius, other.dialogRadius, t)!,
+      bottomSheetRadius: lerpDouble(bottomSheetRadius, other.bottomSheetRadius, t)!,
+      snackBarRadius: lerpDouble(snackBarRadius, other.snackBarRadius, t)!,
+    );
+  }
 }
