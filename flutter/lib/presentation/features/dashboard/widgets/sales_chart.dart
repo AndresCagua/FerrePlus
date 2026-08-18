@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' as intl;
 
 import '../../../../domain/models/admin_models.dart';
 import '../../../shared/widgets/app_empty_state.dart';
@@ -40,10 +41,16 @@ class SalesChart extends StatelessWidget {
               segments: const <ButtonSegment<DashboardPeriod>>[
                 ButtonSegment(
                   value: DashboardPeriod.week,
-                  label: Text('Semana'),
+                  label: Text('Esta Semana'),
                 ),
-                ButtonSegment(value: DashboardPeriod.month, label: Text('Mes')),
-                ButtonSegment(value: DashboardPeriod.year, label: Text('Ano')),
+                ButtonSegment(
+                  value: DashboardPeriod.month,
+                  label: Text('Este Mes'),
+                ),
+                ButtonSegment(
+                  value: DashboardPeriod.year,
+                  label: Text('Este Año'),
+                ),
               ],
               selected: <DashboardPeriod>{period},
               onSelectionChanged: (Set<DashboardPeriod> selected) =>
@@ -60,10 +67,11 @@ class SalesChart extends StatelessWidget {
               SizedBox(
                 height: AppSpacing.chartHeight,
                 child: Semantics(
-                  label: _chartSemanticsLabel(points),
+                  label: _chartSemanticsLabel(points, period),
                   child: CustomPaint(
                     painter: _SalesChartPainter(
                       points: points,
+                      period: period,
                       color: semanticColors.primary,
                       textColor: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -77,24 +85,53 @@ class SalesChart extends StatelessWidget {
     );
   }
 
-  String _chartSemanticsLabel(List<ChartPoint> values) {
+  String _chartSemanticsLabel(List<ChartPoint> values, DashboardPeriod period) {
     final String pointsLabel = values
         .map(
           (ChartPoint point) =>
-              '${point.fecha?.day ?? ''}: ${point.total.toStringAsFixed(2)}',
+              '${_labelForPeriod(point.fecha, period)}: ${_currency.format(point.total)}',
         )
         .join(', ');
-    return 'Grafico de ventas con ${values.length} periodos. Valores: $pointsLabel';
+    return 'Gráfico de ventas con ${values.length} periodos. Valores: $pointsLabel';
+  }
+
+  static final intl.NumberFormat _currency = intl.NumberFormat.currency(
+    symbol: r'$',
+    decimalDigits: 2,
+  );
+
+  String _labelForPeriod(DateTime? date, DashboardPeriod period) {
+    if (date == null) return '';
+    if (period == DashboardPeriod.year) {
+      const List<String> months = <String>[
+        'Ene',
+        'Feb',
+        'Mar',
+        'Abr',
+        'May',
+        'Jun',
+        'Jul',
+        'Ago',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dic',
+      ];
+      return months[date.month - 1];
+    }
+    return '${date.day}/${date.month}/${date.year}';
   }
 }
 
 class _SalesChartPainter extends CustomPainter {
   const _SalesChartPainter({
     required this.points,
+    required this.period,
     required this.color,
     required this.textColor,
   });
   final List<ChartPoint> points;
+  final DashboardPeriod period;
   final Color color;
   final Color textColor;
 
@@ -136,10 +173,31 @@ class _SalesChartPainter extends CustomPainter {
     }
   }
 
-  String _label(DateTime? date) =>
-      date == null ? '' : '${date.day}/${date.month}';
+  String _label(DateTime? date) {
+    if (date == null) return '';
+    if (period == DashboardPeriod.year) {
+      const List<String> months = <String>[
+        'Ene',
+        'Feb',
+        'Mar',
+        'Abr',
+        'May',
+        'Jun',
+        'Jul',
+        'Ago',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dic',
+      ];
+      return months[date.month - 1];
+    }
+    return '${date.day}/${date.month}';
+  }
 
   @override
   bool shouldRepaint(_SalesChartPainter oldDelegate) =>
-      oldDelegate.points != points || oldDelegate.color != color;
+      oldDelegate.points != points ||
+      oldDelegate.color != color ||
+      oldDelegate.period != period;
 }

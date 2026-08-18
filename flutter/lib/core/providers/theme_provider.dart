@@ -9,7 +9,9 @@ final themePreferenceStoreProvider = Provider<ThemePreferenceStore>((ref) {
   return InMemoryThemePreferenceStore();
 });
 
-final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
+  ThemeModeNotifier.new,
+);
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   late final ThemePreferenceStore _store;
@@ -38,7 +40,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 Future<ProviderContainer> createAppContainer() async {
   final SharedPreferences preferences = await SharedPreferences.getInstance();
   return ProviderContainer(
-      overrides: [
+    overrides: [
       themePreferenceStoreProvider.overrideWithValue(
         SharedPreferencesThemePreferenceStore(preferences),
       ),

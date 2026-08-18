@@ -27,7 +27,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
-final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);
 
 class AuthNotifier extends Notifier<AuthState> {
   late final AuthRepository _repository;
@@ -47,7 +49,11 @@ class AuthNotifier extends Notifier<AuthState> {
         return;
       }
       final user = await _repository.getCurrentUser();
-      state = AuthState(status: AuthStatus.authenticated, user: user, permisos: user.permisos.toSet());
+      state = AuthState(
+        status: AuthStatus.authenticated,
+        user: user,
+        permisos: user.permisos.toSet(),
+      );
     } catch (error) {
       await _repository.logout();
       state = AuthState(status: AuthStatus.failure, error: error.toString());
@@ -58,8 +64,13 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> login(String email, String password) async {
     state = state.copyWith(status: AuthStatus.unknown, error: null);
     try {
-      final response = await _repository.login(LoginRequest(email: email, password: password));
-      state = AuthState(status: AuthStatus.authenticated, permisos: response.permisos.toSet());
+      final response = await _repository.login(
+        LoginRequest(email: email, password: password),
+      );
+      state = AuthState(
+        status: AuthStatus.authenticated,
+        permisos: response.permisos.toSet(),
+      );
       await refreshUser();
     } catch (error) {
       state = AuthState(status: AuthStatus.failure, error: error.toString());
@@ -68,7 +79,11 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> refreshUser() async {
     final user = await _repository.getCurrentUser();
-    state = AuthState(status: AuthStatus.authenticated, user: user, permisos: user.permisos.toSet());
+    state = AuthState(
+      status: AuthStatus.authenticated,
+      user: user,
+      permisos: user.permisos.toSet(),
+    );
   }
 
   Future<void> logout() async {

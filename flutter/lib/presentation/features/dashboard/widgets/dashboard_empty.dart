@@ -9,6 +9,6 @@ class DashboardEmpty extends StatelessWidget {
     icon: Icons.dashboard_outlined,
     title: 'Bienvenido a FerrePlus',
     subtitle:
-        'Los datos de tu negocio apareceran aqui cuando registres actividad.',
+        'Los datos de tu negocio aparecerán aquí cuando registres actividad.',
   );
 }

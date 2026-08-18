@@ -76,9 +76,7 @@ void main() {
     'notifier preserves conversation id and history after a failure',
     () async {
       final FakeChatRepository repository = FakeChatRepository(
-        response: const ChatResponse(
-          answer: 'Primera respuesta',
-        ),
+        response: const ChatResponse(answer: 'Primera respuesta'),
       );
       final ProviderContainer container = ProviderContainer(
         overrides: [chatRepositoryProvider.overrideWithValue(repository)],
@@ -89,7 +87,11 @@ void main() {
       expect(repository.requests.single.conversationId, isNotNull);
       expect(
         container.read(chatProvider).conversationId,
-        matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')),
+        matches(
+          RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+          ),
+        ),
       );
       expect(container.read(chatProvider).messages, hasLength(2));
 

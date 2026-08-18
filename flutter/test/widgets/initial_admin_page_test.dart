@@ -18,7 +18,8 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<LoginResponse> login(LoginRequest request) => throw UnimplementedError();
+  Future<LoginResponse> login(LoginRequest request) =>
+      throw UnimplementedError();
   @override
   Future<Usuario> getCurrentUser() => throw UnimplementedError();
   @override
@@ -30,13 +31,23 @@ class _FakeAuthRepository implements AuthRepository {
 }
 
 void main() {
-  testWidgets('validates and submits initial admin registration', (WidgetTester tester) async {
+  testWidgets('validates and submits initial admin registration', (
+    WidgetTester tester,
+  ) async {
     final _FakeAuthRepository repository = _FakeAuthRepository();
     final GoRouter router = GoRouter(
       initialLocation: '/registro',
       routes: <RouteBase>[
-        GoRoute(path: '/registro', builder: (BuildContext context, GoRouterState state) => InitialAdminPage(repository: repository)),
-        GoRoute(path: '/auth', builder: (BuildContext context, GoRouterState state) => const Text('Login')),
+        GoRoute(
+          path: '/registro',
+          builder: (BuildContext context, GoRouterState state) =>
+              InitialAdminPage(repository: repository),
+        ),
+        GoRoute(
+          path: '/auth',
+          builder: (BuildContext context, GoRouterState state) =>
+              const Text('Login'),
+        ),
       ],
     );
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));

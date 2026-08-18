@@ -144,12 +144,15 @@ class ProductoRepositoryImpl implements ProductoRepository {
   @override
   Future<Producto> getById(int id) async {
     try {
-      final Response<Object?> response = await dio.get<Object?>('${ApiPaths.productos}/$id');
+      final Response<Object?> response = await dio.get<Object?>(
+        '${ApiPaths.productos}/$id',
+      );
       return Producto.fromJson(_map(response.data));
     } on DioException catch (error) {
       throw mapDioFailure(error);
     }
   }
+
   @override
   Future<List<Producto>> list({String? query, int? categoria}) async {
     try {

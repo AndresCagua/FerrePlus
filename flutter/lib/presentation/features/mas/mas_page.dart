@@ -103,6 +103,7 @@ class MasPage extends ConsumerWidget {
               _MasSectionView(section: section, permissions: permissions),
           _SystemSection(
             components: components,
+            permissions: permissions,
             onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
           ),
         ],
@@ -157,8 +158,13 @@ class _MasTile extends StatelessWidget {
 }
 
 class _SystemSection extends StatelessWidget {
-  const _SystemSection({required this.components, required this.onLogout});
+  const _SystemSection({
+    required this.components,
+    required this.permissions,
+    required this.onLogout,
+  });
   final AppComponentTheme components;
+  final Set<String> permissions;
   final VoidCallback onLogout;
 
   @override
@@ -169,6 +175,8 @@ class _SystemSection extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: AppSpacing.space8),
         child: Text('SISTEMA', style: Theme.of(context).textTheme.labelLarge),
       ),
+      for (final _MasItem item in _systemItems)
+        if (permissions.contains(item.permission)) _MasTile(item: item),
       const MasThemeSelector(),
       Semantics(
         button: true,
@@ -182,6 +190,11 @@ class _SystemSection extends StatelessWidget {
       ),
     ],
   );
+
+  static const List<_MasItem> _systemItems = <_MasItem>[
+    _MasItem('Logs', Icons.history, '/logs', PermissionCodes.logs),
+    _MasItem('Chat', Icons.chat_bubble_outline, '/chat', PermissionCodes.chat),
+  ];
 }
 
 class _MasSection {

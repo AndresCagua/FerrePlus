@@ -15,7 +15,7 @@ class MetricsGrid extends StatelessWidget {
       final int columns = constraints.maxWidth >= AppSpacing.space360 ? 2 : 1;
       final double textScale = MediaQuery.textScalerOf(
         context,
-      ).scale(1).clamp(1, 1.5).toDouble();
+      ).scale(1).clamp(1, 2).toDouble();
       return GridView.custom(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),

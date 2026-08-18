@@ -1,1 +1,2 @@
-export '../commercial_pages.dart' show VentasPage, VentaFormPage, VentaDetailPage;
+export '../commercial_pages.dart'
+    show VentasPage, VentaFormPage, VentaDetailPage;

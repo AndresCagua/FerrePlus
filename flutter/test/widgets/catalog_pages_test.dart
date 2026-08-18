@@ -23,8 +23,10 @@ class ProductRepositoryFake implements ProductoRepository {
     if (throwOnList) throw StateError('fallo de red');
     return items;
   }
+
   @override
-  Future<Producto> getById(int id) async => items.firstWhere((Producto item) => item.id == id);
+  Future<Producto> getById(int id) async =>
+      items.firstWhere((Producto item) => item.id == id);
 
   @override
   Future<Producto> create(Producto value) async {
@@ -54,7 +56,8 @@ class CategoriesFake implements CategoriaRepository {
     const Categoria(id: 4, nombre: 'Herramientas'),
   ];
   @override
-  Future<Categoria> getById(int id) async => const Categoria(id: 4, nombre: 'Herramientas');
+  Future<Categoria> getById(int id) async =>
+      const Categoria(id: 4, nombre: 'Herramientas');
   @override
   Future<Categoria> create(Categoria value) async => value;
   @override
@@ -69,7 +72,8 @@ class SuppliersFake implements ProveedorRepository {
     const Proveedor(id: 8, nombre: 'Acme'),
   ];
   @override
-  Future<Proveedor> getById(int id) async => const Proveedor(id: 8, nombre: 'Acme');
+  Future<Proveedor> getById(int id) async =>
+      const Proveedor(id: 8, nombre: 'Acme');
   @override
   Future<Proveedor> create(Proveedor value) async => value;
   @override
@@ -223,7 +227,10 @@ void main() {
     ])..throwOnUpdate = true;
     await tester.pumpWidget(
       buildTestApp(
-        child: const ProductoFormPage(id: 1, product: Producto(id: 1, nombre: 'Taladro', stockActual: 2)),
+        child: const ProductoFormPage(
+          id: 1,
+          product: Producto(id: 1, nombre: 'Taladro', stockActual: 2),
+        ),
         products: products,
       ),
     );
@@ -235,6 +242,9 @@ void main() {
     );
     await tester.tap(find.text('Guardar'));
     await tester.pumpAndSettle();
-    expect(find.text('No se pudo completar la operacion. Intenta nuevamente.'), findsOneWidget);
+    expect(
+      find.text('No se pudo completar la operacion. Intenta nuevamente.'),
+      findsOneWidget,
+    );
   });
 }

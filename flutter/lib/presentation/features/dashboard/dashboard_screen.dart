@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/admin_models.dart';
-import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_view.dart';
 import '../../shared/widgets/app_loading_indicator.dart';
 import '../../shared/widgets/page_scaffold.dart';
@@ -25,7 +24,6 @@ class DashboardScreen extends ConsumerWidget {
     final AsyncValue<ReporteDashboard> state = ref.watch(dashboardProvider);
     return PageScaffold(
       title: 'Dashboard',
-      showAppBar: false,
       child: state.when(
         loading: () => const AppLoadingIndicator(
           message: 'Cargando dashboard',
@@ -62,10 +60,9 @@ class _DashboardContent extends ConsumerWidget {
             message: 'Cargando grafico',
             showSkeleton: true,
           ),
-          error: (Object error, StackTrace stack) => const AppEmptyState(
-            title: 'Grafico no disponible',
-            subtitle: 'No se pudieron cargar las ventas del periodo.',
-            icon: Icons.bar_chart_outlined,
+          error: (Object error, StackTrace stack) => AppErrorView(
+            message: 'No se pudieron cargar las ventas del periodo.',
+            onRetry: () => ref.invalidate(dashboardSalesProvider),
           ),
           data: (List<ChartPoint> points) => SalesChart(
             period: period,
@@ -90,18 +87,4 @@ class _DashboardContent extends ConsumerWidget {
       value.totalClientes == 0 &&
       value.totalProveedores == 0 &&
       value.ventasPorDia.isEmpty;
-}
-
-class PlaceholderScreen extends StatelessWidget {
-  const PlaceholderScreen({required this.title, super.key});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-     appBar: AppBarBuilder(title: title),
-     body: const AppEmptyState(
-       title: 'Disponible pronto',
-       subtitle: 'Disponible en un proximo slice.',
-     ),
-  );
 }

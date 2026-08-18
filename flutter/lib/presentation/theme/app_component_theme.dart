@@ -55,7 +55,8 @@ class AppComponentTheme extends ThemeExtension<AppComponentTheme> {
   );
 
   @override
-  AppComponentTheme copyWith({double? cardRadius, double? buttonHeight}) => AppComponentTheme(
+  AppComponentTheme copyWith({double? cardRadius, double? buttonHeight}) =>
+      AppComponentTheme(
         cardPadding: cardPadding,
         cardRadius: cardRadius ?? this.cardRadius,
         cardElevation: cardElevation,
@@ -84,9 +85,17 @@ class AppComponentTheme extends ThemeExtension<AppComponentTheme> {
       buttonPadding: EdgeInsets.lerp(buttonPadding, other.buttonPadding, t)!,
       buttonRadius: lerpDouble(buttonRadius, other.buttonRadius, t)!,
       inputRadius: lerpDouble(inputRadius, other.inputRadius, t)!,
-      navigationBarHeight: lerpDouble(navigationBarHeight, other.navigationBarHeight, t)!,
+      navigationBarHeight: lerpDouble(
+        navigationBarHeight,
+        other.navigationBarHeight,
+        t,
+      )!,
       dialogRadius: lerpDouble(dialogRadius, other.dialogRadius, t)!,
-      bottomSheetRadius: lerpDouble(bottomSheetRadius, other.bottomSheetRadius, t)!,
+      bottomSheetRadius: lerpDouble(
+        bottomSheetRadius,
+        other.bottomSheetRadius,
+        t,
+      )!,
       snackBarRadius: lerpDouble(snackBarRadius, other.snackBarRadius, t)!,
     );
   }

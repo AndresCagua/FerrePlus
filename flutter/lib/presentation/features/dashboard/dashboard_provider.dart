@@ -26,6 +26,7 @@ final dashboardSalesProvider = FutureProvider<List<ChartPoint>>((
   final List<ChartPoint> dashboardPoints = groupChartPoints(
     dashboard.ventasPorDia,
     period,
+    range: range,
   );
   if (dashboardPoints.isNotEmpty) return dashboardPoints;
 
@@ -36,5 +37,6 @@ final dashboardSalesProvider = FutureProvider<List<ChartPoint>>((
           ChartPoint(fecha: sale.fechaCreacion, total: sale.total.toDouble()),
     ),
     period,
+    range: range,
   );
 });

@@ -23,10 +23,22 @@ class SharedPreferencesThemePreferenceStore implements ThemePreferenceStore {
   final SharedPreferences _preferences;
 
   @override
-  Future<AppThemeMode> read() async => AppThemeModeSerialization.fromStorage(_preferences.getString(_key));
+  Future<AppThemeMode> read() async {
+    try {
+      return AppThemeModeSerialization.fromStorage(
+        _preferences.getString(_key),
+      );
+    } catch (_) {
+      return AppThemeMode.system;
+    }
+  }
 
   @override
   Future<void> write(AppThemeMode mode) async {
-    await _preferences.setString(_key, mode.storageValue);
+    try {
+      await _preferences.setString(_key, mode.storageValue);
+    } catch (_) {
+      // La preferencia es opcional; el tema actual permanece en memoria.
+    }
   }
 }

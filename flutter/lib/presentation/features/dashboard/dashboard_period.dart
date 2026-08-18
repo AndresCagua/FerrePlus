@@ -32,12 +32,14 @@ DateRange dashboardDateRange(DashboardPeriod period, DateTime now) {
 
 List<ChartPoint> groupChartPoints(
   Iterable<ChartPoint> points,
-  DashboardPeriod period,
-) {
+  DashboardPeriod period, {
+  DateRange? range,
+}) {
   final Map<DateTime, double> grouped = <DateTime, double>{};
   for (final ChartPoint point in points) {
     final DateTime? date = point.fecha;
     if (date == null) continue;
+    if (range != null && !_isWithinRange(date, range)) continue;
     final DateTime key = period == DashboardPeriod.year
         ? DateTime(date.year, date.month)
         : DateTime(date.year, date.month, date.day);
@@ -50,4 +52,9 @@ List<ChartPoint> groupChartPoints(
       )
       .toList(growable: false)
     ..sort((ChartPoint a, ChartPoint b) => a.fecha!.compareTo(b.fecha!));
+}
+
+bool _isWithinRange(DateTime date, DateRange range) {
+  final DateTime day = DateTime(date.year, date.month, date.day);
+  return !day.isBefore(range.desde) && !day.isAfter(range.hasta);
 }

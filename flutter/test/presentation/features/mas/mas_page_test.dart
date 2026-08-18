@@ -70,6 +70,8 @@ void main() {
       expect(find.text(section), findsOneWidget);
     }
     expect(find.text('Seguir sistema'), findsOneWidget);
+    expect(find.text('Logs'), findsOneWidget);
+    expect(find.text('Chat'), findsOneWidget);
     expect(find.text('Cerrar sesion'), findsOneWidget);
   });
 

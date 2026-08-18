@@ -39,7 +39,8 @@ class _Products implements ProductoRepository {
     const Producto(id: 1, nombre: 'Martillo', stockActual: 5, precioVenta: 100),
   ];
   @override
-  Future<Producto> getById(int id) async => const Producto(id: 1, nombre: 'Martillo');
+  Future<Producto> getById(int id) async =>
+      const Producto(id: 1, nombre: 'Martillo');
   @override
   Future<Producto> create(Producto value) async => value;
   @override
@@ -52,7 +53,8 @@ class _Clients implements ClienteRepository {
   @override
   Future<List<Cliente>> list() async => <Cliente>[];
   @override
-  Future<Cliente> getById(int id) async => const Cliente(id: 1, nombre: 'Cliente');
+  Future<Cliente> getById(int id) async =>
+      const Cliente(id: 1, nombre: 'Cliente');
   @override
   Future<Cliente> create(Cliente value) async => value;
   @override
@@ -127,7 +129,9 @@ void main() {
     expect(find.text('11.50'), findsOneWidget);
   });
 
-  testWidgets('bloquea guardar venta sin VENTAS_CREAR', (WidgetTester tester) async {
+  testWidgets('bloquea guardar venta sin VENTAS_CREAR', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

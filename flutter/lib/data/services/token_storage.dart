@@ -36,7 +36,9 @@ class TokenStorage {
     final String? value = await _storage.read(key: AppConstants.permisosKey);
     if (value == null) return <String>[];
     final Object? decoded = jsonDecode(value);
-    if (decoded is! List<Object?>) throw const FormatException('Permisos invalidos');
+    if (decoded is! List<Object?>) {
+      throw const FormatException('Permisos invalidos');
+    }
     return decoded.whereType<String>().toList(growable: false);
   }
 

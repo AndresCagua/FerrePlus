@@ -15,25 +15,25 @@ class QuickActions extends ConsumerWidget {
     final List<_QuickAction> actions =
         <_QuickAction>[
               const _QuickAction(
-                'Nueva venta',
+                '+ Nueva venta',
                 '/ventas/nuevo',
                 PermissionCodes.ventasCrear,
                 Icons.point_of_sale,
               ),
               const _QuickAction(
-                'Nuevo producto',
+                '+ Nuevo producto',
                 '/productos/nuevo',
                 PermissionCodes.productosCrear,
                 Icons.inventory_2,
               ),
               const _QuickAction(
-                'Registrar gasto',
+                '+ Registrar gasto',
                 '/gastos/nuevo',
                 PermissionCodes.gastosCrear,
                 Icons.receipt_long,
               ),
               const _QuickAction(
-                'Registrar compra',
+                '+ Registrar compra',
                 '/compras/nuevo',
                 PermissionCodes.comprasCrear,
                 Icons.shopping_cart,
@@ -47,7 +47,7 @@ class QuickActions extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('Acciones rapidas', style: Theme.of(context).textTheme.titleLarge),
+        Text('Acciones rápidas', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: AppSpacing.space8),
         Wrap(
           spacing: AppSpacing.space8,

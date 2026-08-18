@@ -14,7 +14,8 @@ class FakeCategoriaRepository implements CategoriaRepository {
   @override
   Future<List<Categoria>> list() async => values;
   @override
-  Future<Categoria> getById(int id) async => values.firstWhere((Categoria x) => x.id == id);
+  Future<Categoria> getById(int id) async =>
+      values.firstWhere((Categoria x) => x.id == id);
   @override
   Future<Categoria> create(Categoria value) async {
     createCalls++;
@@ -38,7 +39,8 @@ class FakeProveedorRepository implements ProveedorRepository {
   @override
   Future<List<Proveedor>> list() async => values;
   @override
-  Future<Proveedor> getById(int id) async => values.firstWhere((Proveedor x) => x.id == id);
+  Future<Proveedor> getById(int id) async =>
+      values.firstWhere((Proveedor x) => x.id == id);
   @override
   Future<Proveedor> create(Proveedor value) async {
     values = <Proveedor>[value.copyWith(id: 1)];
@@ -60,7 +62,8 @@ class FakeClienteRepository implements ClienteRepository {
   @override
   Future<List<Cliente>> list() async => values;
   @override
-  Future<Cliente> getById(int id) async => values.firstWhere((Cliente x) => x.id == id);
+  Future<Cliente> getById(int id) async =>
+      values.firstWhere((Cliente x) => x.id == id);
   @override
   Future<Cliente> create(Cliente value) async {
     values = <Cliente>[value.copyWith(id: 1)];
@@ -82,7 +85,8 @@ class FakeProductoRepository implements ProductoRepository {
   @override
   Future<List<Producto>> list({String? query, int? categoria}) async => values;
   @override
-  Future<Producto> getById(int id) async => values.firstWhere((Producto x) => x.id == id);
+  Future<Producto> getById(int id) async =>
+      values.firstWhere((Producto x) => x.id == id);
   @override
   Future<Producto> create(Producto value) async {
     values = <Producto>[value.copyWith(id: 1)];

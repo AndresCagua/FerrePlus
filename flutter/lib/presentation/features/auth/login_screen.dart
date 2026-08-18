@@ -30,8 +30,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await ref.read(authNotifierProvider.notifier).login(_email.text.trim(), _password.text);
-    if (mounted && ref.read(authNotifierProvider).status == AuthStatus.authenticated) context.go('/');
+    await ref
+        .read(authNotifierProvider.notifier)
+        .login(_email.text.trim(), _password.text);
+    if (mounted &&
+        ref.read(authNotifierProvider).status == AuthStatus.authenticated) {
+      context.go('/');
+    }
   }
 
   @override
@@ -48,27 +53,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             padding: const EdgeInsets.all(AppSpacing.space24),
             child: Form(
               key: _formKey,
-              child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
-                Text('FerrePlus', style: Theme.of(context).textTheme.headlineMedium),
-                const SizedBox(height: AppSpacing.space24),
-                TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Correo'), validator: (value) => value != null && value.contains('@') ? null : 'Ingresa un correo valido'),
-                const SizedBox(height: AppSpacing.space12),
-                TextFormField(controller: _password, obscureText: true, decoration: const InputDecoration(labelText: 'Contrasena'), validator: (value) => value != null && value.length >= 6 ? null : 'La contrasena debe tener al menos 6 caracteres'),
-                if (auth.error != null)
-                  AppErrorView(message: auth.error!, onRetry: _submit),
-                const SizedBox(height: AppSpacing.space20),
-                FilledButton(
-                  onPressed: loading ? null : _submit,
-                  child: loading
-                      ? const AppLoadingIndicator()
-                      : const Text('Ingresar'),
-                ),
-                const SizedBox(height: AppSpacing.space12),
-                TextButton(
-                  onPressed: loading ? null : () => context.go('/auth/registro'),
-                  child: const Text('Registrar primer usuario'),
-                ),
-              ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    'FerrePlus',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.space24),
+                  TextFormField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(labelText: 'Correo'),
+                    validator: (value) => value != null && value.contains('@')
+                        ? null
+                        : 'Ingresa un correo valido',
+                  ),
+                  const SizedBox(height: AppSpacing.space12),
+                  TextFormField(
+                    controller: _password,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'Contrasena'),
+                    validator: (value) => value != null && value.length >= 6
+                        ? null
+                        : 'La contrasena debe tener al menos 6 caracteres',
+                  ),
+                  if (auth.error != null)
+                    AppErrorView(message: auth.error!, onRetry: _submit),
+                  const SizedBox(height: AppSpacing.space20),
+                  FilledButton(
+                    onPressed: loading ? null : _submit,
+                    child: loading
+                        ? const AppLoadingIndicator()
+                        : const Text('Ingresar'),
+                  ),
+                  const SizedBox(height: AppSpacing.space12),
+                  TextButton(
+                    onPressed: loading
+                        ? null
+                        : () => context.go('/auth/registro'),
+                    child: const Text('Registrar primer usuario'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

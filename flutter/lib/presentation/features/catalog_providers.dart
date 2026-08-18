@@ -53,7 +53,9 @@ class CategoriasNotifier extends AsyncNotifier<List<Categoria>> {
     mutationInFlight = true;
     state = const AsyncLoading();
     try {
-      await (value.id == 0 ? repository.create(value) : repository.update(value.id, value));
+      await (value.id == 0
+          ? repository.create(value)
+          : repository.update(value.id, value));
       await reload();
     } catch (error, stack) {
       state = AsyncError<List<Categoria>>(error, stack);
@@ -98,22 +100,31 @@ class ProveedoresNotifier extends AsyncNotifier<List<Proveedor>> {
     mutationInFlight = true;
     state = const AsyncLoading();
     try {
-      await (value.id == 0 ? repository.create(value) : repository.update(value.id, value));
+      await (value.id == 0
+          ? repository.create(value)
+          : repository.update(value.id, value));
       await reload();
     } catch (error, stack) {
       state = AsyncError<List<Proveedor>>(error, stack);
       rethrow;
-    } finally { mutationInFlight = false; }
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<void> remove(int id) async {
     if (mutationInFlight) return;
     mutationInFlight = true;
     state = const AsyncLoading();
-    try { await repository.delete(id); await reload(); } catch (error, stack) {
+    try {
+      await repository.delete(id);
+      await reload();
+    } catch (error, stack) {
       state = AsyncError<List<Proveedor>>(error, stack);
       rethrow;
-    } finally { mutationInFlight = false; }
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }
 
@@ -136,22 +147,31 @@ class ClientesNotifier extends AsyncNotifier<List<Cliente>> {
     mutationInFlight = true;
     state = const AsyncLoading();
     try {
-      await (value.id == 0 ? repository.create(value) : repository.update(value.id, value));
+      await (value.id == 0
+          ? repository.create(value)
+          : repository.update(value.id, value));
       await reload();
     } catch (error, stack) {
       state = AsyncError<List<Cliente>>(error, stack);
       rethrow;
-    } finally { mutationInFlight = false; }
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<void> remove(int id) async {
     if (mutationInFlight) return;
     mutationInFlight = true;
     state = const AsyncLoading();
-    try { await repository.delete(id); await reload(); } catch (error, stack) {
+    try {
+      await repository.delete(id);
+      await reload();
+    } catch (error, stack) {
       state = AsyncError<List<Cliente>>(error, stack);
       rethrow;
-    } finally { mutationInFlight = false; }
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }
 
@@ -184,21 +204,30 @@ class ProductosNotifier extends AsyncNotifier<List<Producto>> {
     mutationInFlight = true;
     state = const AsyncLoading();
     try {
-      await (value.id == 0 ? repository.create(value) : repository.update(value.id, value));
+      await (value.id == 0
+          ? repository.create(value)
+          : repository.update(value.id, value));
       await reload();
     } catch (error, stack) {
       state = AsyncError<List<Producto>>(error, stack);
       rethrow;
-    } finally { mutationInFlight = false; }
+    } finally {
+      mutationInFlight = false;
+    }
   }
 
   Future<void> remove(int id) async {
     if (mutationInFlight) return;
     mutationInFlight = true;
     state = const AsyncLoading();
-    try { await repository.delete(id); await reload(); } catch (error, stack) {
+    try {
+      await repository.delete(id);
+      await reload();
+    } catch (error, stack) {
       state = AsyncError<List<Producto>>(error, stack);
       rethrow;
-    } finally { mutationInFlight = false; }
+    } finally {
+      mutationInFlight = false;
+    }
   }
 }

@@ -19,7 +19,6 @@ class ShellScaffold extends ConsumerWidget {
     ];
     final int currentBranch = navigationShell.currentIndex;
     return Scaffold(
-      appBar: AppBar(title: Text(_titleForBranch(currentBranch))),
       body: navigationShell,
       floatingActionButton: const ChatFloatingActionButton(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -45,15 +44,6 @@ class ShellScaffold extends ConsumerWidget {
       ),
     );
   }
-
-  String _titleForBranch(int branch) => switch (branch) {
-    0 => 'Dashboard',
-    1 => 'Productos',
-    2 => 'Ventas',
-    3 => 'Reportes',
-    4 => 'Más',
-    _ => 'FerrePlus',
-  };
 }
 
 class _Destination {

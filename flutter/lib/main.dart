@@ -9,7 +9,12 @@ import 'presentation/theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final ProviderContainer container = await createAppContainer();
-  runApp(UncontrolledProviderScope(container: container, child: const FerrePlusApp()));
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const FerrePlusApp(),
+    ),
+  );
 }
 
 class FerrePlusApp extends ConsumerWidget {

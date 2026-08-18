@@ -16,5 +16,6 @@ abstract class Usuario with _$Usuario {
     @Default(<String>[]) List<String> permisos,
   }) = _Usuario;
 
-  factory Usuario.fromJson(Map<String, Object?> json) => _$UsuarioFromJson(json);
+  factory Usuario.fromJson(Map<String, Object?> json) =>
+      _$UsuarioFromJson(json);
 }

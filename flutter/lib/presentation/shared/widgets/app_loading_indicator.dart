@@ -4,14 +4,22 @@ import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
 
 class AppLoadingIndicator extends StatelessWidget {
-  const AppLoadingIndicator({this.message = 'Cargando', this.showSkeleton = false, super.key});
+  const AppLoadingIndicator({
+    this.message = 'Cargando',
+    this.showSkeleton = false,
+    super.key,
+  });
   final String message;
   final bool showSkeleton;
 
   @override
   Widget build(BuildContext context) {
     if (showSkeleton) {
-      return Semantics(label: message, liveRegion: true, child: const _LoadingSkeleton());
+      return Semantics(
+        label: message,
+        liveRegion: true,
+        child: const _LoadingSkeleton(),
+      );
     }
     return Semantics(
       label: message,
@@ -48,7 +56,11 @@ class _LoadingSkeleton extends StatelessWidget {
 }
 
 class _SkeletonLine extends StatelessWidget {
-  const _SkeletonLine({required this.width, required this.base, required this.highlight});
+  const _SkeletonLine({
+    required this.width,
+    required this.base,
+    required this.highlight,
+  });
   final double width;
   final Color base;
   final Color highlight;
@@ -83,7 +95,8 @@ class _SkeletonBox extends StatefulWidget {
   State<_SkeletonBox> createState() => _SkeletonBoxState();
 }
 
-class _SkeletonBoxState extends State<_SkeletonBox> with SingleTickerProviderStateMixin {
+class _SkeletonBoxState extends State<_SkeletonBox>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 900),

@@ -11,8 +11,8 @@ import '../services/token_storage.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required Dio dio, required TokenStorage storage})
-      : _dio = dio,
-        _storage = storage;
+    : _dio = dio,
+      _storage = storage;
 
   final Dio _dio;
   final TokenStorage _storage;
@@ -20,10 +20,17 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<LoginResponse> login(LoginRequest request) async {
     try {
-      final Response<Object?> response = await _dio.post<Object?>(ApiPaths.login, data: request.toJson());
-      final Map<String, Object?> json = Map<String, Object?>.from(response.data! as Map<Object?, Object?>);
+      final Response<Object?> response = await _dio.post<Object?>(
+        ApiPaths.login,
+        data: request.toJson(),
+      );
+      final Map<String, Object?> json = Map<String, Object?>.from(
+        response.data! as Map<Object?, Object?>,
+      );
       final LoginResponse result = LoginResponse.fromJson(json);
-      if (result.token.isEmpty) throw const AuthFailure('Respuesta de autenticacion incompleta.');
+      if (result.token.isEmpty) {
+        throw const AuthFailure('Respuesta de autenticacion incompleta.');
+      }
       await _storage.saveSession(result);
       return result;
     } on DioException catch (exception) {
@@ -42,8 +49,9 @@ class AuthRepositoryImpl implements AuthRepository {
           'password': password,
         },
       );
-      final Map<String, Object?> json =
-          Map<String, Object?>.from(response.data! as Map<Object?, Object?>);
+      final Map<String, Object?> json = Map<String, Object?>.from(
+        response.data! as Map<Object?, Object?>,
+      );
       return Usuario.fromJson(json);
     } on DioException catch (exception) {
       if (exception.response?.statusCode == 400 ||
@@ -59,11 +67,25 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Usuario> getCurrentUser() async {
     try {
-      final Response<Object?> response = await _dio.get<Object?>(ApiPaths.currentUser);
-      final Usuario user = Usuario.fromJson(Map<String, Object?>.from(response.data! as Map<Object?, Object?>));
+      final Response<Object?> response = await _dio.get<Object?>(
+        ApiPaths.currentUser,
+      );
+      final Usuario user = Usuario.fromJson(
+        Map<String, Object?>.from(response.data! as Map<Object?, Object?>),
+      );
       final String? token = await _storage.readToken();
-      if (token == null || token.isEmpty) throw const AuthFailure('Sesion invalida.');
-      await _storage.saveSession(LoginResponse(token: token, email: user.email, nombre: user.nombre, usuarioId: user.id, permisos: user.permisos));
+      if (token == null || token.isEmpty) {
+        throw const AuthFailure('Sesion invalida.');
+      }
+      await _storage.saveSession(
+        LoginResponse(
+          token: token,
+          email: user.email,
+          nombre: user.nombre,
+          usuarioId: user.id,
+          permisos: user.permisos,
+        ),
+      );
       return user;
     } on DioException catch (exception) {
       throw mapDioFailure(exception);
@@ -74,8 +96,10 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> logout() => _storage.clear();
 
   @override
-  Future<bool> isAuthenticated() async => (await _storage.readToken())?.isNotEmpty ?? false;
+  Future<bool> isAuthenticated() async =>
+      (await _storage.readToken())?.isNotEmpty ?? false;
 
   @override
-  Future<bool> hasPermission(String permission) async => (await _storage.readPermissions()).contains(permission);
+  Future<bool> hasPermission(String permission) async =>
+      (await _storage.readPermissions()).contains(permission);
 }

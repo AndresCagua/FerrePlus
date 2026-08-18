@@ -9,11 +9,18 @@ Future<bool> confirmDelete(BuildContext context, String name) async =>
         title: const Text('Confirmar eliminacion'),
         content: Text('¿Eliminar $name?'),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
-     ) ?? false;
+    ) ??
+    false;
 
 Future<bool> confirmAction(
   BuildContext context, {
@@ -37,7 +44,8 @@ Future<bool> confirmAction(
           ),
         ],
       ),
-    ) ?? false;
+    ) ??
+    false;
 
 Future<bool> showAsyncConfirmDialog(
   BuildContext context, {
@@ -54,7 +62,8 @@ Future<bool> showAsyncConfirmDialog(
         confirmLabel: confirmLabel,
         onConfirm: onConfirm,
       ),
-    ) ?? false;
+    ) ??
+    false;
 
 class _AsyncConfirmDialog extends StatefulWidget {
   const _AsyncConfirmDialog({
@@ -86,19 +95,19 @@ class _AsyncConfirmDialogState extends State<_AsyncConfirmDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Text(widget.title),
-        content: Text(widget.message),
-        actions: <Widget>[
-          TextButton(
-            onPressed: loading ? null : () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: loading ? null : confirm,
-            child: loading
-                ? const AppLoadingIndicator()
-                : Text(widget.confirmLabel),
-          ),
-        ],
-      );
+    title: Text(widget.title),
+    content: Text(widget.message),
+    actions: <Widget>[
+      TextButton(
+        onPressed: loading ? null : () => Navigator.pop(context, false),
+        child: const Text('Cancelar'),
+      ),
+      FilledButton(
+        onPressed: loading ? null : confirm,
+        child: loading
+            ? const AppLoadingIndicator()
+            : Text(widget.confirmLabel),
+      ),
+    ],
+  );
 }

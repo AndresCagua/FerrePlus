@@ -68,5 +68,6 @@ void main() {
     expect(find.text('Reportes'), findsWidgets);
     expect(find.text('Más'), findsWidgets);
     expect(find.byTooltip('Abrir chat'), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
   });
 }

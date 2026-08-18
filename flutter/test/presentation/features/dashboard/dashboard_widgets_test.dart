@@ -1,12 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ferreplus/core/constants/permission_codes.dart';
+import 'package:ferreplus/core/providers/auth_providers.dart';
 import 'package:ferreplus/domain/models/admin_models.dart';
+import 'package:ferreplus/domain/models/auth_state.dart';
 import 'package:ferreplus/presentation/features/dashboard/dashboard_period.dart';
 import 'package:ferreplus/presentation/features/dashboard/widgets/metric_card.dart';
 import 'package:ferreplus/presentation/features/dashboard/widgets/metrics_grid.dart';
+import 'package:ferreplus/presentation/features/dashboard/widgets/quick_actions.dart';
 import 'package:ferreplus/presentation/features/dashboard/widgets/sales_chart.dart';
 import 'package:ferreplus/presentation/theme/app_theme.dart';
+
+class _AllDashboardPermissions extends AuthNotifier {
+  @override
+  AuthState build() => const AuthState(
+    status: AuthStatus.authenticated,
+    permisos: <String>{
+      PermissionCodes.ventasCrear,
+      PermissionCodes.productosCrear,
+      PermissionCodes.gastosCrear,
+      PermissionCodes.comprasCrear,
+    },
+  );
+}
 
 void main() {
   const List<MetricCardData> metrics = <MetricCardData>[
@@ -114,7 +132,28 @@ void main() {
       ),
     );
     expect(find.text('Ventas por periodo'), findsOneWidget);
-    await tester.tap(find.text('Semana'));
+    expect(find.text('Esta Semana'), findsOneWidget);
+    expect(find.text('Este Mes'), findsOneWidget);
+    expect(find.text('Este Año'), findsOneWidget);
+    await tester.tap(find.text('Esta Semana'));
     expect(selected, DashboardPeriod.week);
+  });
+
+  testWidgets('QuickActions muestra el prefijo requerido en sus etiquetas', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authNotifierProvider.overrideWith(_AllDashboardPermissions.new),
+        ],
+        child: harness(const QuickActions()),
+      ),
+    );
+
+    expect(find.text('+ Nueva venta'), findsOneWidget);
+    expect(find.text('+ Nuevo producto'), findsOneWidget);
+    expect(find.text('+ Registrar gasto'), findsOneWidget);
+    expect(find.text('+ Registrar compra'), findsOneWidget);
   });
 }

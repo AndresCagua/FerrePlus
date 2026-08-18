@@ -49,7 +49,9 @@ class _InitialAdminPageState extends ConsumerState<InitialAdminPage> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Administrador registrado correctamente.')),
+        const SnackBar(
+          content: Text('Administrador registrado correctamente.'),
+        ),
       );
       context.go('/auth');
     } catch (error) {
@@ -79,7 +81,8 @@ class _InitialAdminPageState extends ConsumerState<InitialAdminPage> {
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Nombre'),
-                    validator: (String? value) => value == null || value.trim().isEmpty
+                    validator: (String? value) =>
+                        value == null || value.trim().isEmpty
                         ? 'Ingresa el nombre'
                         : null,
                   ),
@@ -87,7 +90,8 @@ class _InitialAdminPageState extends ConsumerState<InitialAdminPage> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(labelText: 'Correo'),
-                    validator: (String? value) => value == null || !value.contains('@')
+                    validator: (String? value) =>
+                        value == null || !value.contains('@')
                         ? 'Ingresa un correo valido'
                         : null,
                   ),
@@ -95,15 +99,19 @@ class _InitialAdminPageState extends ConsumerState<InitialAdminPage> {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: const InputDecoration(labelText: 'Contrasena'),
-                    validator: (String? value) => value == null || value.length < 6
+                    validator: (String? value) =>
+                        value == null || value.length < 6
                         ? 'La contrasena debe tener al menos 6 caracteres'
                         : null,
                   ),
                   TextFormField(
                     controller: _confirmationController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Confirmar contrasena'),
-                    validator: (String? value) => value != _passwordController.text
+                    decoration: const InputDecoration(
+                      labelText: 'Confirmar contrasena',
+                    ),
+                    validator: (String? value) =>
+                        value != _passwordController.text
                         ? 'Las contrasenas no coinciden'
                         : null,
                   ),
@@ -116,7 +124,10 @@ class _InitialAdminPageState extends ConsumerState<InitialAdminPage> {
                         ? const AppLoadingIndicator()
                         : const Text('Registrar'),
                   ),
-                  TextButton(onPressed: () => context.go('/auth'), child: const Text('Volver al login')),
+                  TextButton(
+                    onPressed: () => context.go('/auth'),
+                    child: const Text('Volver al login'),
+                  ),
                 ],
               ),
             ),

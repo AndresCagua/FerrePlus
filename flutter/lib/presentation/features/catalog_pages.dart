@@ -138,6 +138,7 @@ class _CatalogTile extends StatelessWidget {
         PermissionVisibility(
           allowed: permissions.contains(kind.editPermission),
           child: IconButton(
+            tooltip: 'Editar ${kind.title.toLowerCase()}',
             onPressed: () => context.push(
               '${kind.path}/${kind.id(item)}/editar',
               extra: item,
@@ -148,6 +149,7 @@ class _CatalogTile extends StatelessWidget {
         PermissionVisibility(
           allowed: permissions.contains(kind.deletePermission),
           child: IconButton(
+            tooltip: 'Eliminar ${kind.title.toLowerCase()}',
             onPressed: mutationInFlight
                 ? null
                 : () async {
