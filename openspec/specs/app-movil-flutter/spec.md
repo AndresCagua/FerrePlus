@@ -200,9 +200,9 @@ Cada ruta funcional DEBE requerir un permiso especifico. Si el usuario no posee 
 - WHEN esta en `/productos`
 - THEN el boton "Nuevo producto" no se muestra
 
-#### R8 [S1] Shell navegable y dashboard inicial
+#### R8 [S1] Shell navegable y dashboard inicial (modificado por ui-ux)
 
-El sistema DEBE presentar un shell navegable (bottom navigation bar o drawer) que liste las secciones permitidas segun permisos. El dashboard inicial DEBE mostrar al menos un resumen basico y servir como punto de entrada.
+El sistema DEBE presentar un shell navegable (bottom navigation bar) que liste las secciones permitidas segun permisos, con un maximo de cinco destinos: Dashboard, Productos, Ventas, Reportes y Mas (R55, R56). Las rutas secundarias permanecen accesibles desde la pagina `Mas` categorizada o por deep link; la NavigationBar de 15 destinos del estado anterior queda REMOVIDA. El dashboard DEBE mostrar los seis KPI, la grafica de ventas por periodo, las acciones rapidas y los estados compartidos descritos en R51-R54, y servir como punto de entrada.
 
 ##### Escenario: Menu filtrado por permisos
 
@@ -216,6 +216,18 @@ El sistema DEBE presentar un shell navegable (bottom navigation bar o drawer) qu
 - GIVEN un usuario autenticado
 - WHEN inicia sesion exitosamente
 - THEN el sistema navega al dashboard
+
+##### Escenario: El dashboard muestra el dashboard de FerrePlus
+
+- GIVEN el usuario inicia sesion correctamente
+- WHEN el dashboard se renderiza
+- THEN muestra los seis KPIs, la grafica de ventas y las acciones rapidas segun R51-R54
+
+##### Escenario: El shell muestra cinco pestanas
+
+- GIVEN un usuario autenticado
+- WHEN el shell se renderiza
+- THEN la barra inferior muestra como maximo cinco items y las rutas restantes se alcanzan desde `Mas`
 
 #### R9 [S1] Configuracion de URL base via dart-define
 
@@ -606,9 +618,9 @@ El sistema DEBE poder consultar los modulos y permisos disponibles para construi
 - THEN se llaman `GET /api/modulos` y `GET /api/permisos`
 - AND se renderiza la matriz completa
 
-#### R32 [S4] Dashboard con KPIs
+#### R32 [S4] Dashboard con KPIs (modificado por ui-ux)
 
-El sistema DEBE mostrar el dashboard consumiendo `GET /api/reportes/dashboard` (o endpoint equivalente), presentando KPIs como ventas del dia, total de productos, stock bajo y grafica resumen.
+El sistema DEBE mostrar el dashboard consumiendo `GET /api/reportes/dashboard` (o endpoint equivalente), presentando exactamente los mismos seis KPIs que el dashboard web (`totalProductos`, `productosStockBajo`, `ventasHoy`, `ventasMes`, `totalClientes`, `totalProveedores`) con las mismas asignaciones de icono, color y ruta; ademas DEBE incluir la grafica de ventas por periodo (semana/mes/ano) usando los datos existentes `ventasPorDia` o el endpoint `reportes/ventas`.
 
 ##### Escenario: Dashboard con datos
 
@@ -621,6 +633,18 @@ El sistema DEBE mostrar el dashboard consumiendo `GET /api/reportes/dashboard` (
 - GIVEN falla de conexion
 - WHEN se carga el dashboard
 - THEN se muestra un mensaje de error y un boton de reintentar
+
+##### Escenario: Los KPIs del dashboard coinciden con la web
+
+- GIVEN el backend devuelve datos del dashboard
+- WHEN el dashboard movil se renderiza
+- THEN los seis KPIs usan las mismas etiquetas, iconos, colores y rutas que `frontend/src/app/dashboard/dashboard/dashboard.component.ts`
+
+##### Escenario: La grafica del dashboard coincide con los periodos web
+
+- GIVEN el usuario cambia el selector de periodo
+- WHEN la grafica se recarga
+- THEN usa los mismos rangos de fecha y agrupacion (dia para semana/mes, mes para anio) que el dashboard web
 
 #### R33 [S4] Reportes de ventas, inventario y movimientos
 
@@ -794,9 +818,9 @@ El sistema DEBE aplicar buenas practicas de accesibilidad (etiquetas, contraste,
 - WHEN se ejecutan widget tests
 - THEN los elementos interactivos tienen descripciones accesibles
 
-#### R43 [S5] Icono, splash y tema
+#### R43 [S5] Icono, splash y tema (modificado por ui-ux)
 
-El sistema DEBE configurar el icono de la app y la pantalla de splash para Android, y aplicar el tema de Material 3 de forma consistente en toda la app.
+El sistema DEBE configurar el icono de la app y la pantalla de splash para Android usando el motivo `hardware` de FerrePlus (no un icono Material generico ni el logo de Flutter), y aplicar el tema de Material 3 de forma consistente en toda la app. El tema DEBE incluir ColorSchemes claro y oscuro con los seeds aprobados (`#1565C0` claro, `#64B5F6` oscuro) y un selector de tema visible en `Mas > SISTEMA` (R49). El icono launcher generico de Flutter del estado anterior queda REMOVIDO y reemplazado por el motivo de marca.
 
 ##### Escenario: Icono y splash en Android
 
@@ -804,6 +828,511 @@ El sistema DEBE configurar el icono de la app y la pantalla de splash para Andro
 - WHEN se lanza
 - THEN se muestra el splash con el icono de Ferreplus
 - AND el tema Material 3 se aplica en las pantallas principales
+
+##### Escenario: El icono es de marca FerrePlus
+
+- GIVEN los assets del icono de la app
+- WHEN se inspeccionan
+- THEN el asset fuente usa el motivo martillo/herramienta `hardware`
+
+##### Escenario: El tema soporta selector visible
+
+- GIVEN el sistema de tema
+- WHEN el usuario abre `Mas > SISTEMA`
+- THEN hay un selector de tema con Claro/Oscuro/Sistema disponible
+
+### S6 — UI/UX: Design System, Dashboard, Navegacion y Accesibilidad
+
+Este slice incorpora el cambio `app-movil-flutter-ui-ux` (archivado 2026-08-18): evoluciona la app de prototipo funcional a una experiencia movil profesional, accesible y visualmente consistente. Preserva la arquitectura existente (Clean Architecture, Riverpod, GoRouter `StatefulShellRoute`, fechas `DateTime` con converters ISO) y no modifica contratos del backend ni el frontend web.
+
+#### R48 [S6] Design tokens de tres capas
+
+El sistema DEBE exponer un Design System centralizado en `flutter/lib/presentation/theme/` con tres capas de tokens: primitiva, semantica y de componente. Los widgets DEBEN consumir tokens semanticos o de componente; NO DEBEN usar colores, spacing, tamanos tipograficos, radios, elevaciones ni tamanos de icono hardcodeados.
+
+##### Escenario: Los tokens primitivos definen valores raw
+
+- GIVEN la app necesita un color, spacing, radio, elevacion, tamano tipografico o tamano de icono
+- WHEN un desarrollador inspecciona los archivos de tema
+- THEN los tokens primitivos (ej. `AppColors.blue700`, `AppSpacing.space16`, `AppRadii.radiusM`) existen como fuente unica de verdad de los valores raw
+
+##### Escenario: Los tokens semanticos se adaptan a claro/oscuro
+
+- GIVEN la app corre en modo claro u oscuro
+- WHEN un widget solicita un color semantico (ej. `AppColors.primary`, `AppColors.surface`, `AppColors.error`)
+- THEN el valor se resuelve al primitivo correcto para el `ThemeMode` activo
+
+##### Escenario: Los tokens de componente centralizan estilos reutilizables
+
+- GIVEN la app renderiza Cards, AppBars, Botones, Inputs, NavigationBars, Dialogs, BottomSheets o SnackBars
+- WHEN esos componentes se estilizan
+- THEN usan tokens de nivel componente (ej. `AppComponentStyles.cardPadding`, `AppComponentStyles.buttonHeight`, `AppComponentStyles.appBarElevation`) en lugar de valores inline
+
+##### Escenario: Sin estilos hardcodeados en widgets nuevos
+
+- GIVEN un widget nuevo agregado durante este cambio
+- WHEN `flutter analyze` corre y se realiza una auditoria de tokens
+- THEN no aparecen colores hex raw, magic numbers de spacing, tamanos raw de `TextStyle` ni elevaciones hardcodeadas fuera de los archivos de tokens
+
+---
+
+#### R49 [S6] Selector de tema visible
+
+El sistema DEBE ofrecer un selector de tema visible en `Mas > SISTEMA` con tres opciones: Claro, Oscuro y Seguir sistema. La seleccion por defecto DEBE seguir la preferencia del sistema. El modo seleccionado DEBE persistir entre reinicios usando un almacen local de preferencias (sin dependencia del backend).
+
+##### Escenario: El default sigue al sistema
+
+- GIVEN el dispositivo en modo oscuro y el usuario sin preferencia propia
+- WHEN la app se lanza
+- THEN la app renderiza en modo oscuro y el selector muestra "Seguir sistema"
+
+##### Escenario: El usuario selecciona modo claro
+
+- GIVEN el usuario abre `Mas > SISTEMA`
+- WHEN selecciona "Claro"
+- THEN la app cambia a modo claro inmediatamente y persiste la eleccion
+
+##### Escenario: El usuario selecciona modo oscuro
+
+- GIVEN el usuario abre `Mas > SISTEMA`
+- WHEN selecciona "Oscuro"
+- THEN la app cambia a modo oscuro inmediatamente y persiste la eleccion
+
+##### Escenario: Retorno al default del sistema
+
+- GIVEN el usuario selecciono previamente "Claro"
+- WHEN selecciona "Seguir sistema"
+- THEN la app vuelve al tema del dispositivo y limpia el override manual
+
+---
+
+#### R50 [S6] Icono de app y splash de FerrePlus
+
+El sistema DEBE reemplazar el icono launcher y el splash por defecto de Flutter con el motivo `hardware` de FerrePlus, consistente con el sidebar/login web. El icono DEBE generarse con un metodo reproducible (`flutter_launcher_icons` a partir de un PNG fuente derivado de `Icons.hardware`, o mipmaps manuales generados desde la misma fuente si la herramienta falla). El splash DEBE mostrar el mismo motivo al iniciar.
+
+##### Escenario: El icono launcher muestra el motivo hardware de FerrePlus
+
+- GIVEN la app instalada en Android
+- WHEN el usuario ve la pantalla de inicio o el launcher
+- THEN el icono muestra el motivo martillo/herramienta, no el logo de Flutter
+
+##### Escenario: El splash muestra el motivo hardware de FerrePlus
+
+- GIVEN el usuario lanza la app
+- WHEN el splash es visible
+- THEN el splash muestra el mismo motivo hardware de FerrePlus
+
+##### Escenario: Generacion de icono reproducible como fallback
+
+- GIVEN `flutter_launcher_icons` falla en el entorno local
+- WHEN un desarrollador compila la app
+- THEN los mipmaps se generan manualmente desde la misma fuente PNG/vectorial `hardware` para que el icono instalado siga siendo consistente
+
+---
+
+#### R51 [S6] Seis tarjetas KPI del dashboard web
+
+El sistema DEBE renderizar seis tarjetas KPI en el dashboard usando la misma data y semantica que el dashboard web:
+
+1. **Total Productos** — `inventory_2`, `#1565C0`, ruta `/productos`
+2. **Stock Bajo** — `warning_amber`, `#c62828`, ruta `/productos`
+3. **Ventas Hoy** — `today`, `#2e7d32`, ruta `/ventas`
+4. **Ventas del Mes** — `date_range`, `#FF8F00`, ruta `/ventas` (#FF8F00 falla contraste 4.5:1 en claro; implementado con kpiAmberAccessible #B45309 por R63)
+5. **Total Clientes** — `people`, `#6a1b9a`, ruta `/clientes`
+6. **Proveedores** — `local_shipping`, `#00838f`, ruta `/proveedores`
+
+Cada tarjeta KPI DEBE mostrar un icono Material, una etiqueta y un valor. El color semantico DEBE aplicarse solo al icono o a un badge pequeno; el fondo de la tarjeta DEBE permanecer neutral. El texto del valor DEBE tener mayor peso visual que la etiqueta. Tocar una tarjeta DEBE navegar a su ruta asociada.
+
+##### Escenario: El dashboard renderiza los seis KPIs
+
+- GIVEN el backend devuelve un `ReporteDashboard` con todos los campos poblados
+- WHEN el usuario abre el dashboard
+- THEN aparecen las seis tarjetas KPI con el icono, la etiqueta y el valor correctos
+
+##### Escenario: Los colores KPI son semanticos y contenidos
+
+- GIVEN el dashboard renderizado
+- WHEN se inspecciona una tarjeta KPI
+- THEN solo el icono (o un badge pequeno) usa el color semantico; la superficie de la tarjeta usa el color de superficie del tema
+
+##### Escenario: Tocar un KPI navega a su ruta
+
+- GIVEN el usuario en el dashboard
+- WHEN toca "Total Clientes"
+- THEN la app navega a `/clientes`
+
+##### Escenario: El valor KPI es mas prominente que la etiqueta
+
+- GIVEN el dashboard renderizado
+- WHEN se inspecciona una tarjeta KPI
+- THEN el valor numerico usa un estilo tipografico mayor/pesado que la etiqueta
+
+---
+
+#### R52 [S6] Grafica de ventas por periodo
+
+El sistema DEBE renderizar una grafica simple de barras de ventas por periodo en el dashboard. El selector DEBE ofrecer tres periodos: "Esta Semana", "Este Mes" y "Este Año". La grafica DEBE usar los datos existentes `ReporteDashboard.ventasPorDia` o llamar al mismo endpoint que usa la web para obtener ventas por fecha (`ReporteRepository.ventas(desde, hasta)`), agrupar los resultados por dia cuando el periodo es semana/mes o por mes cuando el periodo es anio, y renderizar las barras usando solo widgets built-in de Flutter (`CustomPaint`, `Row` de `Container`, o similar). NO SE PUEDE agregar ninguna dependencia nueva de graficas.
+
+##### Escenario: El periodo por defecto es el mes
+
+- GIVEN el usuario abre el dashboard
+- WHEN la seccion de la grafica carga
+- THEN el selector muestra "Este Mes" y la grafica muestra ventas agrupadas por dia del mes actual
+
+##### Escenario: Cambio a semana
+
+- GIVEN la grafica del dashboard visible
+- WHEN el usuario selecciona "Esta Semana"
+- THEN la grafica recalcula el rango desde el lunes actual hasta hoy y muestra ventas agrupadas por dia
+
+##### Escenario: Cambio a anio
+
+- GIVEN la grafica del dashboard visible
+- WHEN el usuario selecciona "Este Año"
+- THEN la grafica recalcula el rango desde el 1 de enero hasta hoy y muestra ventas agrupadas por mes
+
+##### Escenario: La grafica formatea los valores como moneda
+
+- GIVEN la grafica con datos
+- WHEN el usuario ve las barras
+- THEN los valores se formatean con el formateador de moneda de la app (ej. "$1,250.00")
+
+##### Escenario: Estado vacio de la grafica
+
+- GIVEN el periodo seleccionado sin ventas
+- WHEN la grafica se renderiza
+- THEN muestra un estado vacio como "Sin ventas registradas en el periodo" en lugar de inventar datos
+
+---
+
+#### R53 [S6] Acciones rapidas condicionadas por permiso
+
+El sistema DEBE renderizar una seccion "Acciones rápidas" en el dashboard con hasta cuatro acciones: "+ Nueva venta" (`/ventas/nuevo`), "+ Nuevo producto" (`/productos/nuevo`), "+ Registrar gasto" (`/gastos/nuevo`) y "+ Registrar compra" (`/compras/nuevo`). Cada accion DEBE ser visible solo si el usuario autenticado tiene el permiso `CREAR` correspondiente. Tocar una accion DEBE navegar a su ruta de creacion.
+
+##### Escenario: Todos los permisos de creacion presentes
+
+- GIVEN un usuario con `VENTAS_CREAR`, `PRODUCTOS_CREAR`, `GASTOS_CREAR` y `COMPRAS_CREAR`
+- WHEN el dashboard carga
+- THEN las cuatro acciones rapidas son visibles
+
+##### Escenario: Faltan algunos permisos de creacion
+
+- GIVEN un usuario solo con `VENTAS_CREAR` y `PRODUCTOS_CREAR`
+- WHEN el dashboard carga
+- THEN solo aparecen "+ Nueva venta" y "+ Nuevo producto"
+
+##### Escenario: Tocar una accion rapida navega
+
+- GIVEN el usuario ve "+ Nueva venta"
+- WHEN la toca
+- THEN la app navega a `/ventas/nuevo`
+
+---
+
+#### R54 [S6] Estados loading, empty y error del dashboard
+
+El sistema DEBE manejar los estados `loading`, `empty` y `error` en el dashboard sin inventar datos. Mientras carga, DEBE mostrar un skeleton o shimmer donde sea valioso. Ante un error, DEBE mostrar un mensaje de error y un CTA de reintento. Ante un `ReporteDashboard` vacio (todos los valores en cero/vacio), DEBE mostrar un estado vacio con un mensaje y, si el permiso lo permite, un CTA para crear datos iniciales.
+
+##### Escenario: Dashboard cargando
+
+- GIVEN la peticion del dashboard en vuelo
+- WHEN el dashboard se renderiza
+- THEN se muestra un placeholder skeleton/shimmer para KPIs y grafica
+
+##### Escenario: Error del dashboard con reintento
+
+- GIVEN la peticion del dashboard falla
+- WHEN el dashboard se renderiza
+- THEN aparece un mensaje de error junto con un boton "Intentar nuevamente"
+
+##### Escenario: Dashboard vacio
+
+- GIVEN el backend devuelve un `ReporteDashboard` con todos los contadores en cero y sin datos de grafica
+- WHEN el dashboard se renderiza
+- THEN aparece un estado vacio (ej. "Bienvenido a FerrePlus — los datos de tu negocio aparecerán aquí")
+- AND no se muestran datos falsos
+
+---
+
+#### R55 [S6] NavigationBar de maximo cinco destinos
+
+El sistema DEBE reducir la `NavigationBar` del shell a un maximo de cinco destinos: Dashboard, Productos, Ventas, Reportes y Mas. La NavigationBar de 15 destinos del estado anterior queda REMOVIDA; la barra NO DEBE contener mas de cinco destinos y todas las rutas previamente alcanzables siguen accesibles via `Mas` o deep links. La pestana seleccionada DEBE reflejar la rama actual del `StatefulShellRoute` y el estado por rama DEBE preservarse.
+
+##### Escenario: Cinco pestanas visibles
+
+- GIVEN un usuario autenticado con todos los permisos relevantes
+- WHEN el shell se renderiza
+- THEN se muestran exactamente cinco NavigationDestinations
+
+##### Escenario: Estado de pestana preservado
+
+- GIVEN el usuario en la pestana Productos con una lista scrolleada
+- WHEN cambia a Ventas y vuelve a Productos
+- THEN la lista de Productos mantiene la misma posicion de scroll y estado
+
+##### Escenario: La rama 0 es Dashboard
+
+- GIVEN el usuario toca la pestana Dashboard
+- THEN el indice de rama activo es `0` y la ruta es `/` o `/dashboard`
+
+---
+
+#### R56 [S6] Pagina Mas categorizada con todas las rutas secundarias
+
+El sistema DEBE agregar una pagina `Mas` (`/mas`) accesible desde el quinto tab. La pagina DEBE agrupar los destinos restantes en secciones categorizadas: OPERACIONES (Compras, Movimientos, Gastos), CATALOGOS (Categorias, Proveedores, Clientes, Precios), ADMINISTRACION (Usuarios, Roles) y SISTEMA (Logs, Chat). Cada item DEBE ser visible solo si el usuario tiene el permiso `VER` correspondiente. Tocar un item DEBE navegar a su ruta canonica. Los deep links y guards de permisos de todas esas rutas DEBEN seguir funcionando sin cambios.
+
+##### Escenario: La pagina Mas lista items categorizados
+
+- GIVEN un usuario con todos los permisos
+- WHEN abre `Mas`
+- THEN la pagina muestra las cuatro categorias con sus items correspondientes
+
+##### Escenario: Items de Mas filtrados por permiso
+
+- GIVEN un usuario sin `USUARIOS_VER` ni `ROLES_VER`
+- WHEN abre `Mas`
+- THEN la categoria ADMINISTRACION se oculta o no muestra items
+
+##### Escenario: Un item de Mas navega a su ruta canonica
+
+- GIVEN el usuario toca "Compras" en `Mas`
+- WHEN el toque se completa
+- THEN la app navega a `/compras` usando las ramas/rutas existentes
+
+##### Escenario: Deep link a ruta secundaria sigue funcionando
+
+- GIVEN un usuario con `COMPRAS_VER`
+- WHEN la app recibe un deep link a `/compras`
+- THEN la ruta se renderiza y el guard de permiso permite el acceso
+
+---
+
+#### R57 [S6] Chat accesible via FAB flotante
+
+El sistema DEBE conservar el `ChatFloatingActionButton` existente como via principal de acceso al chat. El FAB DEBE ser visible para cualquier usuario autenticado y navegar a `/chat` al tocarlo. Una entrada secundaria de chat PUEDE colocarse en `Mas > SISTEMA`, pero NO DEBE reemplazar al FAB.
+
+##### Escenario: FAB visible para usuario autenticado
+
+- GIVEN un usuario autenticado
+- WHEN el shell se renderiza
+- THEN el FAB de chat es visible
+
+##### Escenario: El FAB navega al chat
+
+- GIVEN el usuario ve el FAB de chat
+- WHEN lo toca
+- THEN la app navega a `/chat`
+
+##### Escenario: FAB oculto al cerrar sesion
+
+- GIVEN un usuario en la pantalla de login
+- WHEN la pantalla se renderiza
+- THEN el FAB de chat no se muestra
+
+---
+
+#### R58 [S6] AppBar contextual
+
+El sistema DEBE ofrecer una `AppBar` contextual en las pantallas del shell con altura, spacing y un titulo acorde a la pantalla actual. La AppBar PUEDE incluir un area de acciones minima (placeholder de notificaciones o avatar segun decision del usuario), pero NO DEBE introducir UI bloqueante ni reducir el area de contenido accesible por debajo de las guias de Material.
+
+##### Escenario: El titulo de la AppBar coincide con la pantalla
+
+- GIVEN el usuario en la lista de Productos
+- WHEN la AppBar se renderiza
+- THEN el titulo dice "Productos" (o equivalente) usando el token tipografico para titulos de AppBar
+
+##### Escenario: La AppBar respeta safe area y spacing
+
+- GIVEN la app corre en un dispositivo con notch o barra de estado
+- WHEN la pantalla se renderiza
+- THEN la AppBar evita la safe area y usa el padding del token de componente
+
+---
+
+#### R59 [S6] Widget de loading compartido
+
+El sistema DEBE ofrecer un widget de loading compartido (`AppLoadingIndicator` o equivalente) usado en todas las pantallas basadas en API. DEBE usar shimmer/skeleton cuando sea significativo; en caso contrario, DEBE mostrar un `CircularProgressIndicator` consistente con semantica accesible.
+
+##### Escenario: Loading compartido en el dashboard
+
+- GIVEN el dashboard cargando
+- WHEN el widget de loading se renderiza
+- THEN usa el widget de loading compartido, no un indicador ad-hoc inline
+
+##### Escenario: Loading compartido en pantallas de lista
+
+- GIVEN cualquier pantalla de lista obtiene datos
+- WHEN el widget de loading se renderiza
+- THEN usa el mismo widget de loading compartido que el dashboard
+
+---
+
+#### R60 [S6] Widget de empty state compartido
+
+El sistema DEBE ofrecer un widget de empty state compartido (`AppEmptyState` o equivalente) usado en todas las pantallas que pueden devolver sin datos. El widget DEBE mostrar un icono, un titulo, un subtitulo y un CTA opcional.
+
+##### Escenario: Lista de productos vacia
+
+- GIVEN la lista de productos sin items
+- WHEN la lista se renderiza
+- THEN aparece el widget de empty state compartido con icono, titulo y subtitulo
+
+##### Escenario: Grafica vacia
+
+- GIVEN la grafica del dashboard sin datos
+- WHEN el area de la grafica se renderiza
+- THEN se usa el widget de empty state compartido o un empty state especifico de grafica consistente con el
+
+---
+
+#### R61 [S6] Widget de error/reintento compartido
+
+El sistema DEBE ofrecer un widget de error compartido (`AppErrorView` o equivalente) usado en todas las pantallas basadas en API. El widget DEBE mostrar un icono de error, un mensaje y un boton "Intentar nuevamente" que dispare la accion de reintento provista por el llamador.
+
+##### Escenario: Error en el dashboard con reintento
+
+- GIVEN la peticion del dashboard falla
+- WHEN el widget de error se renderiza
+- THEN muestra el widget de error compartido con un boton de reintento que invalida el provider del dashboard
+
+##### Escenario: Error en pantalla de lista con reintento
+
+- GIVEN una peticion de lista falla
+- WHEN el widget de error se renderiza
+- THEN usa el mismo widget de error compartido con un boton de reintento
+
+---
+
+#### R62 [S6] Layout responsive sin overflow
+
+El sistema DEBE usar `LayoutBuilder` y/o `MediaQuery` para adaptar los layouts. El grid de KPIs del dashboard DEBE renderizar dos columnas cuando el ancho lo permite y una columna en telefonos angostos. Los layouts landscape y tablet DEBEN ser utilizables sin scroll horizontal, overflow de `RenderFlex` ni texto recortado.
+
+##### Escenario: Grid de KPIs de dos columnas en telefono ancho
+
+- GIVEN un telefono en portrait con ancho >= 360 dp
+- WHEN el dashboard se renderiza
+- THEN el grid de KPIs muestra dos columnas
+
+##### Escenario: Grid de KPIs de una columna en telefono angosto
+
+- GIVEN un telefono con ancho < 360 dp
+- WHEN el dashboard se renderiza
+- THEN el grid de KPIs muestra una columna
+
+##### Escenario: Sin overflow en landscape
+
+- GIVEN el telefono rota a landscape
+- WHEN el dashboard se renderiza
+- THEN no ocurren errores de overflow `RenderFlex` y todo el contenido permanece dentro de los limites
+
+##### Escenario: Sin scroll horizontal
+
+- GIVEN el usuario en cualquier pantalla del shell
+- WHEN interactua con la pantalla
+- THEN el contenido no hace scroll horizontal salvo diseno explicito (ej. una tabla de datos)
+
+---
+
+#### R63 [S6] Cumplimiento de accesibilidad
+
+El sistema DEBE cumplir los siguientes requisitos de accesibilidad: ratio de contraste de al menos 4.5:1 para texto e iconos; touch targets de al menos 48 dp para todos los controles interactivos; labels semanticos (`Semantics` o `tooltip`) para todos los botones solo-icono; soporte de escala de texto del sistema sin texto recortado; y que ninguna informacion se transmita solo por color.
+
+##### Escenario: El contraste cumple el minimo
+
+- GIVEN la app corre en modo claro u oscuro
+- WHEN se mide el texto/iconos en primer plano contra su fondo
+- THEN el ratio de contraste es de al menos 4.5:1
+
+##### Escenario: Los touch targets cumplen el minimo
+
+- GIVEN un control interactivo (boton, icon button, list tile, chip)
+- WHEN se mide su area de toque
+- THEN es de al menos 48 dp x 48 dp
+
+##### Escenario: Los botones de icono tienen labels
+
+- GIVEN un boton solo-icono (ej. accion de AppBar, FAB)
+- WHEN un lector de pantalla lo enfoca
+- THEN anuncia una descripcion significativa
+
+##### Escenario: Soporte de escala de texto
+
+- GIVEN la escala de texto del dispositivo en el ajuste accesible maximo
+- WHEN el dashboard se renderiza
+- THEN el texto se envuelve o scrollea en lugar de desbordar o recortarse
+
+##### Escenario: El color no es el unico indicador
+
+- GIVEN un indicador de estado que usa color
+- WHEN el indicador se ve en escala de grises
+- THEN una segunda pista visual (icono, texto, patron) sigue comunicando el significado
+
+---
+
+#### R64 [S6] Extraccion de componentes reutilizables
+
+El sistema DEBE extraer widgets reutilizables del dashboard y de los estados compartidos: `MetricCard`, `SalesChart`, `QuickActions`, `DashboardEmpty`, `AppLoadingIndicator`, `AppEmptyState` y `AppErrorView`. Ningun archivo de widget DEBE superar las 300 lineas; los widgets DEBEN componerse de piezas mas pequenas.
+
+##### Escenario: MetricCard reutilizado
+
+- GIVEN cualquier KPI que necesita mostrarse
+- WHEN el dashboard se renderiza
+- THEN usa el widget compartido `MetricCard`
+
+##### Escenario: SalesChart reutilizado
+
+- GIVEN el dashboard renderiza la grafica de ventas
+- WHEN el area de la grafica se construye
+- THEN usa el widget compartido `SalesChart`
+
+##### Escenario: Sin widgets gigantes
+
+- GIVEN un widget nuevo agregado
+- WHEN se revisa su archivo
+- THEN tiene menos de 300 lineas y se compone de widgets mas pequenos
+
+---
+
+#### R65 [S6] Verificacion por fase y tests
+
+El sistema DEBE pasar `flutter analyze` con cero issues por fase. Los 52 tests existentes DEBEN permanecer verdes. Los nuevos widget tests DEBEN cubrir el dashboard (KPIs, grafica, estados empty/error/loading, acciones rapidas por permiso), la navegacion (5 tabs, items de Mas por permiso, deep links) y el selector de tema/presencia del icono.
+
+##### Escenario: flutter analyze limpio
+
+- GIVEN una fase completada
+- WHEN `flutter analyze` corre
+- THEN reporta cero errores y cero warnings
+
+##### Escenario: Los tests existentes permanecen verdes
+
+- GIVEN los 52 tests existentes
+- WHEN `flutter test` corre
+- THEN los 52 tests pasan
+
+##### Escenario: Nuevos widget tests del dashboard
+
+- GIVEN los nuevos widgets del dashboard
+- WHEN los tests del dashboard corren
+- THEN verifican renderizado de KPIs, renderizado de la grafica, estados empty/error/loading y visibilidad de acciones rapidas por permiso
+
+##### Escenario: Nuevos widget tests de navegacion
+
+- GIVEN el nuevo shell y la pagina Mas
+- WHEN los tests de navegacion corren
+- THEN verifican cinco tabs, items de Mas filtrados por permiso y routing por deep link
+
+##### Escenario: Test del selector de tema
+
+- GIVEN el widget del selector de tema
+- WHEN sus tests corren
+- THEN verifican las tres opciones y que la seleccion actualiza el tema activo
+
+##### Escenario: Test del icono de la app
+
+- GIVEN la configuracion del launcher icon
+- WHEN el build corre
+- THEN los assets generados referencian el motivo hardware de FerrePlus y no el logo de Flutter
+
+---
 
 ### Requisitos transversales
 
@@ -887,6 +1416,7 @@ Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, prov
 - [ ] Ventas y compras envian DTOs con detalles y soportan anulacion; precios, reportes y logs reflejan filtros/permisos del backend.
 - [ ] Chat muestra respuesta Markdown segura, no ejecuta HTML, y presenta/oculta `sources` correctamente.
 - [ ] S1-S5 quedan como slices encadenados, cada uno compilable/testeable y con commits revisados.
+- [ ] La app presenta el Design System de tres capas (tokens primitivos/semanticos/componente), dashboard con seis KPIs + grafica de ventas por periodo, navegacion de cinco tabs + pagina `Mas` categorizada, selector de tema visible en `Mas > SISTEMA`, icono/splash con motivo `hardware` FerrePlus y cumplimiento de accesibilidad (contraste 4.5:1, targets 48dp, semantic labels, escala de texto).
 - [ ] No se agregan notificaciones push, offline sync, cambios de backend ni acceso movil directo a pgvector.
 
 ## Summary
@@ -902,7 +1432,7 @@ Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, prov
 | R5 | Registro condicional | S1 | 3 |
 | R6 | Navegacion con GoRouter | S1 | 3 |
 | R7 | Guards de permisos | S1 | 3 |
-| R8 | Shell navegable y dashboard | S1 | 2 |
+| R8 | Shell navegable y dashboard | S1 | 4 |
 | R9 | URL base via dart-define | S1 | 2 |
 | R10 | Calidad y lints | S1 | 2 |
 | R11 | Listado de productos | S2 | 3 |
@@ -926,7 +1456,7 @@ Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, prov
 | R29 | CRUD de usuarios y contrasena | S4 | 3 |
 | R30 | CRUD de roles y matriz | S4 | 2 |
 | R31 | Catalogo de modulos/permisos | S4 | 1 |
-| R32 | Dashboard con KPIs | S4 | 2 |
+| R32 | Dashboard con KPIs | S4 | 4 |
 | R33 | Reportes de ventas/inventario/movimientos | S4 | 2 |
 | R34 | Logs paginados/filtrados | S4 | 2 |
 | R35 | Borrado de logs por rango | S4 | 2 |
@@ -937,30 +1467,52 @@ Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, prov
 | R40 | conversationId y errores | S5 | 2 |
 | R41 | Reconstruccion de indice | S5 | 2 |
 | R42 | Accesibilidad, rendimiento y Android | S5 | 2 |
-| R43 | Icono, splash y tema | S5 | 1 |
+| R43 | Icono, splash y tema | S5 | 3 |
 | R44 | Manejo de errores/vacios/carga | Cross | 3 |
 | R45 | Formato de fechas consistente | Cross | 2 |
 | R46 | Visibilidad por permisos | Cross | 2 |
 | R47 | Calidad y tests por slice | Cross | 2 |
+| R48 | Design tokens de tres capas | S6 | 4 |
+| R49 | Selector de tema visible | S6 | 4 |
+| R50 | Icono y splash de FerrePlus | S6 | 3 |
+| R51 | Seis KPI del dashboard web | S6 | 4 |
+| R52 | Grafica de ventas por periodo | S6 | 5 |
+| R53 | Acciones rapidas por permiso | S6 | 3 |
+| R54 | Estados loading/empty/error del dashboard | S6 | 3 |
+| R55 | NavigationBar de maximo cinco destinos | S6 | 3 |
+| R56 | Pagina Mas categorizada | S6 | 4 |
+| R57 | Chat accesible via FAB | S6 | 3 |
+| R58 | AppBar contextual | S6 | 2 |
+| R59 | Widget de loading compartido | S6 | 2 |
+| R60 | Widget de empty state compartido | S6 | 2 |
+| R61 | Widget de error/reintento compartido | S6 | 2 |
+| R62 | Layout responsive sin overflow | S6 | 4 |
+| R63 | Cumplimiento de accesibilidad | S6 | 5 |
+| R64 | Extraccion de componentes reutilizables | S6 | 3 |
+| R65 | Verificacion por fase y tests | S6 | 6 |
 
 ### Conteo por slice
 
 | Slice | Requisitos | Escenarios |
 |-------|------------|------------|
-| S1 | 10 | 26 |
+| S1 | 10 | 28 |
 | S2 | 6 | 13 |
-| S3 | 9 | 16 |
-| S4 | 10 | 18 |
-| S5 | 7 | 14 |
+| S3 | 10 | 18 |
+| S4 | 10 | 22 |
+| S5 | 7 | 16 |
 | Cross-cutting | 4 | 9 |
-| **Total** | **46** | **96** |
+| S6 | 18 | 62 |
+| **Total** | **65** | **168** |
+
+> Nota: el cambio `app-movil-flutter-ui-ux` (archivado 2026-08-18) agrego 18 requisitos (R48-R65), modifico 3 (R8, R32, R43) y removio 2 implementaciones previas (NavigationBar de 15 destinos e icono launcher generico de Flutter). El conteo base fue normalizado a su contenido real (47 requisitos / 100 escenarios; el resumen previo declaraba 46/96 por un error de conteo en S3 y S4).
 
 ### Cobertura
 
 - **Happy paths**: cubiertos (login, CRUDs, POS, reportes, chat, logs).
 - **Edge cases**: cubiertos (sesion corrupta, lista vacia, venta sin detalles, respuesta vacia, markdown malformado, rango de logs vacio).
 - **Error states**: cubiertos (401, 403, timeout, red fallida, validaciones de permisos).
+- **UI/UX (S6)**: cubiertos (tokens light/dark, selector de tema persistente, seis KPIs + grafica por periodo, acciones por permiso, loading/empty/error, cinco tabs + Mas, deep links, responsive, contraste 4.5:1, targets 48dp, semantic labels, escala de texto, icono de marca).
 
 ### Next step
 
-Listo para **design** (`sdd-design`). El design debe aterrizar: estructura exacta de capas en `flutter/lib/`, contratos de repositorios, modelos freezed, configuracion de Dio + interceptor, configuracion de GoRouter con shell, estrategia de almacenamiento seguro, estrategia de renderizado Markdown seguro, esquema de providers Riverpod y plan de tests por slice.
+Ambos cambios de la app movil (`app-movil-flutter` y `app-movil-flutter-ui-ux`) estan implementados, verificados y archivados. Este spec es la fuente de verdad consolidada para `flutter/`. Nuevos cambios deberan usar deltas sobre este spec.
