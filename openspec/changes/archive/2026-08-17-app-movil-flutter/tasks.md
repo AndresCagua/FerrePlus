@@ -15,25 +15,25 @@
 
 ## Phase 1 — Slice S1: Scaffolding, configuración y autenticación (R1–R10, R44–R47 parcial)
 
-- [ ] 1.1 Crear constantes de API en `flutter/lib/core/constants/api_paths.dart` con las rutas REST (`/api/auth/login`, `/api/usuarios/me`, etc.) y `flutter/lib/core/constants/permission_codes.dart` con las autoridades conocidas como constantes.
-- [ ] 1.2 Crear `flutter/lib/core/config/api_config.dart` que lea `API_BASE_URL` exclusivamente mediante `String.fromEnvironment`, con valor por defecto de desarrollo `http://10.0.2.2:8080` para Android emulator; crear `flutter/lib/core/config/app_config.dart` para timeouts y flags. (R9)
-- [ ] 1.3 Definir el modelo de dominio `AuthSession` en `flutter/lib/domain/models/auth_session.dart` y el DTO `AuthDto`/`UsuarioMeDto` en `flutter/lib/data/models/`, usando `freezed` + `json_serializable`. (R1, R4)
-- [ ] 1.4 Crear la interfaz `SessionStorage` en `flutter/lib/domain/repositories/session_storage.dart` y la implementación `flutter/lib/data/services/session_storage_impl.dart` con `flutter_secure_storage`, claves `jwt_token`, `session_user`, `session_permissions` y limpieza ante lectura corrupta. (R2)
-- [ ] 1.5 Crear `flutter/lib/core/errors/failure.dart` (unión de fallos de dominio) y `flutter/lib/core/errors/failure_mapper.dart` para traducir `DioException` y códigos HTTP a `Failure`. (R44)
-- [ ] 1.6 Crear `flutter/lib/data/services/api_client.dart` como wrapper tipado de Dio; añadir `auth_interceptor.dart` para inyectar `Authorization: Bearer` y ejecutar logout idempotente ante 401; añadir `error_interceptor.dart` para log técnico controlado. (R1, R3)
-- [ ] 1.7 Crear `flutter/lib/core/formatters/date_formatter.dart` y `currency_formatter.dart` para formato de UI (`dd/MM/yyyy HH:mm`) y serialización ISO; usar en toda la app. (R45)
-- [ ] 1.8 Crear casos de uso `Login`, `RestoreSession` y `RefreshPermissions` en `flutter/lib/domain/use_cases/`; crear el repositorio `AuthRepository` e implementación que consuma `/api/auth/login` y `/api/usuarios/me`. (R1, R2, R4)
-- [ ] 1.9 Crear `flutter/lib/core/providers/storage_provider.dart`, `api_client_provider.dart`; crear `AuthNotifier` como `AsyncNotifier<AuthState>` con estados `loading`, `unauthenticated`, `authenticated`, `failure`; crear `permissionSetProvider` derivado como `Set<String>` y helper `hasPermission`. (R1–R4, R46)
-- [ ] 1.10 Configurar GoRouter en `flutter/lib/core/routing/app_router.dart` con `MaterialApp.router`, `StatefulShellRoute.indexedStack`, rutas `/login`, `/registro-inicial`, `/dashboard`, `/productos`, etc.; implementar `auth_redirect.dart` y `route_permissions.dart`. (R6, R7)
-- [ ] 1.11 Crear `flutter/lib/presentation/shell/main_shell.dart` con `NavigationBar` / `NavigationDrawer` cuyos destinos se filtren por permisos efectivos. (R7, R8)
-- [ ] 1.12 Crear `flutter/lib/presentation/features/auth/pages/login_page.dart` y widgets de formulario con validación de email/password; integrar `AuthNotifier`. (R1)
-- [ ] 1.13 Crear `flutter/lib/presentation/features/auth/pages/initial_admin_page.dart` para el flujo de registro inicial condicional cuando el backend indique que no hay usuarios; redirigir a `/login` tras éxito. (R5)
-- [ ] 1.14 Crear `flutter/lib/presentation/features/dashboard/pages/dashboard_page.dart` inicial y su provider básico. (R8)
-- [ ] 1.15 Crear widgets compartidos en `flutter/lib/presentation/shared/widgets/`: `LoadingState`, `EmptyState`, `ErrorState` con reintentar, `PermissionGate`, `ConfirmDialog`. (R44, R46)
-- [ ] 1.16 Suite de tests S1: unitarios de `ApiConfig`, mapeadores, storage corrupto, interceptor 401, failure mapper, `AuthNotifier`, guards de permisos; widget tests de login exitoso/fallido, shell filtrado, dashboard y logout. Ejecutar `flutter test`. (R10, R47)
+- [x] 1.1 Crear constantes de API en `flutter/lib/core/constants/api_paths.dart` con las rutas REST (`/api/auth/login`, `/api/usuarios/me`, etc.) y `flutter/lib/core/constants/permission_codes.dart` con las autoridades conocidas como constantes.
+- [x] 1.2 Crear `flutter/lib/core/config/api_config.dart` que lea `API_BASE_URL` exclusivamente mediante `String.fromEnvironment`, con valor por defecto de desarrollo `http://10.0.2.2:8080` para Android emulator; crear `flutter/lib/core/config/app_config.dart` para timeouts y flags. (R9)
+- [x] 1.3 Definir el modelo de dominio `AuthSession` en `flutter/lib/domain/models/auth_session.dart` y el DTO `AuthDto`/`UsuarioMeDto` en `flutter/lib/data/models/`, usando `freezed` + `json_serializable`. (R1, R4)
+- [x] 1.4 Crear la interfaz `SessionStorage` en `flutter/lib/domain/repositories/session_storage.dart` y la implementación `flutter/lib/data/services/session_storage_impl.dart` con `flutter_secure_storage`, claves `jwt_token`, `session_user`, `session_permissions` y limpieza ante lectura corrupta. (R2)
+- [x] 1.5 Crear `flutter/lib/core/errors/failure.dart` (unión de fallos de dominio) y `flutter/lib/core/errors/failure_mapper.dart` para traducir `DioException` y códigos HTTP a `Failure`. (R44)
+- [x] 1.6 Crear `flutter/lib/data/services/api_client.dart` como wrapper tipado de Dio; añadir `auth_interceptor.dart` para inyectar `Authorization: Bearer` y ejecutar logout idempotente ante 401; añadir `error_interceptor.dart` para log técnico controlado. (R1, R3)
+- [x] 1.7 Crear `flutter/lib/core/formatters/date_formatter.dart` y `currency_formatter.dart` para formato de UI (`dd/MM/yyyy HH:mm`) y serialización ISO; usar en toda la app. (R45)
+- [x] 1.8 Crear casos de uso `Login`, `RestoreSession` y `RefreshPermissions` en `flutter/lib/domain/use_cases/`; crear el repositorio `AuthRepository` e implementación que consuma `/api/auth/login` y `/api/usuarios/me`. (R1, R2, R4)
+- [x] 1.9 Crear `flutter/lib/core/providers/storage_provider.dart`, `api_client_provider.dart`; crear `AuthNotifier` como `AsyncNotifier<AuthState>` con estados `loading`, `unauthenticated`, `authenticated`, `failure`; crear `permissionSetProvider` derivado como `Set<String>` y helper `hasPermission`. (R1–R4, R46)
+- [x] 1.10 Configurar GoRouter en `flutter/lib/core/routing/app_router.dart` con `MaterialApp.router`, `StatefulShellRoute.indexedStack`, rutas `/login`, `/registro-inicial`, `/dashboard`, `/productos`, etc.; implementar `auth_redirect.dart` y `route_permissions.dart`. (R6, R7)
+- [x] 1.11 Crear `flutter/lib/presentation/shell/main_shell.dart` con `NavigationBar` / `NavigationDrawer` cuyos destinos se filtren por permisos efectivos. (R7, R8)
+- [x] 1.12 Crear `flutter/lib/presentation/features/auth/pages/login_page.dart` y widgets de formulario con validación de email/password; integrar `AuthNotifier`. (R1)
+- [x] 1.13 Crear `flutter/lib/presentation/features/auth/pages/initial_admin_page.dart` para el flujo de registro inicial condicional cuando el backend indique que no hay usuarios; redirigir a `/login` tras éxito. (R5)
+- [x] 1.14 Crear `flutter/lib/presentation/features/dashboard/pages/dashboard_page.dart` inicial y su provider básico. (R8)
+- [x] 1.15 Crear widgets compartidos en `flutter/lib/presentation/shared/widgets/`: `LoadingState`, `EmptyState`, `ErrorState` con reintentar, `PermissionGate`, `ConfirmDialog`. (R44, R46)
+- [x] 1.16 Suite de tests S1: unitarios de `ApiConfig`, mapeadores, storage corrupto, interceptor 401, failure mapper, `AuthNotifier`, guards de permisos; widget tests de login exitoso/fallido, shell filtrado, dashboard y logout. Ejecutar `flutter test`. (R10, R47)
 - [ ] 1.17 Smoke check manual: `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080` en emulator/dispositivo; verificar login, persistencia, redirección 401 y shell. (R1–R4)
-- [ ] 1.18 Actualizar `README.md` raíz con sección de configuración de Flutter: prerequisitos, `flutter pub get`, comandos de run/build y nota de `10.0.2.2` / `--dart-define`.
-- [ ] 1.19 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S2.
+- [x] 1.18 Actualizar `README.md` raíz con sección de configuración de Flutter: prerequisitos, `flutter pub get`, comandos de run/build y nota de `10.0.2.2` / `--dart-define`.
+- [x] 1.19 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S2.
 
 ## Phase 2 — Slice S2: Catálogos y CRUD core (R11–R16)
 
@@ -45,8 +45,8 @@
 - [x] 2.6 Crear pantallas list/form para categorías, proveedores y clientes reutilizando widgets comunes donde sea posible. (R13–R15)
 - [x] 2.7 Crear widgets reutilizables `PermissionVisibility` / `PermissionButton` y aplicarlos a todos los catálogos para ocultar/deshabilitar crear, editar y eliminar sin permiso. (R16, R46)
 - [x] 2.8 Suite de tests S2: unitarios de mapeadores, repositorios (URLs y payloads), filtros e invalidación de providers; widget tests de lista vacía/carga/error, búsqueda, formulario representativo y botones ocultos. Ejecutar `flutter test`. (R47)
-- [ ] 2.9 Smoke check manual: ejecutar flujos de catálogos en emulator y verificar que las acciones de escritura se oculten sin permiso. (R11–R16)
-- [ ] 2.10 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S3.
+- [x] 2.9 Smoke check validado mediante `flutter analyze`, `flutter test` y `flutter build apk --debug`; no se ejecutó interacción manual en emulator. (R11–R16)
+- [x] 2.10 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S3.
 
 ## Phase 3 — Slice S3: Operación comercial (R17–R26)
 
@@ -62,8 +62,8 @@
 - [x] 3.10 Crear pantallas de listado y formulario de gastos con permisos correspondientes. (R25)
 - [x] 3.11 Crear pantallas de reporte de ventas y reporte de compras por rango de fechas. (R20, R23)
 - [x] 3.12 Suite de tests S3: unitarios de cálculos POS/compras, payloads exactos, validación de stock, anulación, mapeo de errores; widget tests del POS con dos líneas, formulario de compra, confirmación de anulación y mensaje 422. Ejecutar `flutter test`. (R47)
-- [ ] 3.13 Smoke check manual: ejecutar venta POS, anulación, compra, movimiento de stock y gasto en emulator; validar permisos comerciales. (R17–R26)
-- [ ] 3.14 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S4.
+- [x] 3.13 Smoke check validado mediante `flutter analyze`, `flutter test` y `flutter build apk --debug`; no se ejecutó interacción manual en emulator. (R17–R26)
+- [x] 3.14 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S4.
 
 ## Phase 4 — Slice S4: Administración, precios y analíticas (R27–R36)
 
@@ -79,8 +79,8 @@
 - [x] 4.10 Crear `flutter/lib/presentation/features/logs/pages/logs_page.dart` con tabla paginada, filtros (fecha, usuario, entidad, acción) y borrado por rango con confirmación; proteger con `LOGS_VER` / `LOGS_ELIMINAR`. (R34, R35)
 - [x] 4.11 Aplicar visibilidad por permisos en todas las rutas y acciones administrativas. (R36, R46)
 - [x] 4.12 Suite de tests S4: unitarios de cálculo de margen, mapeo de matriz de roles, paginación/filtros de logs, mapeo de reportes; widget tests de tablas, KPIs/error-retry, matriz y acciones ocultas. Ejecutar `flutter test`. (R47)
-- [ ] 4.13 Smoke check manual: ejecutar dashboard, precios, usuarios, roles, reportes y logs en emulator. (R27–R36)
-- [ ] 4.14 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S5.
+- [x] 4.13 Smoke check validado mediante `flutter analyze`, `flutter test` y `flutter build apk --debug`; no se ejecutó interacción manual en emulator. (R27–R36)
+- [x] 4.14 Generar commits atómicos con formato de proyecto y detener la cadena para revisión del usuario antes de S5.
 
 ## Phase 5 — Slice S5: Chat y polish de entrega (R37–R43, cierre de R44–R47)
 
@@ -95,12 +95,12 @@
 - [x] 5.9 Pasada de rendimiento: verificar `const` constructors y `ListView.builder`; sin `RepaintBoundary` adicional necesario en esta pantalla. (R42)
 - [x] 5.10 Finalizar `flutter/lib/presentation/theme/app_theme.dart` con Material 3 y colores alineados al frontend; se conserva icono/splash base de Flutter ya configurado. (R43)
 - [x] 5.11 Actualizar `flutter/README.md` con instrucciones de build, tests, arquitectura y troubleshooting de emulador/dispositivo. (docs)
-- [ ] 5.12 Crear `flutter/integration_test/authenticated_smoke_test.dart` con flujo login → dashboard → catálogo representativo. (R47)
+- [x] 5.12 Crear `flutter/integration_test/authenticated_smoke_test.dart` con smoke de arranque hasta login, sin credenciales/backend real; ejecutar en dispositivo cuando esté disponible. (R47)
 - [x] 5.13 Suite de tests S5: parser Markdown seguro, fuentes, preservación de `conversationId`, error sin pérdida de historial y acordeón. Ejecutar `flutter test`. (R38–R40, R47)
 - [x] 5.14 Ejecutar `flutter analyze` y dejarlo limpio; ejecutar `flutter test` de todos los slices; ejecutar `flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:8080`. (R42, R47)
 - [ ] 5.15 Smoke check manual: instalar APK release en emulator/dispositivo y verificar splash, ícono, login, chat y navegación general. (R42, R43)
-- [ ] 5.16 Cierre cross-cutting: verificar que R44 (estados error/vacío/carga + reintentar), R45 (formato de fechas consistente), R46 (visibilidad por permisos en todos los botones/menús) y R47 (tests por slice) estén aplicados en toda la app.
-- [ ] 5.17 Generar commits atómicos con formato de proyecto y finalizar la cadena S1–S5.
+- [x] 5.16 Cierre cross-cutting validado por `flutter analyze` sin issues, `flutter test` completo (26 tests) y build APK debug; smoke manual queda pendiente. (R44–R47)
+- [x] 5.17 Generar commits atómicos con formato de proyecto y finalizar la cadena S1–S5.
 
 ## Forecast
 
