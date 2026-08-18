@@ -23,6 +23,8 @@ abstract final class AppColors {
   static const Color kpiPurple = Color(0xFF6A1B9A);
   static const Color kpiTeal = Color(0xFF00838F);
   static const Color kpiAmber = Color(0xFFFF8F00);
+  // Darker semantic amber keeps the KPI icon above 3:1 on light surfaces.
+  static const Color kpiAmberAccessible = Color(0xFFB45309);
   static const Color successContainerLight = Color(0xFFE8F5E9);
   static const Color errorContainerLight = Color(0xFFFFEBEE);
   static const Color successContainerDark = Color(0xFF1B5E20);

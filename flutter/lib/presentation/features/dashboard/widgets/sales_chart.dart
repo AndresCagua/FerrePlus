@@ -24,9 +24,7 @@ class SalesChart extends StatelessWidget {
     final AppComponentTheme components =
         Theme.of(context).extension<AppComponentTheme>() ??
         AppComponentTheme.standard;
-    final AppSemanticColors semanticColors =
-        Theme.of(context).extension<AppSemanticColors>() ??
-        AppSemanticColors.light;
+    final AppSemanticColors semanticColors = AppSemanticColors.of(context);
     return Card(
       child: Padding(
         padding: components.cardPadding,
@@ -62,7 +60,7 @@ class SalesChart extends StatelessWidget {
               SizedBox(
                 height: AppSpacing.chartHeight,
                 child: Semantics(
-                  label: 'Grafico de ventas con ${points.length} periodos',
+                  label: _chartSemanticsLabel(points),
                   child: CustomPaint(
                     painter: _SalesChartPainter(
                       points: points,
@@ -77,6 +75,16 @@ class SalesChart extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _chartSemanticsLabel(List<ChartPoint> values) {
+    final String pointsLabel = values
+        .map(
+          (ChartPoint point) =>
+              '${point.fecha?.day ?? ''}: ${point.total.toStringAsFixed(2)}',
+        )
+        .join(', ');
+    return 'Grafico de ventas con ${values.length} periodos. Valores: $pointsLabel';
   }
 }
 

@@ -47,39 +47,39 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     return PageScaffold(
       title: 'Asistente FerrePlus',
       actions: <Widget>[
-          if (canRebuild)
-            Semantics(
-              label: 'Reconstruir indice del chat',
-              button: true,
-              child: IconButton(
-                tooltip: 'Reconstruir indice',
-                onPressed: chat.isRebuildingIndex ? null : _confirmRebuild,
-                icon: chat.isRebuildingIndex
-                    ? const SizedBox.square(
-                        dimension: 20,
-                        child: AppLoadingIndicator(),
-                      )
-                    : const Icon(Icons.sync),
-              ),
-            ),
+        if (canRebuild)
           Semantics(
-            label: 'Reiniciar conversacion',
+            label: 'Reconstruir indice del chat',
             button: true,
             child: IconButton(
-              tooltip: 'Reiniciar conversacion',
-              onPressed: chat.messages.isEmpty
-                  ? null
-                  : () => ref.read(chatProvider.notifier).restartConversation(),
-              icon: const Icon(Icons.refresh),
+              tooltip: 'Reconstruir indice',
+              onPressed: chat.isRebuildingIndex ? null : _confirmRebuild,
+              icon: chat.isRebuildingIndex
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: AppLoadingIndicator(),
+                    )
+                  : const Icon(Icons.sync),
             ),
           ),
-        ],
+        Semantics(
+          label: 'Reiniciar conversacion',
+          button: true,
+          child: IconButton(
+            tooltip: 'Reiniciar conversacion',
+            onPressed: chat.messages.isEmpty
+                ? null
+                : () => ref.read(chatProvider.notifier).restartConversation(),
+            icon: const Icon(Icons.refresh),
+          ),
+        ),
+      ],
       child: Column(
         children: <Widget>[
           if (chat.error != null)
             MaterialBanner(
               content: Text(chat.error!),
-              leading: const Icon(Icons.error_outline),
+              leading: const ExcludeSemantics(child: Icon(Icons.error_outline)),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => ref.read(chatProvider.notifier).clearError(),

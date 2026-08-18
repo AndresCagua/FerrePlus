@@ -28,9 +28,9 @@ bool can(WidgetRef ref, String permission) =>
     ref.watch(authNotifierProvider).permisos.contains(permission);
 
 Widget errorView(Object error, VoidCallback retry) => AppErrorView(
-      message: 'No se pudo cargar la informacion: $error',
-      onRetry: retry,
-    );
+  message: 'No se pudo cargar la informacion: $error',
+  onRetry: retry,
+);
 
 class PreciosPage extends ConsumerWidget {
   const PreciosPage({super.key});
@@ -288,12 +288,8 @@ class UsuariosPage extends ConsumerWidget {
                     trailing: Chip(
                       label: Text(user.activo ? 'Activo' : 'Inactivo'),
                       backgroundColor: user.activo
-                          ? (Theme.of(context).extension<AppSemanticColors>() ??
-                                  AppSemanticColors.light)
-                              .successContainer
-                          : (Theme.of(context).extension<AppSemanticColors>() ??
-                                  AppSemanticColors.light)
-                              .errorContainer,
+                          ? AppSemanticColors.of(context).successContainer
+                          : AppSemanticColors.of(context).errorContainer,
                     ),
                     onTap: can(ref, PermissionCodes.usuariosEditar)
                         ? () => context.push(
@@ -679,9 +675,9 @@ Future<void> _deleteUser(
         return true;
       } catch (error) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(userFailureMessage(error))),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(userFailureMessage(error))));
         }
         return false;
       }
@@ -760,9 +756,9 @@ Future<void> _deleteRole(BuildContext context, WidgetRef ref, Rol role) async {
         return true;
       } catch (error) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(userFailureMessage(error))),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(userFailureMessage(error))));
         }
         return false;
       }
@@ -961,7 +957,7 @@ class ReportesPage extends StatelessWidget {
   const ReportesPage({super.key});
   @override
   Widget build(BuildContext context) => Scaffold(
-     appBar: const AppBarBuilder(title: 'Reportes'),
+    appBar: const AppBarBuilder(title: 'Reportes'),
     body: ListView(
       children: <Widget>[
         ListTile(
@@ -990,7 +986,7 @@ class DashboardAdminPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<ReporteDashboard> state = ref.watch(dashboardProvider);
     return Scaffold(
-       appBar: const AppBarBuilder(title: 'Dashboard'),
+      appBar: const AppBarBuilder(title: 'Dashboard'),
       body: state.when(
         loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) =>
@@ -1000,7 +996,10 @@ class DashboardAdminPage extends ConsumerWidget {
           children: <Widget>[
             _kpiGrid(context, report),
             const SizedBox(height: AppSpacing.space16),
-            SizedBox(height: AppSpacing.chartHeight, child: _salesChart(report.ventasPorDia)),
+            SizedBox(
+              height: AppSpacing.chartHeight,
+              child: _salesChart(report.ventasPorDia),
+            ),
           ],
         ),
       ),
@@ -1024,10 +1023,7 @@ Widget _metric(BuildContext context, String label, String value) => SizedBox(
   child: Card(
     child: ListTile(
       title: Text(label),
-      subtitle: Text(
-        value,
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
+      subtitle: Text(value, style: Theme.of(context).textTheme.titleLarge),
     ),
   ),
 );
@@ -1133,7 +1129,7 @@ class _ReporteVentasState extends ConsumerState<ReporteVentasPage> {
       reportSalesProvider(DateRange(desde, hasta)),
     );
     return Scaffold(
-       appBar: const AppBarBuilder(title: 'Ventas por fecha'),
+      appBar: const AppBarBuilder(title: 'Ventas por fecha'),
       body: Column(
         children: <Widget>[
           Row(
@@ -1247,7 +1243,7 @@ class _LogsState extends ConsumerState<LogsPageView> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                        child: AppLoadingIndicator(),
+                      child: AppLoadingIndicator(),
                     )
                   : const Icon(Icons.delete_sweep),
               onPressed: ref.watch(logsProvider).isLoading

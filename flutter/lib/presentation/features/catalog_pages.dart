@@ -80,11 +80,12 @@ class SimpleCatalogPage extends ConsumerWidget {
         allowed: permissions.contains(kind.createPermission),
         child: FloatingActionButton(
           onPressed: () => context.push('${kind.path}/nuevo'),
+          tooltip: 'Nuevo registro de ${kind.title.toLowerCase()}',
           child: const Icon(Icons.add),
         ),
       ),
       child: value.when(
-         loading: () => const AppLoadingIndicator(),
+        loading: () => const AppLoadingIndicator(),
         error: (Object error, StackTrace stack) => _ErrorRetry(
           message: error.toString(),
           retry: () => kind.reload(ref),
@@ -181,11 +182,8 @@ class _ErrorRetry extends StatelessWidget {
   final String message;
   final VoidCallback retry;
   @override
-  Widget build(BuildContext context) => AppErrorView(
-        message: message,
-        onRetry: retry,
-        retryLabel: 'Reintentar',
-      );
+  Widget build(BuildContext context) =>
+      AppErrorView(message: message, onRetry: retry, retryLabel: 'Reintentar');
 }
 
 class CategoriasPage extends StatelessWidget {

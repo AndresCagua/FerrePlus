@@ -148,9 +148,9 @@ class _MasTile extends StatelessWidget {
     label: 'Abrir ${item.label}',
     child: ListTile(
       minVerticalPadding: AppSpacing.space8,
-      leading: Icon(item.icon),
+      leading: ExcludeSemantics(child: Icon(item.icon)),
       title: Text(item.label),
-      trailing: const Icon(Icons.chevron_right),
+      trailing: const ExcludeSemantics(child: Icon(Icons.chevron_right)),
       onTap: () => context.go(item.route),
     ),
   );

@@ -22,9 +22,9 @@ import '../shared/widgets/confirm_dialog.dart';
 import '../theme/app_spacing.dart';
 
 Widget _error(Object error, VoidCallback retry) => AppErrorView(
-      message: 'No se pudo cargar la informacion: $error',
-      onRetry: retry,
-    );
+  message: 'No se pudo cargar la informacion: $error',
+  onRetry: retry,
+);
 
 Future<DateTime?> _pickDate(BuildContext context, DateTime? initial) =>
     showDatePicker(
@@ -35,11 +35,11 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime? initial) =>
     );
 
 Future<bool> _confirm(BuildContext context, String title) => confirmAction(
-      context,
-      title: title,
-      message: 'Esta accion no se puede deshacer.',
-      confirmLabel: 'Confirmar',
-    );
+  context,
+  title: title,
+  message: 'Esta accion no se puede deshacer.',
+  confirmLabel: 'Confirmar',
+);
 
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge(this.status);
@@ -80,6 +80,7 @@ class _VentasPageState extends ConsumerState<VentasPage> {
       floatingActionButton: permissions.contains(PermissionCodes.ventasCrear)
           ? FloatingActionButton(
               onPressed: () => context.push('/ventas/nuevo'),
+              tooltip: 'Nueva venta',
               child: const Icon(Icons.add),
             )
           : null,
@@ -511,6 +512,7 @@ class _ComprasPageState extends ConsumerState<ComprasPage> {
       floatingActionButton: permissions.contains(PermissionCodes.comprasCrear)
           ? FloatingActionButton(
               onPressed: () => context.push('/compras/nuevo'),
+              tooltip: 'Nueva compra',
               child: const Icon(Icons.add),
             )
           : null,
@@ -917,6 +919,7 @@ class MovimientosPage extends ConsumerWidget {
       floatingActionButton: canCreate
           ? FloatingActionButton(
               onPressed: () => context.push('/movimientos/nuevo'),
+              tooltip: 'Nuevo movimiento',
               child: const Icon(Icons.add),
             )
           : null,
@@ -931,10 +934,10 @@ class MovimientosPage extends ConsumerWidget {
                 () => ref.read(movimientosProvider.notifier).reload(),
               ),
               data: (List<MovimientoStock> items) => items.isEmpty
-          ? const AppEmptyState(
-              title: 'Sin movimientos',
-              subtitle: 'No hay movimientos registrados.',
-            )
+                  ? const AppEmptyState(
+                      title: 'Sin movimientos',
+                      subtitle: 'No hay movimientos registrados.',
+                    )
                   : ListView.builder(
                       itemCount: items.length,
                       itemBuilder: (BuildContext context, int index) {
@@ -1121,6 +1124,7 @@ class GastosPage extends ConsumerWidget {
       floatingActionButton: permissions.contains(PermissionCodes.gastosCrear)
           ? FloatingActionButton(
               onPressed: () => context.push('/gastos/nuevo'),
+              tooltip: 'Nuevo gasto',
               child: const Icon(Icons.add),
             )
           : null,
@@ -1274,7 +1278,7 @@ class _GastoFormState extends ConsumerState<GastoFormPage> {
       title: widget.id == null ? 'Nuevo gasto' : 'Editar gasto',
     ),
     body: loadingExisting
-          ? const AppLoadingIndicator()
+        ? const AppLoadingIndicator()
         : loadError != null
         ? _error(loadError!, _loadExisting)
         : Form(

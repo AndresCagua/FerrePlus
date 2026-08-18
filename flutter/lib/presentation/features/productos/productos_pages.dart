@@ -39,6 +39,7 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
         allowed: permissions.contains(PermissionCodes.productosCrear),
         child: FloatingActionButton(
           onPressed: () => context.push('/productos/nuevo'),
+          tooltip: 'Nuevo producto',
           child: const Icon(Icons.add),
         ),
       ),
@@ -102,11 +103,11 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
         'Stock: ${product.stockActual}  Precio: ${product.precioVenta}',
       ),
       leading: low
-          ? Icon(
-              Icons.warning_amber,
-              color: (Theme.of(context).extension<AppSemanticColors>() ??
-                      AppSemanticColors.light)
-                  .warning,
+          ? ExcludeSemantics(
+              child: Icon(
+                Icons.warning_amber,
+                color: AppSemanticColors.of(context).warning,
+              ),
             )
           : null,
       trailing: PermissionVisibility(
@@ -342,11 +343,11 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
       child: loadingExisting
           ? const AppLoadingIndicator()
           : loadError != null
-           ? AppErrorView(
-               message: 'No se pudo cargar el producto.',
-               onRetry: _loadExisting,
-               retryLabel: 'Reintentar',
-             )
+          ? AppErrorView(
+              message: 'No se pudo cargar el producto.',
+              onRetry: _loadExisting,
+              retryLabel: 'Reintentar',
+            )
           : !allowed
           ? const Center(child: Text('No tienes permiso para esta accion.'))
           : Form(
@@ -411,7 +412,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
   }
 
   Widget field(String name, String label, bool required) => Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.space12),
+    padding: const EdgeInsets.only(bottom: AppSpacing.space12),
     child: TextFormField(
       controller: fields[name],
       keyboardType: const TextInputType.numberWithOptions(decimal: true),

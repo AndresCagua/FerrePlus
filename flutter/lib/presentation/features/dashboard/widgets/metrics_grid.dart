@@ -13,6 +13,9 @@ class MetricsGrid extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (BuildContext context, BoxConstraints constraints) {
       final int columns = constraints.maxWidth >= AppSpacing.space360 ? 2 : 1;
+      final double textScale = MediaQuery.textScalerOf(
+        context,
+      ).scale(1).clamp(1, 1.5).toDouble();
       return GridView.custom(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -20,7 +23,7 @@ class MetricsGrid extends StatelessWidget {
           crossAxisCount: columns,
           crossAxisSpacing: AppSpacing.space12,
           mainAxisSpacing: AppSpacing.space12,
-          mainAxisExtent: AppSpacing.metricCardHeight,
+          mainAxisExtent: AppSpacing.metricCardHeight * textScale,
         ),
         childrenDelegate: SliverChildListDelegate(
           metrics
@@ -35,9 +38,7 @@ class MetricsGrid extends StatelessWidget {
     BuildContext context,
     ReporteDashboard report,
   ) {
-    final AppSemanticColors colors =
-        Theme.of(context).extension<AppSemanticColors>() ??
-        AppSemanticColors.light;
+    final AppSemanticColors colors = AppSemanticColors.of(context);
     return <MetricCardData>[
       MetricCardData(
         label: 'Total Productos',
