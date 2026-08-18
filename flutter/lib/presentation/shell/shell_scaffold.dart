@@ -19,9 +19,7 @@ class ShellScaffold extends ConsumerWidget {
     ];
     final int currentBranch = navigationShell.currentIndex;
     return Scaffold(
-      body: navigationShell,
-      floatingActionButton: const ChatFloatingActionButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: DraggableChatFab(child: navigationShell),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentBranch,
         onDestinationSelected: (int index) => navigationShell.goBranch(

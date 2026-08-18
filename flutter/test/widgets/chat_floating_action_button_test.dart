@@ -56,6 +56,22 @@ Widget _buildTestApp(AuthState authState) {
   );
 }
 
+Widget _buildDraggableTestApp(AuthState authState) {
+  return ProviderScope(
+    overrides: [
+      authNotifierProvider.overrideWith(() => _FixedAuthNotifier(authState)),
+      chatRepositoryProvider.overrideWithValue(_ChatRepositoryFake()),
+    ],
+    child: const MaterialApp(
+      home: Scaffold(
+        body: DraggableChatFab(
+          child: SizedBox.expand(child: Text('Contenido')),
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
   testWidgets('muestra el FAB con permiso de chat', (
     WidgetTester tester,
@@ -110,5 +126,45 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Asistente FerrePlus'), findsOneWidget);
+  });
+
+  testWidgets('el FAB de chat se puede arrastrar libremente', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildDraggableTestApp(const AuthState(status: AuthStatus.authenticated)),
+    );
+
+    final Finder fab = find.byType(FloatingActionButton);
+    final Offset inicio = tester.getTopLeft(fab);
+
+    // Arrastra hacia arriba-izquierda: el FAB debe moverse con el dedo.
+    await tester.drag(fab, const Offset(-80, -120));
+    await tester.pumpAndSettle();
+
+    final Offset movido = tester.getTopLeft(fab);
+    expect(movido.dx, lessThan(inicio.dx));
+    expect(movido.dy, lessThan(inicio.dy));
+  });
+
+  testWidgets('el FAB de chat respeta los limites de la pantalla', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildDraggableTestApp(const AuthState(status: AuthStatus.authenticated)),
+    );
+
+    final Finder fab = find.byType(FloatingActionButton);
+
+    // Intenta arrastrar muy lejos: no debe salirse del area visible.
+    await tester.drag(fab, const Offset(-4000, -4000));
+    await tester.pumpAndSettle();
+
+    final Rect area = tester.getRect(fab);
+    final Size pantalla = tester.getSize(find.byType(MaterialApp));
+    expect(area.left, greaterThanOrEqualTo(0));
+    expect(area.top, greaterThanOrEqualTo(0));
+    expect(area.right, lessThanOrEqualTo(pantalla.width));
+    expect(area.bottom, lessThanOrEqualTo(pantalla.height));
   });
 }
