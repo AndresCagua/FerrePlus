@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../domain/repositories/auth_repository.dart';
+import '../../shared/widgets/app_error_view.dart';
+import '../../shared/widgets/app_loading_indicator.dart';
+import '../../shared/widgets/page_scaffold.dart';
+import '../../theme/app_spacing.dart';
 
 class InitialAdminPage extends ConsumerStatefulWidget {
   const InitialAdminPage({required this.repository, super.key});
@@ -58,20 +62,20 @@ class _InitialAdminPageState extends ConsumerState<InitialAdminPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Registro inicial')),
-      body: Center(
+    return PageScaffold(
+      title: 'Registro inicial',
+      child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.space24),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   const Text('Registrar administrador'),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.space20),
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Nombre'),
@@ -104,15 +108,12 @@ class _InitialAdminPageState extends ConsumerState<InitialAdminPage> {
                         : null,
                   ),
                   if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                    ),
-                  const SizedBox(height: 20),
+                    AppErrorView(message: _error!, onRetry: _submit),
+                  const SizedBox(height: AppSpacing.space20),
                   FilledButton(
                     onPressed: _isSubmitting ? null : _submit,
                     child: _isSubmitting
-                        ? const CircularProgressIndicator()
+                        ? const AppLoadingIndicator()
                         : const Text('Registrar'),
                   ),
                   TextButton(onPressed: () => context.go('/auth'), child: const Text('Volver al login')),

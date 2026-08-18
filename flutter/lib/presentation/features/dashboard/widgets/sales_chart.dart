@@ -5,6 +5,7 @@ import '../../../shared/widgets/app_empty_state.dart';
 import '../../../theme/app_component_theme.dart';
 import '../../../theme/app_semantic_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../theme/app_typography.dart';
 import '../dashboard_period.dart';
 
 class SalesChart extends StatelessWidget {
@@ -114,7 +115,7 @@ class _SalesChartPainter extends CustomPainter {
       );
       text.text = TextSpan(
         text: _label(point.fecha),
-        style: TextStyle(color: textColor, fontSize: AppSpacing.chartLabelSize),
+        style: AppTypography.textTheme.bodySmall!.copyWith(color: textColor),
       );
       text.layout(maxWidth: slot);
       text.paint(

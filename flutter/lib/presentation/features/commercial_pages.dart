@@ -14,16 +14,17 @@ import '../../domain/use_cases/build_purchase.dart';
 import '../../domain/use_cases/build_sale.dart';
 import 'catalog_providers.dart';
 import 'commercial_providers.dart';
+import '../shared/widgets/app_error_view.dart';
+import '../shared/widgets/app_empty_state.dart';
+import '../shared/widgets/app_loading_indicator.dart';
+import '../shared/widgets/page_scaffold.dart';
+import '../shared/widgets/confirm_dialog.dart';
+import '../theme/app_spacing.dart';
 
-Widget _error(Object error, VoidCallback retry) => Center(
-  child: Column(
-    mainAxisSize: MainAxisSize.min,
-    children: <Widget>[
-      Text('Error: $error'),
-      FilledButton(onPressed: retry, child: const Text('Reintentar')),
-    ],
-  ),
-);
+Widget _error(Object error, VoidCallback retry) => AppErrorView(
+      message: 'No se pudo cargar la informacion: $error',
+      onRetry: retry,
+    );
 
 Future<DateTime?> _pickDate(BuildContext context, DateTime? initial) =>
     showDatePicker(
@@ -33,25 +34,12 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime? initial) =>
       initialDate: initial ?? DateTime.now(),
     );
 
-Future<bool> _confirm(BuildContext context, String title) async =>
-    await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(title),
-        content: const Text('Esta accion no se puede deshacer.'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
-    ) ??
-    false;
+Future<bool> _confirm(BuildContext context, String title) => confirmAction(
+      context,
+      title: title,
+      message: 'Esta accion no se puede deshacer.',
+      confirmLabel: 'Confirmar',
+    );
 
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge(this.status);
@@ -79,10 +67,11 @@ class _VentasPageState extends ConsumerState<VentasPage> {
     final List<Cliente> clients =
         ref.watch(clientesProvider).value ?? <Cliente>[];
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ventas'),
+      appBar: AppBarBuilder(
+        title: 'Ventas',
         actions: <Widget>[
           IconButton(
+            tooltip: 'Ver reportes de ventas',
             onPressed: () => context.push('/ventas/reportes'),
             icon: const Icon(Icons.assessment),
           ),
@@ -132,11 +121,14 @@ class _VentasPageState extends ConsumerState<VentasPage> {
           ),
           Expanded(
             child: value.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const AppLoadingIndicator(),
               error: (Object e, StackTrace s) =>
                   _error(e, () => ref.read(ventasProvider.notifier).reload()),
               data: (List<Venta> items) => items.isEmpty
-                  ? const Center(child: Text('No hay ventas.'))
+                  ? const AppEmptyState(
+                      title: 'Sin ventas',
+                      subtitle: 'No hay ventas registradas.',
+                    )
                   : ListView.builder(
                       itemCount: items.length,
                       itemBuilder: (BuildContext context, int index) {
@@ -276,11 +268,11 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
     final num discountValue = num.tryParse(discount.text) ?? 0;
     final num iva = (subtotal - discountValue) * .15;
     return Scaffold(
-      appBar: AppBar(title: const Text('Nueva venta POS')),
+      appBar: AppBarBuilder(title: 'Nueva venta POS'),
       body: Form(
         key: formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.space16),
           children: <Widget>[
             DropdownButtonFormField<int>(
               initialValue: clientId,
@@ -388,6 +380,7 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
                   children: <Widget>[
                     Text(entry.value.subtotal!.toStringAsFixed(2)),
                     IconButton(
+                      tooltip: 'Eliminar linea',
                       onPressed: () =>
                           setState(() => details.removeAt(entry.key)),
                       icon: const Icon(Icons.delete_outline),
@@ -421,7 +414,7 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
                   ? _save
                   : null,
               child: saving
-                  ? const CircularProgressIndicator()
+                  ? const AppLoadingIndicator()
                   : const Text('Guardar venta'),
             ),
           ],
@@ -443,9 +436,9 @@ class VentaDetailPage extends ConsumerWidget {
         .contains(PermissionCodes.ventasEliminar);
     final bool mutationInFlight = ref.watch(ventasProvider).isLoading;
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalle de venta')),
+      appBar: AppBarBuilder(title: 'Detalle de venta'),
       body: value.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) => _error(e, () {}),
         data: (Venta sale) => ListView(
           children: <Widget>[
@@ -480,7 +473,7 @@ class VentaDetailPage extends ConsumerWidget {
                         }
                       },
                 child: mutationInFlight
-                    ? const CircularProgressIndicator()
+                    ? const AppLoadingIndicator()
                     : const Text('Anular venta'),
               ),
           ],
@@ -505,10 +498,11 @@ class _ComprasPageState extends ConsumerState<ComprasPage> {
     final Set<String> permissions = ref.watch(authNotifierProvider).permisos;
     final bool mutationInFlight = ref.watch(comprasProvider).isLoading;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Compras'),
+      appBar: AppBarBuilder(
+        title: 'Compras',
         actions: <Widget>[
           IconButton(
+            tooltip: 'Ver reportes de compras',
             onPressed: () => context.push('/compras/reportes'),
             icon: const Icon(Icons.assessment),
           ),
@@ -542,11 +536,14 @@ class _ComprasPageState extends ConsumerState<ComprasPage> {
           ),
           Expanded(
             child: value.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const AppLoadingIndicator(),
               error: (Object e, StackTrace s) =>
                   _error(e, () => ref.read(comprasProvider.notifier).reload()),
               data: (List<Compra> items) => items.isEmpty
-                  ? const Center(child: Text('No hay compras.'))
+                  ? const AppEmptyState(
+                      title: 'Sin compras',
+                      subtitle: 'No hay compras registradas.',
+                    )
                   : ListView.builder(
                       itemCount: items.length,
                       itemBuilder: (BuildContext context, int index) {
@@ -563,6 +560,7 @@ class _ComprasPageState extends ConsumerState<ComprasPage> {
                                   ) &&
                                   x.estado != 'ANULADA')
                                 IconButton(
+                                  tooltip: 'Anular compra',
                                   onPressed: mutationInFlight
                                       ? null
                                       : () async {
@@ -594,9 +592,7 @@ class _ComprasPageState extends ConsumerState<ComprasPage> {
                                       ? const SizedBox(
                                           width: 20,
                                           height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
+                                          child: AppLoadingIndicator(),
                                         )
                                       : const Icon(Icons.cancel_outlined),
                                 ),
@@ -733,17 +729,17 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
         ref.watch(proveedoresProvider).value ?? <Proveedor>[];
     final num d = num.tryParse(discount.text) ?? 0, iva = (subtotal - d) * .15;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.id == null ? 'Nueva compra' : 'Editar compra'),
+      appBar: AppBarBuilder(
+        title: widget.id == null ? 'Nueva compra' : 'Editar compra',
       ),
       body: loadingExisting
-          ? const Center(child: CircularProgressIndicator())
+          ? const AppLoadingIndicator()
           : loadError != null
           ? _error(loadError!, _loadExisting)
           : Form(
               key: keyForm,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.space16),
                 children: <Widget>[
                   TextFormField(
                     controller: invoice,
@@ -895,7 +891,7 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
                           }
                         : null,
                     child: saving
-                        ? const CircularProgressIndicator()
+                        ? const AppLoadingIndicator()
                         : const Text('Guardar compra'),
                   ),
                 ],
@@ -917,7 +913,7 @@ class MovimientosPage extends ConsumerWidget {
         .permisos
         .contains(PermissionCodes.movimientosCrear);
     return Scaffold(
-      appBar: AppBar(title: const Text('Movimientos de stock')),
+      appBar: AppBarBuilder(title: 'Movimientos de stock'),
       floatingActionButton: canCreate
           ? FloatingActionButton(
               onPressed: () => context.push('/movimientos/nuevo'),
@@ -929,13 +925,16 @@ class MovimientosPage extends ConsumerWidget {
           const _MovementFilter(),
           Expanded(
             child: value.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const AppLoadingIndicator(),
               error: (Object e, StackTrace s) => _error(
                 e,
                 () => ref.read(movimientosProvider.notifier).reload(),
               ),
               data: (List<MovimientoStock> items) => items.isEmpty
-                  ? const Center(child: Text('No hay movimientos.'))
+          ? const AppEmptyState(
+              title: 'Sin movimientos',
+              subtitle: 'No hay movimientos registrados.',
+            )
                   : ListView.builder(
                       itemCount: items.length,
                       itemBuilder: (BuildContext context, int index) {
@@ -1017,9 +1016,9 @@ class _MovimientoFormState extends ConsumerState<MovimientoFormPage> {
     final List<Producto> products =
         ref.watch(productosProvider).value ?? <Producto>[];
     return Scaffold(
-      appBar: AppBar(title: const Text('Nuevo movimiento')),
+      appBar: AppBarBuilder(title: 'Nuevo movimiento'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.space16),
         children: <Widget>[
           DropdownButtonFormField<int>(
             decoration: const InputDecoration(labelText: 'Producto'),
@@ -1101,7 +1100,7 @@ class _MovimientoFormState extends ConsumerState<MovimientoFormPage> {
                   }
                 : null,
             child: saving
-                ? const CircularProgressIndicator()
+                ? const AppLoadingIndicator()
                 : const Text('Registrar movimiento'),
           ),
         ],
@@ -1118,7 +1117,7 @@ class GastosPage extends ConsumerWidget {
     final Set<String> permissions = ref.watch(authNotifierProvider).permisos;
     final bool mutationInFlight = ref.watch(gastosProvider).isLoading;
     return Scaffold(
-      appBar: AppBar(title: const Text('Gastos')),
+      appBar: AppBarBuilder(title: 'Gastos'),
       floatingActionButton: permissions.contains(PermissionCodes.gastosCrear)
           ? FloatingActionButton(
               onPressed: () => context.push('/gastos/nuevo'),
@@ -1126,11 +1125,14 @@ class GastosPage extends ConsumerWidget {
             )
           : null,
       body: value.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) =>
             _error(e, () => ref.read(gastosProvider.notifier).reload()),
         data: (List<Gasto> items) => items.isEmpty
-            ? const Center(child: Text('No hay gastos.'))
+            ? const AppEmptyState(
+                title: 'Sin gastos',
+                subtitle: 'No hay gastos registrados.',
+              )
             : ListView.builder(
                 itemCount: items.length,
                 itemBuilder: (BuildContext context, int index) {
@@ -1144,6 +1146,7 @@ class GastosPage extends ConsumerWidget {
                         Text(x.monto.toStringAsFixed(2)),
                         if (permissions.contains(PermissionCodes.gastosEditar))
                           IconButton(
+                            tooltip: 'Editar gasto',
                             onPressed: () =>
                                 context.push('/gastos/${x.id}/editar'),
                             icon: const Icon(Icons.edit),
@@ -1152,6 +1155,7 @@ class GastosPage extends ConsumerWidget {
                           PermissionCodes.gastosEliminar,
                         ))
                           IconButton(
+                            tooltip: 'Eliminar gasto',
                             onPressed: mutationInFlight
                                 ? null
                                 : () async {
@@ -1181,9 +1185,7 @@ class GastosPage extends ConsumerWidget {
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
+                                    child: AppLoadingIndicator(),
                                   )
                                 : const Icon(Icons.delete_outline),
                           ),
@@ -1268,17 +1270,17 @@ class _GastoFormState extends ConsumerState<GastoFormPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(widget.id == null ? 'Nuevo gasto' : 'Editar gasto'),
+    appBar: AppBarBuilder(
+      title: widget.id == null ? 'Nuevo gasto' : 'Editar gasto',
     ),
     body: loadingExisting
-        ? const Center(child: CircularProgressIndicator())
+          ? const AppLoadingIndicator()
         : loadError != null
         ? _error(loadError!, _loadExisting)
         : Form(
             key: formKey,
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.space16),
               children: <Widget>[
                 TextFormField(
                   controller: description,
@@ -1375,7 +1377,7 @@ class _GastoFormState extends ConsumerState<GastoFormPage> {
                       ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: AppLoadingIndicator(),
                         )
                       : const Text('Guardar gasto'),
                 ),
@@ -1413,8 +1415,8 @@ class _CommercialReportState extends ConsumerState<CommercialReportPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(widget.sales ? 'Reporte de ventas' : 'Reporte de compras'),
+    appBar: AppBarBuilder(
+      title: widget.sales ? 'Reporte de ventas' : 'Reporte de compras',
     ),
     body: Column(
       children: <Widget>[
@@ -1439,10 +1441,13 @@ class _CommercialReportState extends ConsumerState<CommercialReportPage> {
             FilledButton(onPressed: load, child: const Text('Consultar')),
           ],
         ),
-        if (loading) const LinearProgressIndicator(),
+        if (loading) const AppLoadingIndicator(),
         Expanded(
           child: results.isEmpty
-              ? const Center(child: Text('Sin datos en el rango seleccionado.'))
+              ? const AppEmptyState(
+                  title: 'Sin datos',
+                  subtitle: 'Sin datos en el rango seleccionado.',
+                )
               : ListView.builder(
                   itemCount: results.length,
                   itemBuilder: (BuildContext context, int index) {

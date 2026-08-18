@@ -6,7 +6,12 @@ import '../../domain/models/catalog_models.dart';
 import '../../core/errors/failure_message.dart';
 import '../../core/providers/auth_providers.dart';
 import '../shared/widgets/confirm_dialog.dart';
+import '../shared/widgets/app_empty_state.dart';
+import '../shared/widgets/app_error_view.dart';
+import '../shared/widgets/app_loading_indicator.dart';
+import '../shared/widgets/page_scaffold.dart';
 import '../shared/widgets/permission_visibility.dart';
+import '../theme/app_spacing.dart';
 import 'catalog_providers.dart';
 
 enum CatalogKind { categorias, proveedores, clientes }
@@ -69,8 +74,8 @@ class SimpleCatalogPage extends ConsumerWidget {
       CatalogKind.proveedores => ref.watch(proveedoresProvider).isLoading,
       CatalogKind.clientes => ref.watch(clientesProvider).isLoading,
     };
-    return Scaffold(
-      appBar: AppBar(title: Text(kind.title)),
+    return PageScaffold(
+      title: kind.title,
       floatingActionButton: PermissionVisibility(
         allowed: permissions.contains(kind.createPermission),
         child: FloatingActionButton(
@@ -78,14 +83,17 @@ class SimpleCatalogPage extends ConsumerWidget {
           child: const Icon(Icons.add),
         ),
       ),
-      body: value.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+      child: value.when(
+         loading: () => const AppLoadingIndicator(),
         error: (Object error, StackTrace stack) => _ErrorRetry(
           message: error.toString(),
           retry: () => kind.reload(ref),
         ),
         data: (List<Object> items) => items.isEmpty
-            ? const Center(child: Text('No hay registros disponibles.'))
+            ? const AppEmptyState(
+                title: 'Sin registros',
+                subtitle: 'No hay registros disponibles.',
+              )
             : RefreshIndicator(
                 onRefresh: () => kind.reload(ref),
                 child: ListView.builder(
@@ -158,7 +166,7 @@ class _CatalogTile extends StatelessWidget {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: AppLoadingIndicator(),
                   )
                 : const Icon(Icons.delete_outline),
           ),
@@ -173,15 +181,11 @@ class _ErrorRetry extends StatelessWidget {
   final String message;
   final VoidCallback retry;
   @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(message),
-        FilledButton(onPressed: retry, child: const Text('Reintentar')),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) => AppErrorView(
+        message: message,
+        onRetry: retry,
+        retryLabel: 'Reintentar',
+      );
 }
 
 class CategoriasPage extends StatelessWidget {
@@ -366,14 +370,11 @@ class _CatalogFormPageState extends ConsumerState<CatalogFormPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(
-        '${widget.id == null ? 'Nuevo' : 'Editar'} ${widget.kind.title}',
-      ),
-    ),
-    body: loadingExisting
-        ? const Center(child: CircularProgressIndicator())
+  Widget build(BuildContext context) => PageScaffold(
+    title: '${widget.id == null ? 'Nuevo' : 'Editar'} ${widget.kind.title}',
+    contentPadding: false,
+    child: loadingExisting
+        ? const AppLoadingIndicator()
         : loadError != null
         ? _ErrorRetry(
             message: userFailureMessage(loadError!),
@@ -382,7 +383,7 @@ class _CatalogFormPageState extends ConsumerState<CatalogFormPage> {
         : Form(
             key: formKey,
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.space16),
               children: <Widget>[
                 field('nombre', 'Nombre', true),
                 field('descripcion', 'Descripcion', false),
@@ -396,11 +397,7 @@ class _CatalogFormPageState extends ConsumerState<CatalogFormPage> {
                 FilledButton(
                   onPressed: saving ? null : save,
                   child: saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const AppLoadingIndicator()
                       : const Text('Guardar'),
                 ),
               ],
@@ -408,7 +405,7 @@ class _CatalogFormPageState extends ConsumerState<CatalogFormPage> {
           ),
   );
   Widget field(String name, String label, bool required) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.only(bottom: AppSpacing.space12),
     child: TextFormField(
       controller: fields[name],
       decoration: InputDecoration(labelText: label),

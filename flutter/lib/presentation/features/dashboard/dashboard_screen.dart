@@ -6,6 +6,7 @@ import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_view.dart';
 import '../../shared/widgets/app_loading_indicator.dart';
 import '../../shared/widgets/page_scaffold.dart';
+import '../../theme/app_spacing.dart';
 import '../admin_providers.dart';
 import 'dashboard_provider.dart';
 import 'dashboard_period.dart';
@@ -55,7 +56,7 @@ class _DashboardContent extends ConsumerWidget {
       children: <Widget>[
         const DashboardHeader(),
         MetricsGrid(metrics: MetricsGrid.fromReport(context, report)),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.space24),
         sales.when(
           loading: () => const AppLoadingIndicator(
             message: 'Cargando grafico',
@@ -73,9 +74,9 @@ class _DashboardContent extends ConsumerWidget {
                 ref.read(dashboardPeriodProvider.notifier).select(next),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.space24),
         const QuickActions(),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.space24),
         MonthSummary(report: report),
       ],
     );
@@ -97,7 +98,10 @@ class PlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)),
-    body: const Center(child: Text('Disponible en un proximo slice')),
+     appBar: AppBarBuilder(title: title),
+     body: const AppEmptyState(
+       title: 'Disponible pronto',
+       subtitle: 'Disponible en un proximo slice.',
+     ),
   );
 }

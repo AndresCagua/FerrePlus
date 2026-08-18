@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/app_spacing.dart';
+
 class SafeMarkdownRenderer extends StatelessWidget {
   const SafeMarkdownRenderer({required this.content, super.key});
 
@@ -52,7 +54,7 @@ class SafeMarkdownRenderer extends StatelessWidget {
       }
       flushBullets();
       if (line.isEmpty) {
-        result.add(const SizedBox(height: 8));
+        result.add(const SizedBox(height: AppSpacing.space8));
       } else {
         result.add(
           Padding(
@@ -67,8 +69,8 @@ class SafeMarkdownRenderer extends StatelessWidget {
   }
 
   Widget _inlineText(BuildContext context, String value) {
-    final TextStyle baseStyle =
-        Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final TextStyle baseStyle = textTheme.bodyMedium ?? textTheme.bodyLarge!;
     final List<InlineSpan> spans = <InlineSpan>[];
     final RegExp token = RegExp(r'(\*\*|__)(.+?)(\*\*|__)|(\*|_)(.+?)(\*|_)');
     int cursor = 0;

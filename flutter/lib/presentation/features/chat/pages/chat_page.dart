@@ -7,6 +7,12 @@ import '../../../../domain/models/chat_models.dart';
 import '../chat_provider.dart';
 import '../widgets/chat_sources_accordion.dart';
 import '../widgets/safe_markdown_renderer.dart';
+import '../../../shared/widgets/app_empty_state.dart';
+import '../../../shared/widgets/app_loading_indicator.dart';
+import '../../../shared/widgets/confirm_dialog.dart';
+import '../../../shared/widgets/page_scaffold.dart';
+import '../../../theme/app_radius.dart';
+import '../../../theme/app_spacing.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key});
@@ -38,10 +44,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         .watch(authNotifierProvider)
         .permisos
         .contains(PermissionCodes.chatIndexRebuild);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Asistente FerrePlus'),
-        actions: <Widget>[
+    return PageScaffold(
+      title: 'Asistente FerrePlus',
+      actions: <Widget>[
           if (canRebuild)
             Semantics(
               label: 'Reconstruir indice del chat',
@@ -52,7 +57,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 icon: chat.isRebuildingIndex
                     ? const SizedBox.square(
                         dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: AppLoadingIndicator(),
                       )
                     : const Icon(Icons.sync),
               ),
@@ -69,8 +74,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             ),
           ),
         ],
-      ),
-      body: Column(
+      child: Column(
         children: <Widget>[
           if (chat.error != null)
             MaterialBanner(
@@ -92,15 +96,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   Widget _messages(BuildContext context, ChatState chat) {
     if (chat.messages.isEmpty && !chat.isSending) {
-      return const Center(child: Text('Escribe una pregunta para comenzar.'));
+      return const AppEmptyState(
+        title: 'Comienza una conversacion',
+        subtitle: 'Escribe una pregunta para comenzar.',
+      );
     }
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.space16),
       itemCount: chat.messages.length + (chat.isSending ? 1 : 0),
       itemBuilder: (BuildContext context, int index) {
         if (index == chat.messages.length) {
           return const ListTile(
-            leading: CircularProgressIndicator(),
+            leading: AppLoadingIndicator(),
             title: Text('Consultando al asistente...'),
           );
         }
@@ -116,20 +123,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 700),
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: AppSpacing.space12),
+        padding: const EdgeInsets.all(AppSpacing.space16),
         decoration: BoxDecoration(
           color: isUser ? colors.primaryContainer : colors.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.medium),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
               isUser ? 'Tu' : 'Asistente',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.space8),
             isUser
                 ? Text(message.content)
                 : SafeMarkdownRenderer(content: message.content),
@@ -142,7 +149,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   Widget _composer(BuildContext context, ChatState chat) => SafeArea(
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.space16,
+        AppSpacing.space8,
+        AppSpacing.space16,
+        AppSpacing.space12,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: <Widget>[
@@ -161,7 +173,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               enabled: !chat.isSending,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.space8),
           Semantics(
             label: 'Enviar pregunta',
             button: true,
@@ -177,22 +189,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   );
 
   Future<void> _confirmRebuild() async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Reconstruir indice'),
-        content: const Text('Esta operacion puede tardar. ¿Deseas continuar?'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reconstruir'),
-          ),
-        ],
-      ),
+    final bool confirmed = await confirmAction(
+      context,
+      title: 'Reconstruir indice',
+      message: 'Esta operacion puede tardar. ¿Deseas continuar?',
+      confirmLabel: 'Reconstruir',
     );
     if (confirmed == true && mounted) {
       await ref.read(chatProvider.notifier).rebuildIndex();

@@ -11,6 +11,13 @@ import '../../domain/models/admin_models.dart';
 import '../../domain/models/commercial_models.dart';
 import 'admin_providers.dart';
 import 'dashboard/dashboard_period.dart';
+import '../shared/widgets/app_error_view.dart';
+import '../shared/widgets/app_empty_state.dart';
+import '../shared/widgets/app_loading_indicator.dart';
+import '../shared/widgets/page_scaffold.dart';
+import '../shared/widgets/confirm_dialog.dart';
+import '../theme/app_semantic_colors.dart';
+import '../theme/app_spacing.dart';
 
 String money(num value) => NumberFormat.currency(symbol: '\$').format(value);
 String dateText(DateTime? value) => value == null
@@ -20,17 +27,10 @@ String dateOnly(DateTime value) => DateFormat('yyyy-MM-dd').format(value);
 bool can(WidgetRef ref, String permission) =>
     ref.watch(authNotifierProvider).permisos.contains(permission);
 
-Widget errorView(Object error, VoidCallback retry) => Center(
-  child: Column(
-    mainAxisSize: MainAxisSize.min,
-    children: <Widget>[
-      const Icon(Icons.cloud_off, size: 40),
-      const Text('No se pudo cargar la informacion'),
-      Text('$error', maxLines: 2, overflow: TextOverflow.ellipsis),
-      FilledButton(onPressed: retry, child: const Text('Reintentar')),
-    ],
-  ),
-);
+Widget errorView(Object error, VoidCallback retry) => AppErrorView(
+      message: 'No se pudo cargar la informacion: $error',
+      onRetry: retry,
+    );
 
 class PreciosPage extends ConsumerWidget {
   const PreciosPage({super.key});
@@ -39,13 +39,16 @@ class PreciosPage extends ConsumerWidget {
     final AsyncValue<List<PrecioProducto>> state = ref.watch(preciosProvider);
     final bool mutationInFlight = state.isLoading;
     return Scaffold(
-      appBar: AppBar(title: const Text('Precios')),
+      appBar: const AppBarBuilder(title: 'Precios'),
       body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) =>
             errorView(e, () => ref.invalidate(preciosProvider)),
         data: (List<PrecioProducto> prices) => prices.isEmpty
-            ? const Center(child: Text('No hay precios disponibles.'))
+            ? const AppEmptyState(
+                title: 'Sin precios',
+                subtitle: 'No hay precios disponibles.',
+              )
             : RefreshIndicator(
                 onRefresh: () => ref.read(preciosProvider.notifier).reload(),
                 child: ListView.builder(
@@ -188,7 +191,7 @@ Future<void> _showPriceDialog(
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: AppLoadingIndicator(),
                       )
                     : const Text('Actualizar'),
               ),
@@ -212,13 +215,16 @@ class PrecioHistorialPage extends ConsumerWidget {
         );
     final AsyncValue<List<HistoricoPrecio>> state = ref.watch(provider);
     return Scaffold(
-      appBar: AppBar(title: Text(precio?.nombre ?? 'Historial de precios')),
+      appBar: AppBarBuilder(title: precio?.nombre ?? 'Historial de precios'),
       body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) =>
             errorView(e, () => ref.invalidate(provider)),
         data: (List<HistoricoPrecio> history) => history.isEmpty
-            ? const Center(child: Text('No hay cambios registrados.'))
+            ? const AppEmptyState(
+                title: 'Sin cambios',
+                subtitle: 'No hay cambios registrados.',
+              )
             : ListView.builder(
                 itemCount: history.length,
                 itemBuilder: (BuildContext context, int index) {
@@ -249,8 +255,8 @@ class UsuariosPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Usuario>> state = ref.watch(usuariosProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Usuarios'),
+      appBar: AppBarBuilder(
+        title: 'Usuarios',
         actions: <Widget>[
           if (can(ref, PermissionCodes.usuariosCrear))
             IconButton(
@@ -261,11 +267,14 @@ class UsuariosPage extends ConsumerWidget {
         ],
       ),
       body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) =>
             errorView(e, () => ref.invalidate(usuariosProvider)),
         data: (List<Usuario> users) => users.isEmpty
-            ? const Center(child: Text('No hay usuarios disponibles.'))
+            ? const AppEmptyState(
+                title: 'Sin usuarios',
+                subtitle: 'No hay usuarios disponibles.',
+              )
             : ListView.builder(
                 itemCount: users.length,
                 itemBuilder: (BuildContext context, int index) {
@@ -279,8 +288,12 @@ class UsuariosPage extends ConsumerWidget {
                     trailing: Chip(
                       label: Text(user.activo ? 'Activo' : 'Inactivo'),
                       backgroundColor: user.activo
-                          ? Colors.green.withValues(alpha: .15)
-                          : Colors.red.withValues(alpha: .15),
+                          ? (Theme.of(context).extension<AppSemanticColors>() ??
+                                  AppSemanticColors.light)
+                              .successContainer
+                          : (Theme.of(context).extension<AppSemanticColors>() ??
+                                  AppSemanticColors.light)
+                              .errorContainer,
                     ),
                     onTap: can(ref, PermissionCodes.usuariosEditar)
                         ? () => context.push(
@@ -408,17 +421,17 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Rol>> roles = ref.watch(rolesProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.id == null ? 'Nuevo usuario' : 'Editar usuario'),
+      appBar: AppBarBuilder(
+        title: widget.id == null ? 'Nuevo usuario' : 'Editar usuario',
       ),
       body: loadingExisting
-          ? const Center(child: CircularProgressIndicator())
+          ? const AppLoadingIndicator()
           : loadError != null
           ? errorView(loadError!, _loadExisting)
           : Form(
               key: formKey,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.space16),
                 children: <Widget>[
                   _field(name, 'Nombre', required: true),
                   _field(email, 'Email', required: true, email: true),
@@ -429,7 +442,7 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
                     onChanged: (bool v) => setState(() => active = v),
                   ),
                   roles.when(
-                    loading: () => const LinearProgressIndicator(),
+                    loading: () => const AppLoadingIndicator(),
                     error: (Object e, StackTrace s) =>
                         Text('No se pudieron cargar roles: $e'),
                     data: (List<Rol> values) => DropdownButtonFormField<int>(
@@ -456,7 +469,7 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
                     required: widget.id == null,
                     obscure: true,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.space16),
                   Text(
                     'Overrides de permisos',
                     style: Theme.of(context).textTheme.titleMedium,
@@ -477,7 +490,7 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
                     icon: const Icon(Icons.add),
                     label: const Text('Agregar override'),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.space16),
                   FilledButton(
                     onPressed:
                         !saving &&
@@ -490,7 +503,7 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
                         ? save
                         : null,
                     child: saving
-                        ? const CircularProgressIndicator()
+                        ? const AppLoadingIndicator()
                         : const Text('Guardar'),
                   ),
                   if (widget.id != null) ...<Widget>[
@@ -538,6 +551,7 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
         ),
       ),
       IconButton(
+        tooltip: 'Eliminar override',
         onPressed: () => setState(() => overrides.removeAt(index)),
         icon: const Icon(Icons.delete_outline),
       ),
@@ -637,7 +651,7 @@ Future<void> _changePassword(
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: AppLoadingIndicator(),
                       )
                     : const Text('Cambiar'),
               ),
@@ -654,53 +668,27 @@ Future<void> _deleteUser(
   WidgetRef ref,
   Usuario user,
 ) async {
-  bool deleting = false;
-  final bool? confirmed = await showDialog<bool>(
-    context: context,
-    builder: (BuildContext dialog) => StatefulBuilder(
-      builder: (BuildContext context, void Function(void Function()) set) {
-        return AlertDialog(
-          title: const Text('Confirmar eliminacion'),
-          content: Text('Eliminar a ${user.nombre}?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: deleting ? null : () => dialog.pop(false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: deleting
-                  ? null
-                  : () async {
-                      set(() => deleting = true);
-                      try {
-                        await ref
-                            .read(usuariosProvider.notifier)
-                            .remove(user.id);
-                        if (dialog.mounted) dialog.pop(true);
-                      } catch (error) {
-                        if (dialog.mounted) {
-                          set(() => deleting = false);
-                          ScaffoldMessenger.of(dialog).showSnackBar(
-                            SnackBar(content: Text(userFailureMessage(error))),
-                          );
-                        }
-                      }
-                    },
-              child: deleting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
-    ),
+  final bool confirmed = await showAsyncConfirmDialog(
+    context,
+    title: 'Confirmar eliminacion',
+    message: 'Eliminar a ${user.nombre}?',
+    confirmLabel: 'Eliminar',
+    onConfirm: () async {
+      try {
+        await ref.read(usuariosProvider.notifier).remove(user.id);
+        return true;
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(userFailureMessage(error))),
+          );
+        }
+        return false;
+      }
+    },
   );
-  if (confirmed == true) {
-    if (context.mounted) context.pop();
+  if (confirmed) {
+    if (context.mounted) Navigator.of(context).pop();
   }
 }
 
@@ -711,18 +699,19 @@ class RolesPage extends ConsumerWidget {
     final AsyncValue<List<Rol>> state = ref.watch(rolesProvider);
     final bool mutationInFlight = state.isLoading;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Roles'),
+      appBar: AppBarBuilder(
+        title: 'Roles',
         actions: <Widget>[
           if (can(ref, PermissionCodes.rolesCrear))
             IconButton(
+              tooltip: 'Nuevo rol',
               icon: const Icon(Icons.add),
               onPressed: () => context.push('/roles/nuevo'),
             ),
         ],
       ),
       body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) =>
             errorView(e, () => ref.invalidate(rolesProvider)),
         data: (List<Rol> values) => ListView.builder(
@@ -740,7 +729,7 @@ class RolesPage extends ConsumerWidget {
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: AppLoadingIndicator(),
                             )
                           : const Icon(Icons.delete_outline),
                       onPressed: mutationInFlight
@@ -760,48 +749,24 @@ class RolesPage extends ConsumerWidget {
 }
 
 Future<void> _deleteRole(BuildContext context, WidgetRef ref, Rol role) async {
-  bool deleting = false;
-  await showDialog<void>(
-    context: context,
-    builder: (BuildContext dialog) => StatefulBuilder(
-      builder: (BuildContext context, void Function(void Function()) set) {
-        return AlertDialog(
-          title: const Text('Confirmar eliminacion'),
-          content: Text('Eliminar el rol ${role.nombre}?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: deleting ? null : () => dialog.pop(),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: deleting
-                  ? null
-                  : () async {
-                      set(() => deleting = true);
-                      try {
-                        await ref.read(rolesProvider.notifier).remove(role.id);
-                        if (dialog.mounted) dialog.pop();
-                      } catch (error) {
-                        if (dialog.mounted) {
-                          set(() => deleting = false);
-                          ScaffoldMessenger.of(dialog).showSnackBar(
-                            SnackBar(content: Text(userFailureMessage(error))),
-                          );
-                        }
-                      }
-                    },
-              child: deleting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
-    ),
+  await showAsyncConfirmDialog(
+    context,
+    title: 'Confirmar eliminacion',
+    message: 'Eliminar el rol ${role.nombre}?',
+    confirmLabel: 'Eliminar',
+    onConfirm: () async {
+      try {
+        await ref.read(rolesProvider.notifier).remove(role.id);
+        return true;
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(userFailureMessage(error))),
+          );
+        }
+        return false;
+      }
+    },
   );
 }
 
@@ -904,26 +869,26 @@ class _RolFormState extends ConsumerState<RolFormPage> {
     final AsyncValue<List<Modulo>> modules = ref.watch(modulosProvider);
     final AsyncValue<List<Permiso>> permissions = ref.watch(permisosProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.id == null ? 'Nuevo rol' : 'Editar rol'),
+      appBar: AppBarBuilder(
+        title: widget.id == null ? 'Nuevo rol' : 'Editar rol',
       ),
       body: loadingExisting
-          ? const Center(child: CircularProgressIndicator())
+          ? const AppLoadingIndicator()
           : loadError != null
           ? errorView(loadError!, _loadExisting)
           : Form(
               key: key,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.space16),
                 children: <Widget>[
                   _field(name, 'Nombre', required: true),
                   _field(description, 'Descripcion'),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.space12),
                   modules.when(
-                    loading: () => const LinearProgressIndicator(),
+                    loading: () => const AppLoadingIndicator(),
                     error: (Object e, StackTrace s) => Text('$e'),
                     data: (List<Modulo> values) => permissions.when(
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const AppLoadingIndicator(),
                       error: (Object e, StackTrace s) => Text('$e'),
                       data: (List<Permiso> all) =>
                           _permissionMatrix(values, all),
@@ -941,7 +906,7 @@ class _RolFormState extends ConsumerState<RolFormPage> {
                         ? save
                         : null,
                     child: saving
-                        ? const CircularProgressIndicator()
+                        ? const AppLoadingIndicator()
                         : const Text('Guardar'),
                   ),
                 ],
@@ -996,7 +961,7 @@ class ReportesPage extends StatelessWidget {
   const ReportesPage({super.key});
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Reportes')),
+     appBar: const AppBarBuilder(title: 'Reportes'),
     body: ListView(
       children: <Widget>[
         ListTile(
@@ -1025,17 +990,17 @@ class DashboardAdminPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<ReporteDashboard> state = ref.watch(dashboardProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+       appBar: const AppBarBuilder(title: 'Dashboard'),
       body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) =>
             errorView(e, () => ref.invalidate(dashboardProvider)),
         data: (ReporteDashboard report) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.space16),
           children: <Widget>[
-            _kpiGrid(report),
-            const SizedBox(height: 16),
-            SizedBox(height: 260, child: _salesChart(report.ventasPorDia)),
+            _kpiGrid(context, report),
+            const SizedBox(height: AppSpacing.space16),
+            SizedBox(height: AppSpacing.chartHeight, child: _salesChart(report.ventasPorDia)),
           ],
         ),
       ),
@@ -1043,31 +1008,36 @@ class DashboardAdminPage extends ConsumerWidget {
   }
 }
 
-Widget _kpiGrid(ReporteDashboard r) => Wrap(
-  spacing: 8,
-  runSpacing: 8,
+Widget _kpiGrid(BuildContext context, ReporteDashboard r) => Wrap(
+  spacing: AppSpacing.space8,
+  runSpacing: AppSpacing.space8,
   children: <Widget>[
-    _metric('Ventas hoy', money(r.ventasHoy)),
-    _metric('Ventas mes', money(r.ventasMes)),
-    _metric('Compras mes', money(r.totalComprasMes)),
-    _metric('Gastos mes', money(r.totalGastosMes)),
-    _metric('Stock bajo', '${r.productosStockBajo}'),
+    _metric(context, 'Ventas hoy', money(r.ventasHoy)),
+    _metric(context, 'Ventas mes', money(r.ventasMes)),
+    _metric(context, 'Compras mes', money(r.totalComprasMes)),
+    _metric(context, 'Gastos mes', money(r.totalGastosMes)),
+    _metric(context, 'Stock bajo', '${r.productosStockBajo}'),
   ],
 );
-Widget _metric(String label, String value) => SizedBox(
+Widget _metric(BuildContext context, String label, String value) => SizedBox(
   width: 170,
   child: Card(
     child: ListTile(
       title: Text(label),
       subtitle: Text(
         value,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        style: Theme.of(context).textTheme.titleLarge,
       ),
     ),
   ),
 );
 Widget _salesChart(List<ChartPoint> points) {
-  if (points.isEmpty) return const Center(child: Text('Sin ventas por dia'));
+  if (points.isEmpty) {
+    return const AppEmptyState(
+      title: 'Sin ventas registradas',
+      subtitle: 'No hay ventas por dia.',
+    );
+  }
   return LineChart(
     LineChartData(
       lineBarsData: <LineChartBarData>[
@@ -1101,9 +1071,9 @@ class ReporteDetallePage extends ConsumerWidget {
         ? ref.watch(inventoryReportProvider)
         : ref.watch(movementsReportProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Reporte de $kind')),
+      appBar: AppBarBuilder(title: 'Reporte de $kind'),
       body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoadingIndicator(),
         error: (Object e, StackTrace s) => errorView(
           e,
           () => inventory
@@ -1111,10 +1081,10 @@ class ReporteDetallePage extends ConsumerWidget {
               : ref.invalidate(movementsReportProvider),
         ),
         data: (ReporteDashboard r) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.space16),
           children: <Widget>[
-            _metric('Productos', '${r.totalProductos}'),
-            _metric('Stock bajo', '${r.productosStockBajo}'),
+            _metric(context, 'Productos', '${r.totalProductos}'),
+            _metric(context, 'Stock bajo', '${r.productosStockBajo}'),
             ...r.productosStockBajoList.map(
               (Map<String, Object?> item) => ListTile(
                 title: Text(
@@ -1163,7 +1133,7 @@ class _ReporteVentasState extends ConsumerState<ReporteVentasPage> {
       reportSalesProvider(DateRange(desde, hasta)),
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('Ventas por fecha')),
+       appBar: const AppBarBuilder(title: 'Ventas por fecha'),
       body: Column(
         children: <Widget>[
           Row(
@@ -1184,7 +1154,7 @@ class _ReporteVentasState extends ConsumerState<ReporteVentasPage> {
           ),
           Expanded(
             child: state.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const AppLoadingIndicator(),
               error: (Object e, StackTrace s) => errorView(
                 e,
                 () => ref.invalidate(
@@ -1192,7 +1162,10 @@ class _ReporteVentasState extends ConsumerState<ReporteVentasPage> {
                 ),
               ),
               data: (List<Venta> values) => values.isEmpty
-                  ? const Center(child: Text('No hay ventas en el rango.'))
+                  ? const AppEmptyState(
+                      title: 'Sin ventas',
+                      subtitle: 'No hay ventas en el rango.',
+                    )
                   : ListView.builder(
                       itemCount: values.length,
                       itemBuilder: (BuildContext context, int index) {
@@ -1264,8 +1237,8 @@ class _LogsState extends ConsumerState<LogsPageView> {
     final AsyncValue<LogsPage> state = ref.watch(logsProvider);
     final AsyncValue<List<UsuarioOpcion>> users = ref.watch(logUsersProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Logs'),
+      appBar: AppBarBuilder(
+        title: 'Logs',
         actions: <Widget>[
           if (can(ref, PermissionCodes.logsEliminar))
             IconButton(
@@ -1274,7 +1247,7 @@ class _LogsState extends ConsumerState<LogsPageView> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                        child: AppLoadingIndicator(),
                     )
                   : const Icon(Icons.delete_sweep),
               onPressed: ref.watch(logsProvider).isLoading
@@ -1288,7 +1261,7 @@ class _LogsState extends ConsumerState<LogsPageView> {
           _filters(users),
           Expanded(
             child: state.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const AppLoadingIndicator(),
               error: (Object e, StackTrace s) =>
                   errorView(e, () => ref.invalidate(logsProvider)),
               data: _logList,
@@ -1300,7 +1273,7 @@ class _LogsState extends ConsumerState<LogsPageView> {
   }
 
   Widget _filters(AsyncValue<List<UsuarioOpcion>> users) => Padding(
-    padding: const EdgeInsets.all(8),
+    padding: const EdgeInsets.all(AppSpacing.space8),
     child: Wrap(
       spacing: 8,
       runSpacing: 4,
@@ -1330,7 +1303,7 @@ class _LogsState extends ConsumerState<LogsPageView> {
                   .toList(),
               onChanged: (int? v) => setState(() => userId = v),
             ),
-            loading: () => const LinearProgressIndicator(),
+            loading: () => const AppLoadingIndicator(),
             error: (Object e, StackTrace s) => const Text('Usuarios'),
           ),
         ),
@@ -1356,7 +1329,10 @@ class _LogsState extends ConsumerState<LogsPageView> {
     children: <Widget>[
       Expanded(
         child: page.content.isEmpty
-            ? const Center(child: Text('No hay logs.'))
+            ? const AppEmptyState(
+                title: 'Sin logs',
+                subtitle: 'No hay logs disponibles.',
+              )
             : ListView.builder(
                 itemCount: page.content.length,
                 itemBuilder: (BuildContext context, int index) {
@@ -1375,6 +1351,7 @@ class _LogsState extends ConsumerState<LogsPageView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           IconButton(
+            tooltip: 'Pagina anterior',
             onPressed: page.number > 0
                 ? () => ref.read(logsProvider.notifier).goTo(page.number - 1)
                 : null,
@@ -1384,6 +1361,7 @@ class _LogsState extends ConsumerState<LogsPageView> {
             '${page.number + 1} / ${page.totalPages == 0 ? 1 : page.totalPages}',
           ),
           IconButton(
+            tooltip: 'Pagina siguiente',
             onPressed: page.number + 1 < page.totalPages
                 ? () => ref.read(logsProvider.notifier).goTo(page.number + 1)
                 : null,
@@ -1400,24 +1378,13 @@ class _LogsState extends ConsumerState<LogsPageView> {
       );
       return;
     }
-    final bool? yes = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialog) => AlertDialog(
-        title: const Text('Confirmar eliminacion'),
-        content: const Text('Se eliminaran los logs del rango seleccionado.'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => dialog.pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => dialog.pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final bool yes = await confirmAction(
+      context,
+      title: 'Confirmar eliminacion',
+      message: 'Se eliminaran los logs del rango seleccionado.',
+      confirmLabel: 'Eliminar',
     );
-    if (yes == true) {
+    if (yes) {
       try {
         final LogsEliminados result = await ref
             .read(logsProvider.notifier)

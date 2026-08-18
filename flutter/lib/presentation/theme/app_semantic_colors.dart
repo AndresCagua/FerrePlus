@@ -18,6 +18,8 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     required this.kpiPurple,
     required this.kpiTeal,
     required this.kpiAmber,
+    required this.successContainer,
+    required this.errorContainer,
   });
 
   final Color primary;
@@ -33,6 +35,8 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
   final Color kpiPurple;
   final Color kpiTeal;
   final Color kpiAmber;
+  final Color successContainer;
+  final Color errorContainer;
 
   static const AppSemanticColors light = AppSemanticColors(
     primary: AppColors.blue700,
@@ -48,6 +52,8 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     kpiPurple: AppColors.kpiPurple,
     kpiTeal: AppColors.kpiTeal,
     kpiAmber: AppColors.kpiAmber,
+    successContainer: AppColors.successContainerLight,
+    errorContainer: AppColors.errorContainerLight,
   );
 
   static const AppSemanticColors dark = AppSemanticColors(
@@ -64,6 +70,8 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     kpiPurple: AppColors.coral300,
     kpiTeal: AppColors.blue300,
     kpiAmber: AppColors.warningDark,
+    successContainer: AppColors.successContainerDark,
+    errorContainer: AppColors.errorContainerDark,
   );
 
   @override
@@ -80,7 +88,9 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
         outline: outline,
         kpiPurple: kpiPurple,
         kpiTeal: kpiTeal,
-        kpiAmber: kpiAmber,
+         kpiAmber: kpiAmber,
+         successContainer: successContainer,
+         errorContainer: errorContainer,
       );
 
   @override
@@ -98,5 +108,7 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
         kpiPurple: Color.lerp(kpiPurple, other.kpiPurple, t)!,
         kpiTeal: Color.lerp(kpiTeal, other.kpiTeal, t)!,
         kpiAmber: Color.lerp(kpiAmber, other.kpiAmber, t)!,
+        successContainer: Color.lerp(successContainer, other.successContainer, t)!,
+        errorContainer: Color.lerp(errorContainer, other.errorContainer, t)!,
       );
 }

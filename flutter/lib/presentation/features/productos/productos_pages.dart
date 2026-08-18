@@ -6,7 +6,13 @@ import '../../../core/providers/auth_providers.dart';
 import '../../../core/errors/failure_message.dart';
 import '../../../domain/models/catalog_models.dart';
 import '../../shared/widgets/confirm_dialog.dart';
+import '../../shared/widgets/app_empty_state.dart';
+import '../../shared/widgets/app_error_view.dart';
+import '../../shared/widgets/app_loading_indicator.dart';
+import '../../shared/widgets/page_scaffold.dart';
 import '../../shared/widgets/permission_visibility.dart';
+import '../../theme/app_semantic_colors.dart';
+import '../../theme/app_spacing.dart';
 import '../catalog_providers.dart';
 
 class ProductosPage extends ConsumerStatefulWidget {
@@ -27,8 +33,8 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Producto>> value = ref.watch(productosProvider);
     final Set<String> permissions = ref.watch(authNotifierProvider).permisos;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Productos')),
+    return PageScaffold(
+      title: 'Productos',
       floatingActionButton: PermissionVisibility(
         allowed: permissions.contains(PermissionCodes.productosCrear),
         child: FloatingActionButton(
@@ -36,10 +42,10 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
           child: const Icon(Icons.add),
         ),
       ),
-      body: Column(
+      child: Column(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSpacing.space8),
             child: TextField(
               controller: search,
               onChanged: (String text) =>
@@ -53,16 +59,17 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
           ),
           Expanded(
             child: value.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (Object error, StackTrace stack) => Center(
-                child: FilledButton(
-                  onPressed: () =>
-                      ref.read(productosProvider.notifier).reload(),
-                  child: const Text('Reintentar'),
-                ),
+              loading: () => const AppLoadingIndicator(),
+              error: (Object error, StackTrace stack) => AppErrorView(
+                message: 'No se pudieron cargar los productos.',
+                onRetry: () => ref.read(productosProvider.notifier).reload(),
+                retryLabel: 'Reintentar',
               ),
               data: (List<Producto> products) => products.isEmpty
-                  ? const Center(child: Text('No hay productos disponibles.'))
+                  ? const AppEmptyState(
+                      title: 'Sin productos',
+                      subtitle: 'No hay productos disponibles.',
+                    )
                   : RefreshIndicator(
                       onRefresh: () =>
                           ref.read(productosProvider.notifier).reload(),
@@ -95,7 +102,12 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
         'Stock: ${product.stockActual}  Precio: ${product.precioVenta}',
       ),
       leading: low
-          ? const Icon(Icons.warning_amber, color: Colors.orange)
+          ? Icon(
+              Icons.warning_amber,
+              color: (Theme.of(context).extension<AppSemanticColors>() ??
+                      AppSemanticColors.light)
+                  .warning,
+            )
           : null,
       trailing: PermissionVisibility(
         allowed:
@@ -142,7 +154,7 @@ class _ProductosPageState extends ConsumerState<ProductosPage> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: AppLoadingIndicator(),
                       )
                     : const Icon(Icons.delete_outline),
               ),
@@ -324,31 +336,23 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
           ? PermissionCodes.productosCrear
           : PermissionCodes.productosEditar,
     );
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.id == null ? 'Nuevo producto' : 'Editar producto'),
-      ),
-      body: loadingExisting
-          ? const Center(child: CircularProgressIndicator())
+    return PageScaffold(
+      title: widget.id == null ? 'Nuevo producto' : 'Editar producto',
+      contentPadding: false,
+      child: loadingExisting
+          ? const AppLoadingIndicator()
           : loadError != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  const Text('No se pudo cargar el producto.'),
-                  FilledButton(
-                    onPressed: _loadExisting,
-                    child: const Text('Reintentar'),
-                  ),
-                ],
-              ),
-            )
+           ? AppErrorView(
+               message: 'No se pudo cargar el producto.',
+               onRetry: _loadExisting,
+               retryLabel: 'Reintentar',
+             )
           : !allowed
           ? const Center(child: Text('No tienes permiso para esta accion.'))
           : Form(
               key: formKey,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.space16),
                 children: <Widget>[
                   field('nombre', 'Nombre', true),
                   field('descripcion', 'Descripcion', false),
@@ -374,7 +378,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
                     onChanged: (int? value) =>
                         setState(() => selectedCategoriaId = value),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.space12),
                   DropdownButtonFormField<int>(
                     initialValue: selectedProveedorId,
                     decoration: const InputDecoration(labelText: 'Proveedor'),
@@ -389,14 +393,14 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
                     onChanged: (int? value) =>
                         setState(() => selectedProveedorId = value),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.space12),
                   FilledButton(
                     onPressed: saving ? null : save,
                     child: saving
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: AppLoadingIndicator(),
                           )
                         : const Text('Guardar'),
                   ),
@@ -407,7 +411,7 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
   }
 
   Widget field(String name, String label, bool required) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.space12),
     child: TextFormField(
       controller: fields[name],
       keyboardType: const TextInputType.numberWithOptions(decimal: true),

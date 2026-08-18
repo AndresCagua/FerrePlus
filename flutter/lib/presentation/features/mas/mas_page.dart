@@ -6,6 +6,7 @@ import '../../../core/constants/permission_codes.dart';
 import '../../../core/providers/auth_providers.dart';
 import '../../theme/app_component_theme.dart';
 import '../../theme/app_spacing.dart';
+import '../../shared/widgets/page_scaffold.dart';
 import 'theme_selector.dart';
 
 class MasPage extends ConsumerWidget {
@@ -90,7 +91,7 @@ class MasPage extends ConsumerWidget {
         Theme.of(context).extension<AppComponentTheme>() ??
         AppComponentTheme.standard;
     return Scaffold(
-      appBar: AppBar(title: const Text('Más')),
+      appBar: const AppBarBuilder(title: 'Más'),
       body: ListView(
         padding: components.cardPadding,
         children: <Widget>[

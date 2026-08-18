@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../../theme/app_spacing.dart';
 
 class AppErrorView extends StatelessWidget {
-  const AppErrorView({required this.message, required this.onRetry, super.key});
+  const AppErrorView({required this.message, required this.onRetry, this.retryLabel = 'Intentar nuevamente', super.key});
   final String message;
   final VoidCallback onRetry;
+  final String retryLabel;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -23,7 +24,7 @@ class AppErrorView extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Intentar nuevamente'),
+                 label: Text(retryLabel),
               ),
             ],
           ),

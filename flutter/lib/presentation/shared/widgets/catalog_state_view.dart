@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'app_empty_state.dart';
+import 'app_error_view.dart';
+import 'app_loading_indicator.dart';
+
 class CatalogStateView extends StatelessWidget {
   const CatalogStateView({required this.loading, required this.error, required this.empty, required this.content, required this.retry, super.key});
   final bool loading;
@@ -10,11 +14,16 @@ class CatalogStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (loading) return const Center(child: CircularProgressIndicator());
+    if (loading) return const AppLoadingIndicator();
     if (error != null) {
-      return Center(child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[Text(error!), FilledButton(onPressed: retry, child: const Text('Reintentar'))]));
+      return AppErrorView(message: error!, onRetry: retry);
     }
-    if (empty) return const Center(child: Text('No hay registros disponibles.'));
+    if (empty) {
+      return const AppEmptyState(
+        title: 'Sin registros',
+        subtitle: 'No hay registros disponibles.',
+      );
+    }
     return content;
   }
 }

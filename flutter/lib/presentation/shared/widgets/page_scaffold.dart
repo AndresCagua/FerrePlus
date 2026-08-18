@@ -8,12 +8,16 @@ class PageScaffold extends StatelessWidget {
     required this.title,
     required this.child,
     this.actions,
+    this.floatingActionButton,
+    this.contentPadding = true,
     this.showAppBar = true,
     super.key,
   });
   final String title;
   final Widget child;
   final List<Widget>? actions;
+  final Widget? floatingActionButton;
+  final bool contentPadding;
   final bool showAppBar;
 
   @override
@@ -23,14 +27,17 @@ class PageScaffold extends StatelessWidget {
         AppComponentTheme.standard;
     return Scaffold(
       appBar: showAppBar ? AppBarBuilder(title: title, actions: actions) : null,
+      floatingActionButton: floatingActionButton,
       body: SafeArea(
-        child: Padding(
-          padding: components.cardPadding.copyWith(
-            left: AppSpacing.space16,
-            right: AppSpacing.space16,
-          ),
-          child: child,
-        ),
+        child: contentPadding
+            ? Padding(
+                padding: components.cardPadding.copyWith(
+                  left: AppSpacing.space16,
+                  right: AppSpacing.space16,
+                ),
+                child: child,
+              )
+            : child,
       ),
     );
   }
