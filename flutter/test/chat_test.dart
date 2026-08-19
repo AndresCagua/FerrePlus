@@ -6,6 +6,8 @@ import 'package:ferreplus/domain/models/chat_models.dart';
 import 'package:ferreplus/domain/repositories/chat_repository.dart';
 import 'package:ferreplus/presentation/features/chat/chat_provider.dart';
 import 'package:ferreplus/presentation/features/chat/widgets/chat_sources_accordion.dart';
+import 'package:ferreplus/presentation/features/chat/widgets/chat_assistant_loading_bubble.dart';
+import 'package:ferreplus/presentation/features/chat/widgets/chat_composer.dart';
 import 'package:ferreplus/presentation/features/chat/widgets/safe_markdown_renderer.dart';
 
 class FakeChatRepository implements ChatRepository {
@@ -71,6 +73,45 @@ void main() {
       expect(find.text('Bajo stock'), findsOneWidget);
     },
   );
+
+  testWidgets('loading bubble is horizontal and uses relative width', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(width: 400, child: ChatAssistantLoadingBubble()),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('Consultando'), findsOneWidget);
+    expect(tester.getSize(find.byType(Semantics).last).width, 340);
+    await tester.pump(const Duration(milliseconds: 200));
+  });
+
+  testWidgets('composer muestra contador y boton integrado', (
+    WidgetTester tester,
+  ) async {
+    final TextEditingController controller = TextEditingController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChatComposer(
+            controller: controller,
+            enabled: true,
+            onSend: () {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'Pregunta');
+    await tester.pump();
+    expect(find.text('8/1000'), findsOneWidget);
+    expect(find.byIcon(Icons.send), findsOneWidget);
+  });
 
   test(
     'notifier preserves conversation id and history after a failure',

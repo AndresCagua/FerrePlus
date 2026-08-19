@@ -23,20 +23,17 @@ final dashboardSalesProvider = FutureProvider<List<ChartPoint>>((
   final DashboardPeriod period = ref.watch(dashboardPeriodProvider);
   final DateRange range = dashboardDateRange(period, DateTime.now());
   final ReporteDashboard dashboard = await ref.watch(dashboardProvider.future);
-  final List<ChartPoint> dashboardPoints = groupChartPoints(
-    dashboard.ventasPorDia,
-    period,
-    range: range,
-  );
-  if (dashboardPoints.isNotEmpty) return dashboardPoints;
+  if (chartCoversRange(dashboard.ventasPorDia, period, range)) {
+    return completeChartPoints(dashboard.ventasPorDia, period, range);
+  }
 
   final List<Venta> sales = await ref.watch(reportSalesProvider(range).future);
-  return groupChartPoints(
+  return completeChartPoints(
     sales.map(
       (Venta sale) =>
           ChartPoint(fecha: sale.fechaCreacion, total: sale.total.toDouble()),
     ),
     period,
-    range: range,
+    range,
   );
 });

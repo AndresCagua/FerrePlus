@@ -32,4 +32,31 @@ void main() {
     expect(groupChartPoints(points, DashboardPeriod.month).first.total, 25);
     expect(groupChartPoints(points, DashboardPeriod.year), hasLength(2));
   });
+
+  test('detecta datos parciales y completa todos los intervalos con cero', () {
+    final DateRange range = dashboardDateRange(DashboardPeriod.week, now);
+    final List<ChartPoint> completed = completeChartPoints(
+      <ChartPoint>[ChartPoint(fecha: DateTime(2026, 8, 19), total: 30)],
+      DashboardPeriod.week,
+      range,
+    );
+
+    expect(chartCoversRange(completed, DashboardPeriod.week, range), isTrue);
+    expect(completed, hasLength(3));
+    expect(completed.first.total, 0);
+    expect(completed.last.total, 30);
+  });
+
+  test('completa el año por mes', () {
+    final DateRange range = dashboardDateRange(DashboardPeriod.year, now);
+    final List<ChartPoint> completed = completeChartPoints(
+      <ChartPoint>[ChartPoint(fecha: DateTime(2026, 8, 19), total: 10)],
+      DashboardPeriod.year,
+      range,
+    );
+
+    expect(completed, hasLength(8));
+    expect(completed[7].fecha, DateTime(2026, 8));
+    expect(completed[7].total, 10);
+  });
 }
