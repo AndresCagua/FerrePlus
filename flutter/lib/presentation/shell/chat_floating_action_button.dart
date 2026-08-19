@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/routing/app_router.dart';
 import '../../core/providers/auth_providers.dart';
 import '../../domain/models/auth_state.dart';
 
@@ -78,14 +79,44 @@ class ChatFloatingActionButton extends ConsumerWidget {
     );
     if (!isAuthenticated) return const SizedBox.shrink();
 
+    final String currentPath = _currentPath(context);
+    final bool isChatOpen = currentPath == '/chat';
+    final String label = isChatOpen ? 'Cerrar chat' : 'Abrir chat';
+
     return Semantics(
-      label: 'Abrir chat',
+      label: label,
       button: true,
       child: FloatingActionButton(
-        onPressed: () => context.go('/chat'),
-        tooltip: 'Abrir chat',
-        child: const Icon(Icons.chat_bubble_outline),
+        onPressed: () => _toggleChat(context, ref, isChatOpen, currentPath),
+        tooltip: label,
+        child: Icon(isChatOpen ? Icons.close : Icons.chat_bubble_outline),
       ),
     );
+  }
+
+  void _toggleChat(
+    BuildContext context,
+    WidgetRef ref,
+    bool isChatOpen,
+    String currentPath,
+  ) {
+    if (!isChatOpen) {
+      ref.read(chatPreviousLocationProvider.notifier).remember(currentPath);
+      context.go('/chat');
+      return;
+    }
+
+    final String previousLocation =
+        ref.read(chatPreviousLocationProvider) ?? '/';
+    ref.read(chatPreviousLocationProvider.notifier).clear();
+    context.go(previousLocation);
+  }
+}
+
+String _currentPath(BuildContext context) {
+  try {
+    return GoRouterState.of(context).uri.path;
+  } on GoError {
+    return '/';
   }
 }

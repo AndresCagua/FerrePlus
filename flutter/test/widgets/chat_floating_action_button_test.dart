@@ -42,8 +42,10 @@ Widget _buildTestApp(AuthState authState) {
       ),
       GoRoute(
         path: '/chat',
-        builder: (BuildContext context, GoRouterState state) =>
-            const ChatPage(),
+        builder: (BuildContext context, GoRouterState state) => const Scaffold(
+          body: ChatPage(),
+          floatingActionButton: ChatFloatingActionButton(),
+        ),
       ),
     ],
   );
@@ -126,6 +128,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Asistente FerrePlus'), findsOneWidget);
+  });
+
+  testWidgets('el FAB funciona como toggle y vuelve a la ruta previa', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTestApp(
+        const AuthState(
+          status: AuthStatus.authenticated,
+          permisos: <String>{'CHAT_VER'},
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Abrir chat'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Cerrar chat'), findsOneWidget);
+    expect(find.byIcon(Icons.close), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Cerrar chat'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inicio'), findsOneWidget);
+    expect(find.byTooltip('Abrir chat'), findsOneWidget);
+    expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
   });
 
   testWidgets('el FAB de chat se puede arrastrar libremente', (

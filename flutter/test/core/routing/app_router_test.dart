@@ -15,6 +15,16 @@ class _FixedAuthNotifier extends AuthNotifier {
 }
 
 void main() {
+  test('expone las rutas canonicas de las cinco ramas', () {
+    expect(branchInitialRoutes, <int, String>{
+      0: '/',
+      1: '/productos',
+      2: '/ventas',
+      3: '/reportes',
+      4: '/mas',
+    });
+  });
+
   test('conserva permisos de todas las rutas secundarias', () {
     expect(routePermissions['/categorias'], PermissionCodes.categorias);
     expect(routePermissions['/proveedores'], PermissionCodes.proveedores);

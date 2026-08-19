@@ -47,6 +47,14 @@ StatefulShellBranch _branch(String path, String label) => StatefulShellBranch(
     GoRoute(
       path: path,
       builder: (BuildContext context, GoRouterState state) => Text(label),
+      routes: <RouteBase>[
+        if (path == '/ventas')
+          GoRoute(
+            path: 'gastos',
+            builder: (BuildContext context, GoRouterState state) =>
+                const Text('Gastos'),
+          ),
+      ],
     ),
   ],
 );
@@ -69,5 +77,25 @@ void main() {
     expect(find.text('Más'), findsWidgets);
     expect(find.byTooltip('Abrir chat'), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
+  });
+
+  testWidgets('vuelve a la ruta canonica al tocar la rama activa', (
+    tester,
+  ) async {
+    final GoRouter router = _router();
+    router.go('/ventas/gastos');
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authNotifierProvider.overrideWith(_FixedAuthNotifier.new)],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Ventas').last);
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, '/ventas');
+    expect(find.text('Ventas'), findsWidgets);
   });
 }

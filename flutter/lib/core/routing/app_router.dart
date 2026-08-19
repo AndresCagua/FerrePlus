@@ -18,6 +18,30 @@ import '../../presentation/shell/shell_scaffold.dart';
 import '../constants/permission_codes.dart';
 import '../providers/auth_providers.dart';
 
+/// Ruta canonica que representa la entrada de cada rama del shell.
+const Map<int, String> branchInitialRoutes = <int, String>{
+  0: '/',
+  1: '/productos',
+  2: '/ventas',
+  3: '/reportes',
+  4: '/mas',
+};
+
+/// Ubicacion que se restaura al cerrar el chat desde el FAB.
+final chatPreviousLocationProvider =
+    NotifierProvider<ChatPreviousLocationNotifier, String?>(
+      ChatPreviousLocationNotifier.new,
+    );
+
+class ChatPreviousLocationNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void remember(String location) => state = location;
+
+  void clear() => state = null;
+}
+
 final routerProvider = Provider<GoRouter>((Ref ref) {
   final RouterRefresh refresh = RouterRefresh(ref);
   ref.onDispose(refresh.dispose);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/routing/app_router.dart';
 import 'chat_floating_action_button.dart';
 
 class ShellScaffold extends ConsumerWidget {
@@ -22,9 +23,11 @@ class ShellScaffold extends ConsumerWidget {
       body: DraggableChatFab(child: navigationShell),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentBranch,
-        onDestinationSelected: (int index) => navigationShell.goBranch(
+        onDestinationSelected: (int index) => _selectDestination(
+          context,
+          navigationShell,
           destinations[index].branchIndex,
-          initialLocation: destinations[index].branchIndex == currentBranch,
+          currentBranch,
         ),
         destinations: destinations
             .map(
@@ -41,6 +44,23 @@ class ShellScaffold extends ConsumerWidget {
             .toList(),
       ),
     );
+  }
+
+  void _selectDestination(
+    BuildContext context,
+    StatefulNavigationShell shell,
+    int branchIndex,
+    int currentBranch,
+  ) {
+    final String? canonicalRoute = branchInitialRoutes[branchIndex];
+    if (canonicalRoute == null) return;
+
+    if (branchIndex == currentBranch) {
+      context.go(canonicalRoute);
+      return;
+    }
+
+    shell.goBranch(branchIndex, initialLocation: false);
   }
 }
 
