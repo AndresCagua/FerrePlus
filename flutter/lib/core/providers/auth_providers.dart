@@ -7,6 +7,7 @@ import '../../data/services/token_storage.dart';
 import '../../domain/models/auth_state.dart';
 import '../../domain/models/login_request.dart';
 import '../../domain/repositories/auth_repository.dart';
+import 'offline_providers.dart';
 
 final tokenStorageProvider = Provider<TokenStorage>((ref) {
   return TokenStorage(const FlutterSecureStorage());
@@ -16,7 +17,10 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   final TokenStorage storage = ref.watch(tokenStorageProvider);
   return ApiClient(
     tokenReader: () => storage.cachedToken,
-    onUnauthorized: () => ref.read(authNotifierProvider.notifier).logout(),
+    onUnauthorized: () async {
+      ref.read(offlineCoordinatorProvider).onUnauthorized();
+      await ref.read(authNotifierProvider.notifier).logout();
+    },
   );
 });
 
@@ -72,6 +76,7 @@ class AuthNotifier extends Notifier<AuthState> {
         permisos: response.permisos.toSet(),
       );
       await refreshUser();
+      await ref.read(offlineCoordinatorProvider).resumeAfterLogin();
     } catch (error) {
       state = AuthState(status: AuthStatus.failure, error: error.toString());
     }

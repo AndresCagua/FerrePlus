@@ -2,20 +2,41 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/auth_providers.dart';
 import '../../../data/repositories/commercial_repositories_impl.dart';
+import '../../../data/offline/offline_compra_repository.dart';
+import '../../../data/offline/offline_gasto_repository.dart';
+import '../../../data/offline/offline_movimiento_repository.dart';
+import '../../../data/offline/offline_venta_repository.dart';
+import '../../../core/providers/offline_providers.dart';
 import '../../../domain/models/commercial_models.dart';
 import '../../../domain/repositories/commercial_repositories.dart';
 
 final ventaRepositoryProvider = Provider<VentaRepository>(
-  (ref) => VentaRepositoryImpl(ref.watch(apiClientProvider).dio),
+  (ref) => OfflineVentaRepository(
+    remote: VentaRepositoryImpl(ref.watch(apiClientProvider).dio),
+    queue: ref.watch(offlineQueueProvider),
+    cache: ref.watch(salesCacheProvider),
+  ),
 );
 final compraRepositoryProvider = Provider<CompraRepository>(
-  (ref) => CompraRepositoryImpl(ref.watch(apiClientProvider).dio),
+  (ref) => OfflineCompraRepository(
+    remote: CompraRepositoryImpl(ref.watch(apiClientProvider).dio),
+    queue: ref.watch(offlineQueueProvider),
+    cache: ref.watch(purchasesCacheProvider),
+  ),
 );
 final movimientoRepositoryProvider = Provider<MovimientoRepository>(
-  (ref) => MovimientoRepositoryImpl(ref.watch(apiClientProvider).dio),
+  (ref) => OfflineMovimientoRepository(
+    remote: MovimientoRepositoryImpl(ref.watch(apiClientProvider).dio),
+    queue: ref.watch(offlineQueueProvider),
+    cache: ref.watch(movementsCacheProvider),
+  ),
 );
 final gastoRepositoryProvider = Provider<GastoRepository>(
-  (ref) => GastoRepositoryImpl(ref.watch(apiClientProvider).dio),
+  (ref) => OfflineGastoRepository(
+    remote: GastoRepositoryImpl(ref.watch(apiClientProvider).dio),
+    queue: ref.watch(offlineQueueProvider),
+    cache: ref.watch(expensesCacheProvider),
+  ),
 );
 
 final ventasProvider = AsyncNotifierProvider<VentasNotifier, List<Venta>>(
