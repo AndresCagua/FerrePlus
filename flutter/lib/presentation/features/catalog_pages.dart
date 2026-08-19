@@ -10,6 +10,8 @@ import '../shared/widgets/app_empty_state.dart';
 import '../shared/widgets/app_error_view.dart';
 import '../shared/widgets/app_loading_indicator.dart';
 import '../shared/widgets/page_scaffold.dart';
+import '../shared/widgets/forms/app_form_field.dart';
+import '../shared/widgets/forms/app_form_section.dart';
 import '../shared/widgets/permission_visibility.dart';
 import '../theme/app_spacing.dart';
 import 'catalog_providers.dart';
@@ -383,8 +385,14 @@ class _CatalogFormPageState extends ConsumerState<CatalogFormPage> {
         : Form(
             key: formKey,
             child: ListView(
+              shrinkWrap: true,
+              cacheExtent: 10000,
               padding: const EdgeInsets.all(AppSpacing.space16),
               children: <Widget>[
+                const AppFormSection(
+                  title: 'DATOS GENERALES',
+                  children: <Widget>[],
+                ),
                 field('nombre', 'Nombre', true),
                 field('descripcion', 'Descripcion', false),
                 if (widget.kind != CatalogKind.categorias) ...<Widget>[
@@ -404,15 +412,12 @@ class _CatalogFormPageState extends ConsumerState<CatalogFormPage> {
             ),
           ),
   );
-  Widget field(String name, String label, bool required) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.space12),
-    child: TextFormField(
-      controller: fields[name],
-      decoration: InputDecoration(labelText: label),
-      validator: required
-          ? (String? value) =>
-                value == null || value.trim().isEmpty ? 'Campo requerido' : null
-          : null,
-    ),
+  Widget field(String name, String label, bool required) => AppFormField(
+    controller: fields[name],
+    label: label,
+    validator: required
+        ? (String? value) =>
+              value == null || value.trim().isEmpty ? 'Campo requerido' : null
+        : null,
   );
 }

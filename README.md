@@ -54,6 +54,56 @@ npm start
 
 El frontend corre en `http://localhost:4200`.
 
+## App Móvil Flutter
+
+La aplicación móvil vive en `flutter/` y comparte los contratos REST del sistema
+sin modificar el backend ni el frontend web.
+
+### Stack y arquitectura
+
+- **Flutter 3.38** y Dart 3.10.
+- **Riverpod** para estado y dependencias; **GoRouter** para navegación.
+- **Drift/SQLite** para cola y caché local; sincronización orientada a conectividad.
+- **Clean Architecture**: `presentation/` depende de `domain/` y `data/`
+  implementa sus contratos.
+- Tema de tres capas: tokens primitivos, semánticos y de componentes en
+  `flutter/lib/presentation/theme/`.
+
+### Estructura principal
+
+```text
+flutter/
+├── lib/core/                  # configuración, routing y providers base
+├── lib/data/                  # Dio, repositorios, Drift y sincronización offline
+├── lib/domain/                # modelos, contratos y casos de uso
+├── lib/presentation/          # pantallas, formularios, tema y widgets compartidos
+├── test/                      # unit, repository y widget tests
+└── integration_test/          # flujos de ciclo de vida y sincronización
+```
+
+### Desarrollo y verificación
+
+```bash
+cd flutter
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8081
+flutter analyze
+flutter test
+flutter build apk --dart-define=API_BASE_URL=https://api.example.com
+```
+
+En un emulador Android, `10.0.2.2` apunta al host del equipo. La suite debe
+mantener todos los tests existentes y los nuevos tests de widgets/integración.
+
+### Funcionalidades móviles recientes
+
+- Rediseño responsive de chat y formularios: secciones claras, labels legibles,
+  espaciado consistente y acciones alcanzables con el teclado abierto.
+- Trabajo offline para ventas, compras, gastos y movimientos mediante cola
+  SQLite durable, caché optimista y sincronización FIFO al recuperar la red.
+- Reintentos acotados, manejo de sesión expirada y notificaciones locales
+  agrupadas sin exponer datos sensibles.
+
 ### 4. Acceso inicial
 
 - **Email:** `admin@ferreplus.com`

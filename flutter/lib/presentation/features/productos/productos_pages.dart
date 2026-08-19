@@ -10,6 +10,9 @@ import '../../shared/widgets/app_empty_state.dart';
 import '../../shared/widgets/app_error_view.dart';
 import '../../shared/widgets/app_loading_indicator.dart';
 import '../../shared/widgets/page_scaffold.dart';
+import '../../shared/widgets/forms/app_dropdown_field.dart';
+import '../../shared/widgets/forms/app_form_field.dart';
+import '../../shared/widgets/forms/app_form_section.dart';
 import '../../shared/widgets/permission_visibility.dart';
 import '../../theme/app_semantic_colors.dart';
 import '../../theme/app_spacing.dart';
@@ -359,15 +362,15 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
                   field('descripcion', 'Descripcion', false),
                   field('codigoBarras', 'Codigo de barras', false),
                   field('ubicacion', 'Ubicacion', false),
-                  field('stockActual', 'Stock actual', true),
                   field('stockMinimo', 'Stock minimo', false),
                   field('stockMaximo', 'Stock maximo', false),
                   field('precioCompra', 'Precio compra', true),
                   field('precioVenta', 'Precio venta', true),
+                  field('stockActual', 'Stock actual', true),
                   field('unidadMedida', 'Unidad de medida', false),
-                  DropdownButtonFormField<int>(
+                  AppDropdownField<int>(
+                    label: 'Categoria',
                     initialValue: selectedCategoriaId,
-                    decoration: const InputDecoration(labelText: 'Categoria'),
                     items: categorias
                         .map(
                           (Categoria item) => DropdownMenuItem<int>(
@@ -380,9 +383,13 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
                         setState(() => selectedCategoriaId = value),
                   ),
                   const SizedBox(height: AppSpacing.space12),
-                  DropdownButtonFormField<int>(
+                  const AppFormSection(
+                    title: 'RELACIONES',
+                    children: <Widget>[],
+                  ),
+                  AppDropdownField<int>(
+                    label: 'Proveedor',
                     initialValue: selectedProveedorId,
-                    decoration: const InputDecoration(labelText: 'Proveedor'),
                     items: proveedores
                         .map(
                           (Proveedor item) => DropdownMenuItem<int>(
@@ -411,16 +418,13 @@ class _ProductoFormPageState extends ConsumerState<ProductoFormPage> {
     );
   }
 
-  Widget field(String name, String label, bool required) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.space12),
-    child: TextFormField(
-      controller: fields[name],
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      decoration: InputDecoration(labelText: label),
-      validator: required
-          ? (String? value) =>
-                value == null || value.trim().isEmpty ? 'Campo requerido' : null
-          : null,
-    ),
+  Widget field(String name, String label, bool required) => AppFormField(
+    controller: fields[name],
+    label: label,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    validator: required
+        ? (String? value) =>
+              value == null || value.trim().isEmpty ? 'Campo requerido' : null
+        : null,
   );
 }

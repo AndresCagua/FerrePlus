@@ -15,6 +15,9 @@ import '../shared/widgets/app_error_view.dart';
 import '../shared/widgets/app_empty_state.dart';
 import '../shared/widgets/app_loading_indicator.dart';
 import '../shared/widgets/page_scaffold.dart';
+import '../shared/widgets/forms/app_dropdown_field.dart';
+import '../shared/widgets/forms/app_form_field.dart';
+import '../shared/widgets/forms/app_form_section.dart';
 import '../shared/widgets/confirm_dialog.dart';
 import '../theme/app_semantic_colors.dart';
 import '../theme/app_spacing.dart';
@@ -427,8 +430,14 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
           : Form(
               key: formKey,
               child: ListView(
+                shrinkWrap: true,
+                cacheExtent: 10000,
                 padding: const EdgeInsets.all(AppSpacing.space16),
                 children: <Widget>[
+                  const AppFormSection(
+                    title: 'DATOS DEL USUARIO',
+                    children: <Widget>[],
+                  ),
                   _field(name, 'Nombre', required: true),
                   _field(email, 'Email', required: true, email: true),
                   _field(phone, 'Telefono'),
@@ -441,9 +450,9 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
                     loading: () => const AppLoadingIndicator(),
                     error: (Object e, StackTrace s) =>
                         Text('No se pudieron cargar roles: $e'),
-                    data: (List<Rol> values) => DropdownButtonFormField<int>(
+                    data: (List<Rol> values) => AppDropdownField<int>(
+                      label: 'Rol',
                       initialValue: roleId,
-                      decoration: const InputDecoration(labelText: 'Rol'),
                       items: values
                           .map(
                             (Rol r) => DropdownMenuItem<int>(
@@ -528,9 +537,9 @@ class _UsuarioFormState extends ConsumerState<UsuarioFormPage> {
   Widget _overrideRow(int index, UsuarioPermiso item) => Row(
     children: <Widget>[
       Expanded(
-        child: TextFormField(
+        child: AppFormField(
+          label: 'Codigo permiso',
           initialValue: item.permisoCodigo,
-          decoration: const InputDecoration(labelText: 'Codigo permiso'),
           onChanged: (String v) => overrides[index] = UsuarioPermiso(
             permisoCodigo: v,
             concedido: overrides[index].concedido,
@@ -561,18 +570,15 @@ Widget _field(
   bool required = false,
   bool email = false,
   bool obscure = false,
-}) => Padding(
-  padding: const EdgeInsets.only(bottom: 12),
-  child: TextFormField(
-    controller: controller,
-    obscureText: obscure,
-    keyboardType: email ? TextInputType.emailAddress : null,
-    decoration: InputDecoration(labelText: label),
-    validator: required
-        ? (String? value) =>
-              value == null || value.trim().isEmpty ? 'Campo requerido' : null
-        : null,
-  ),
+}) => AppFormField(
+  controller: controller,
+  label: label,
+  obscureText: obscure,
+  keyboardType: email ? TextInputType.emailAddress : null,
+  validator: required
+      ? (String? value) =>
+            value == null || value.trim().isEmpty ? 'Campo requerido' : null
+      : null,
 );
 
 Future<void> _changePassword(
@@ -875,8 +881,14 @@ class _RolFormState extends ConsumerState<RolFormPage> {
           : Form(
               key: key,
               child: ListView(
+                shrinkWrap: true,
+                cacheExtent: 10000,
                 padding: const EdgeInsets.all(AppSpacing.space16),
                 children: <Widget>[
+                  const AppFormSection(
+                    title: 'DATOS DEL ROL',
+                    children: <Widget>[],
+                  ),
                   _field(name, 'Nombre', required: true),
                   _field(description, 'Descripcion'),
                   const SizedBox(height: AppSpacing.space12),

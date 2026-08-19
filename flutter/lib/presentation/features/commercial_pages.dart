@@ -18,6 +18,9 @@ import '../shared/widgets/app_error_view.dart';
 import '../shared/widgets/app_empty_state.dart';
 import '../shared/widgets/app_loading_indicator.dart';
 import '../shared/widgets/page_scaffold.dart';
+import '../shared/widgets/forms/app_dropdown_field.dart';
+import '../shared/widgets/forms/app_form_field.dart';
+import '../shared/widgets/forms/app_form_section.dart';
 import '../shared/widgets/confirm_dialog.dart';
 import '../theme/app_spacing.dart';
 
@@ -272,153 +275,161 @@ class _VentaFormState extends ConsumerState<VentaFormPage> {
       appBar: AppBarBuilder(title: 'Nueva venta POS'),
       body: Form(
         key: formKey,
-        child: ListView(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.space16),
-          children: <Widget>[
-            DropdownButtonFormField<int>(
-              initialValue: clientId,
-              decoration: const InputDecoration(labelText: 'Cliente'),
-              items: clients
-                  .map(
-                    (Cliente x) => DropdownMenuItem<int>(
-                      value: x.id,
-                      child: Text(x.nombre),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (int? v) => setState(() => clientId = v),
-            ),
-            DropdownButtonFormField<String>(
-              initialValue: method,
-              decoration: const InputDecoration(labelText: 'Metodo de pago'),
-              items:
-                  const <String>[
-                        'EFECTIVO',
-                        'TARJETA',
-                        'TRANSFERENCIA',
-                        'CREDITO',
-                      ]
-                      .map(
-                        (String x) =>
-                            DropdownMenuItem<String>(value: x, child: Text(x)),
-                      )
-                      .toList(),
-              onChanged: (String? v) => setState(() => method = v ?? method),
-            ),
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: 'Producto'),
-              value: productId,
-              items: products
-                  .map(
-                    (Producto x) => DropdownMenuItem<int>(
-                      value: x.id,
-                      child: Text('${x.nombre} (stock ${x.stockActual})'),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (int? v) => setState(() {
-                productId = v;
-                final Producto? p = products
-                    .where((Producto x) => x.id == v)
-                    .firstOrNull;
-                price.text = p?.precioVenta.toString() ?? '';
-              }),
-            ),
-            TextFormField(
-              controller: quantity,
-              decoration: const InputDecoration(labelText: 'Cantidad'),
-              keyboardType: TextInputType.number,
-            ),
-            TextFormField(
-              controller: price,
-              decoration: const InputDecoration(labelText: 'Precio unitario'),
-              keyboardType: TextInputType.number,
-            ),
-            FilledButton(
-              onPressed: () {
-                final Producto? p = products
-                    .where((Producto x) => x.id == productId)
-                    .firstOrNull;
-                final int? count = int.tryParse(quantity.text);
-                final num? unit = num.tryParse(price.text);
-                if (p == null ||
-                    count == null ||
-                    unit == null ||
-                    count <= 0 ||
-                    count > p.stockActual) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Producto, cantidad valida y stock disponible son obligatorios.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const AppFormSection(
+                title: 'DATOS DE LA VENTA',
+                children: <Widget>[],
+              ),
+              AppDropdownField<int>(
+                label: 'Cliente',
+                initialValue: clientId,
+                items: clients
+                    .map(
+                      (Cliente x) => DropdownMenuItem<int>(
+                        value: x.id,
+                        child: Text(x.nombre),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (int? v) => setState(() => clientId = v),
+              ),
+              AppDropdownField<String>(
+                label: 'Metodo de pago',
+                initialValue: method,
+                items:
+                    const <String>[
+                          'EFECTIVO',
+                          'TARJETA',
+                          'TRANSFERENCIA',
+                          'CREDITO',
+                        ]
+                        .map(
+                          (String x) => DropdownMenuItem<String>(
+                            value: x,
+                            child: Text(x),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (String? v) => setState(() => method = v ?? method),
+              ),
+              const AppFormSection(title: 'PRODUCTOS', children: <Widget>[]),
+              AppDropdownField<int>(
+                label: 'Producto',
+                initialValue: productId,
+                items: products
+                    .map(
+                      (Producto x) => DropdownMenuItem<int>(
+                        value: x.id,
+                        child: Text('${x.nombre} (stock ${x.stockActual})'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (int? v) => setState(() {
+                  productId = v;
+                  final Producto? p = products
+                      .where((Producto x) => x.id == v)
+                      .firstOrNull;
+                  price.text = p?.precioVenta.toString() ?? '';
+                }),
+              ),
+              AppFormField(
+                label: 'Cantidad',
+                controller: quantity,
+                keyboardType: TextInputType.number,
+              ),
+              AppFormField(
+                label: 'Precio unitario',
+                controller: price,
+                keyboardType: TextInputType.number,
+              ),
+              FilledButton(
+                onPressed: () {
+                  final Producto? p = products
+                      .where((Producto x) => x.id == productId)
+                      .firstOrNull;
+                  final int? count = int.tryParse(quantity.text);
+                  final num? unit = num.tryParse(price.text);
+                  if (p == null ||
+                      count == null ||
+                      unit == null ||
+                      count <= 0 ||
+                      count > p.stockActual) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Producto, cantidad valida y stock disponible son obligatorios.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  setState(
+                    () => details.add(
+                      DetalleVenta(
+                        productoId: p.id,
+                        productoNombre: p.nombre,
+                        cantidad: count,
+                        precioUnitario: unit,
+                        subtotal: count * unit,
                       ),
                     ),
                   );
-                  return;
-                }
-                setState(
-                  () => details.add(
-                    DetalleVenta(
-                      productoId: p.id,
-                      productoNombre: p.nombre,
-                      cantidad: count,
-                      precioUnitario: unit,
-                      subtotal: count * unit,
-                    ),
+                },
+                child: const Text('Agregar linea'),
+              ),
+              ...details.asMap().entries.map(
+                (MapEntry<int, DetalleVenta> entry) => ListTile(
+                  key: ValueKey<int>(entry.key),
+                  title: Text(entry.value.productoNombre ?? 'Producto'),
+                  subtitle: Text(
+                    '${entry.value.cantidad} x ${entry.value.precioUnitario}',
                   ),
-                );
-              },
-              child: const Text('Agregar linea'),
-            ),
-            ...details.asMap().entries.map(
-              (MapEntry<int, DetalleVenta> entry) => ListTile(
-                key: ValueKey<int>(entry.key),
-                title: Text(entry.value.productoNombre ?? 'Producto'),
-                subtitle: Text(
-                  '${entry.value.cantidad} x ${entry.value.precioUnitario}',
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(entry.value.subtotal!.toStringAsFixed(2)),
-                    IconButton(
-                      tooltip: 'Eliminar linea',
-                      onPressed: () =>
-                          setState(() => details.removeAt(entry.key)),
-                      icon: const Icon(Icons.delete_outline),
-                    ),
-                  ],
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(entry.value.subtotal!.toStringAsFixed(2)),
+                      IconButton(
+                        tooltip: 'Eliminar linea',
+                        onPressed: () =>
+                            setState(() => details.removeAt(entry.key)),
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            TextFormField(
-              controller: discount,
-              decoration: const InputDecoration(labelText: 'Descuento'),
-              keyboardType: TextInputType.number,
-              onChanged: (_) => setState(() {}),
-            ),
-            TextFormField(
-              controller: observations,
-              decoration: const InputDecoration(labelText: 'Observaciones'),
-            ),
-            Text('Subtotal: ${subtotal.toStringAsFixed(2)}'),
-            Text('IVA (15%): ${iva.toStringAsFixed(2)}'),
-            Text(
-              'Total: ${(subtotal - discountValue + iva).toStringAsFixed(2)}',
-            ),
-            FilledButton(
-              onPressed:
-                  ref
-                          .watch(authNotifierProvider)
-                          .permisos
-                          .contains(PermissionCodes.ventasCrear) &&
-                      !saving
-                  ? _save
-                  : null,
-              child: saving
-                  ? const AppLoadingIndicator()
-                  : const Text('Guardar venta'),
-            ),
-          ],
+              const AppFormSection(title: 'RESUMEN', children: <Widget>[]),
+              AppFormField(
+                label: 'Descuento',
+                controller: discount,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => setState(() {}),
+              ),
+              AppFormField(label: 'Observaciones', controller: observations),
+              Text('Subtotal: ${subtotal.toStringAsFixed(2)}'),
+              Text('IVA (15%): ${iva.toStringAsFixed(2)}'),
+              Text(
+                'Total: ${(subtotal - discountValue + iva).toStringAsFixed(2)}',
+              ),
+              FilledButton(
+                onPressed:
+                    ref
+                            .watch(authNotifierProvider)
+                            .permisos
+                            .contains(PermissionCodes.ventasCrear) &&
+                        !saving
+                    ? _save
+                    : null,
+                child: saving
+                    ? const AppLoadingIndicator()
+                    : const Text('Guardar venta'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -741,20 +752,24 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
           : Form(
               key: keyForm,
               child: ListView(
+                shrinkWrap: true,
+                cacheExtent: 10000,
                 padding: const EdgeInsets.all(AppSpacing.space16),
                 children: <Widget>[
-                  TextFormField(
+                  const AppFormSection(
+                    title: 'DATOS DE LA COMPRA',
+                    children: <Widget>[],
+                  ),
+                  AppFormField(
+                    label: 'Numero de factura',
                     controller: invoice,
-                    decoration: const InputDecoration(
-                      labelText: 'Numero de factura',
-                    ),
                     validator: (String? v) => v == null || v.trim().isEmpty
                         ? 'Campo requerido'
                         : null,
                   ),
-                  DropdownButtonFormField<int>(
-                    decoration: const InputDecoration(labelText: 'Proveedor'),
-                    value: supplierId,
+                  AppDropdownField<int>(
+                    label: 'Proveedor',
+                    initialValue: supplierId,
                     items: suppliers
                         .map(
                           (Proveedor x) => DropdownMenuItem<int>(
@@ -765,9 +780,9 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
                         .toList(),
                     onChanged: (int? v) => setState(() => supplierId = v),
                   ),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Estado'),
-                    value: status,
+                  AppDropdownField<String>(
+                    label: 'Estado',
+                    initialValue: status,
                     items: const <String>['PENDIENTE', 'COMPLETADA', 'ANULADA']
                         .map(
                           (String x) => DropdownMenuItem<String>(
@@ -793,9 +808,9 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
                           : DateFormatter.forDisplay(invoiceDate!),
                     ),
                   ),
-                  DropdownButtonFormField<int>(
-                    decoration: const InputDecoration(labelText: 'Producto'),
-                    value: productId,
+                  AppDropdownField<int>(
+                    label: 'Producto',
+                    initialValue: productId,
                     items: products
                         .map(
                           (Producto x) => DropdownMenuItem<int>(
@@ -815,16 +830,14 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
                           '';
                     }),
                   ),
-                  TextField(
+                  AppFormField(
+                    label: 'Cantidad',
                     controller: quantity,
-                    decoration: const InputDecoration(labelText: 'Cantidad'),
                     keyboardType: TextInputType.number,
                   ),
-                  TextField(
+                  AppFormField(
+                    label: 'Precio unitario',
                     controller: price,
-                    decoration: const InputDecoration(
-                      labelText: 'Precio unitario',
-                    ),
                     keyboardType: TextInputType.number,
                   ),
                   FilledButton(
@@ -861,16 +874,14 @@ class _CompraFormState extends ConsumerState<CompraFormPage> {
                       trailing: Text(x.subtotal!.toStringAsFixed(2)),
                     ),
                   ),
-                  TextField(
+                  AppFormField(
+                    label: 'Descuento',
                     controller: discount,
-                    decoration: const InputDecoration(labelText: 'Descuento'),
                     onChanged: (_) => setState(() {}),
                   ),
-                  TextField(
+                  AppFormField(
+                    label: 'Observaciones',
                     controller: observations,
-                    decoration: const InputDecoration(
-                      labelText: 'Observaciones',
-                    ),
                   ),
                   Text('Subtotal: ${subtotal.toStringAsFixed(2)}'),
                   Text('IVA (15%): ${iva.toStringAsFixed(2)}'),
@@ -1021,11 +1032,17 @@ class _MovimientoFormState extends ConsumerState<MovimientoFormPage> {
     return Scaffold(
       appBar: AppBarBuilder(title: 'Nuevo movimiento'),
       body: ListView(
+        shrinkWrap: true,
+        cacheExtent: 10000,
         padding: const EdgeInsets.all(AppSpacing.space16),
         children: <Widget>[
-          DropdownButtonFormField<int>(
-            decoration: const InputDecoration(labelText: 'Producto'),
-            value: productId,
+          const AppFormSection(
+            title: 'DETALLE DEL MOVIMIENTO',
+            children: <Widget>[],
+          ),
+          AppDropdownField<int>(
+            label: 'Producto',
+            initialValue: productId,
             items: products
                 .map(
                   (Producto x) =>
@@ -1034,14 +1051,14 @@ class _MovimientoFormState extends ConsumerState<MovimientoFormPage> {
                 .toList(),
             onChanged: (int? v) => setState(() => productId = v),
           ),
-          TextField(
+          AppFormField(
+            label: 'Cantidad',
             controller: quantity,
-            decoration: const InputDecoration(labelText: 'Cantidad'),
             keyboardType: TextInputType.number,
           ),
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(labelText: 'Tipo'),
-            value: type,
+          AppDropdownField<String>(
+            label: 'Tipo',
+            initialValue: type,
             items: const <String>['ENTRADA', 'SALIDA', 'AJUSTE']
                 .map(
                   (String x) =>
@@ -1050,18 +1067,9 @@ class _MovimientoFormState extends ConsumerState<MovimientoFormPage> {
                 .toList(),
             onChanged: (String? v) => setState(() => type = v ?? type),
           ),
-          TextField(
-            controller: reference,
-            decoration: const InputDecoration(labelText: 'Referencia'),
-          ),
-          TextField(
-            controller: reason,
-            decoration: const InputDecoration(labelText: 'Motivo'),
-          ),
-          TextField(
-            controller: price,
-            decoration: const InputDecoration(labelText: 'Precio unitario'),
-          ),
+          AppFormField(label: 'Referencia', controller: reference),
+          AppFormField(label: 'Motivo', controller: reason),
+          AppFormField(label: 'Precio unitario', controller: price),
           FilledButton(
             onPressed:
                 !saving &&
@@ -1284,36 +1292,32 @@ class _GastoFormState extends ConsumerState<GastoFormPage> {
         : Form(
             key: formKey,
             child: ListView(
+              shrinkWrap: true,
+              cacheExtent: 10000,
               padding: const EdgeInsets.all(AppSpacing.space16),
               children: <Widget>[
-                TextFormField(
+                const AppFormSection(
+                  title: 'DATOS DEL GASTO',
+                  children: <Widget>[],
+                ),
+                AppFormField(
+                  label: 'Descripcion',
                   controller: description,
-                  decoration: const InputDecoration(labelText: 'Descripcion'),
                   validator: (String? v) =>
                       v == null || v.trim().isEmpty ? 'Campo requerido' : null,
                 ),
-                TextFormField(
+                AppFormField(
+                  label: 'Monto',
                   controller: amount,
-                  decoration: const InputDecoration(labelText: 'Monto'),
                   keyboardType: TextInputType.number,
                   validator: (String? v) =>
                       num.tryParse(v ?? '') == null ? 'Monto invalido' : null,
                 ),
-                TextField(
-                  controller: category,
-                  decoration: const InputDecoration(labelText: 'Categoria'),
-                ),
-                TextField(
-                  controller: method,
-                  decoration: const InputDecoration(
-                    labelText: 'Metodo de pago',
-                  ),
-                ),
-                TextField(
+                AppFormField(label: 'Categoria', controller: category),
+                AppFormField(label: 'Metodo de pago', controller: method),
+                AppFormField(
+                  label: 'Numero de comprobante',
                   controller: receipt,
-                  decoration: const InputDecoration(
-                    labelText: 'Numero de comprobante',
-                  ),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -1326,10 +1330,7 @@ class _GastoFormState extends ConsumerState<GastoFormPage> {
                         : DateFormatter.forDisplay(date!),
                   ),
                 ),
-                TextField(
-                  controller: observations,
-                  decoration: const InputDecoration(labelText: 'Observaciones'),
-                ),
+                AppFormField(label: 'Observaciones', controller: observations),
                 FilledButton(
                   onPressed:
                       ref
