@@ -19,7 +19,7 @@ Este cambio crea una aplicacion movil Flutter 3+/Dart dentro del directorio `flu
 ### Fuera de alcance
 
 - Cambios al backend, contrato REST, esquema PostgreSQL o pgvector.
-- Notificaciones push, sincronizacion offline, cache offline conflictiva o modo desconectado.
+- Notificaciones push (FCM) y sincronizacion offline de chat, autenticacion, catalogos, reportes o administracion fuera de la cache de listados comerciales (R66-R73).
 - Registro de usuario como flujo normal (solo el caso de backend sin usuarios).
 - Modificacion del frontend Angular, generacion automatica de clientes OpenAPI o nuevos endpoints.
 - Markdown arbitrario con HTML ejecutable; el chat usa renderizado seguro limitado.
@@ -156,9 +156,9 @@ Si el backend indica que no existe ningun usuario (o expone un endpoint/respuest
 - WHEN se accede a la app
 - THEN no se muestra la opcion de registro inicial
 
-#### R6 [S1] Navegacion declarativa con GoRouter
+#### R6 [S1] Navegacion declarativa con GoRouter (modificado por app-movil-fixes-offline: R-M2)
 
-El sistema DEBE usar GoRouter para la navegacion. La configuracion DEBE incluir un `redirect` que envie a `/login` a usuarios no autenticados y al dashboard a usuarios autenticados que intenten acceder a `/login`. El shell principal DEBE conservar estado entre pestanas mediante `StatefulShellRoute` o equivalente.
+El sistema DEBE usar GoRouter para la navegacion. La configuracion DEBE incluir un `redirect` que envie a `/login` a usuarios no autenticados y al dashboard a usuarios autenticados que intenten acceder a `/login`. El shell principal DEBE conservar estado entre pestanas mediante `StatefulShellRoute` o equivalente. La navegacion entre ramas DEBE ser explicita y determinista segun R-M2: un mapa inmutable `branchInitialRoutes` (`0→/`, `1→/productos`, `2→/ventas`, `3→/reportes`, `4→/mas`) y `goBranch` solo para cambios de rama.
 
 ##### Escenario: Usuario no autenticado accede a ruta protegida
 
@@ -200,9 +200,9 @@ Cada ruta funcional DEBE requerir un permiso especifico. Si el usuario no posee 
 - WHEN esta en `/productos`
 - THEN el boton "Nuevo producto" no se muestra
 
-#### R8 [S1] Shell navegable y dashboard inicial (modificado por ui-ux)
+#### R8 [S1] Shell navegable y dashboard inicial (modificado por ui-ux; app-movil-fixes-offline: R-M2)
 
-El sistema DEBE presentar un shell navegable (bottom navigation bar) que liste las secciones permitidas segun permisos, con un maximo de cinco destinos: Dashboard, Productos, Ventas, Reportes y Mas (R55, R56). Las rutas secundarias permanecen accesibles desde la pagina `Mas` categorizada o por deep link; la NavigationBar de 15 destinos del estado anterior queda REMOVIDA. El dashboard DEBE mostrar los seis KPI, la grafica de ventas por periodo, las acciones rapidas y los estados compartidos descritos en R51-R54, y servir como punto de entrada.
+El sistema DEBE presentar un shell navegable (bottom navigation bar) que liste las secciones permitidas segun permisos, con un maximo de cinco destinos: Dashboard, Productos, Ventas, Reportes y Mas (R55, R56). Las rutas secundarias permanecen accesibles desde la pagina `Mas` categorizada o por deep link; la NavigationBar de 15 destinos del estado anterior queda REMOVIDA. El dashboard DEBE mostrar los seis KPI, la grafica de ventas por periodo, las acciones rapidas y los estados compartidos descritos en R51-R54, y servir como punto de entrada. La navegacion del shell DEBE ser determinista: `ShellScaffold` DEBE usar un mapa explicito `branchIndex -> ruta inicial canonica` (`0→/`, `1→/productos`, `2→/ventas`, `3→/reportes`, `4→/mas`) y navegar explicitamente a la ruta canonica de la rama seleccionada. Las rutas secundarias como `/gastos`, `/compras` y `/movimientos` DEBEN resolverse correctamente sin depender de heuristicas de `StatefulShellRoute.indexedStack`. El estado por rama DEBE continuar preservandose.
 
 ##### Escenario: Menu filtrado por permisos
 
@@ -228,6 +228,32 @@ El sistema DEBE presentar un shell navegable (bottom navigation bar) que liste l
 - GIVEN un usuario autenticado
 - WHEN el shell se renderiza
 - THEN la barra inferior muestra como maximo cinco items y las rutas restantes se alcanzan desde `Mas`
+
+##### Escenario: Gastos -> Ventas navega correctamente
+
+- GIVEN el usuario esta en `/gastos` dentro de la rama Ventas
+- WHEN toca la pestana Ventas
+- THEN la app navega a `/ventas`
+
+##### Escenario: Deep link a ruta secundaria selecciona la rama correcta
+
+- GIVEN la app recibe un deep link a `/compras`
+- WHEN el shell se renderiza
+- THEN la rama 2 esta seleccionada
+- AND la pagina `/compras` se muestra
+
+##### Escenario: Estado de la rama se preserva
+
+- GIVEN el usuario hizo scroll en la lista de Productos y luego cambio a Dashboard
+- WHEN vuelve a Productos
+- THEN la lista permanece en la misma posicion de scroll
+
+##### Escenario: Cinco ramas/tabs se mantienen
+
+- GIVEN el shell se renderiza
+- WHEN se inspecciona la barra de navegacion inferior
+- THEN se muestran exactamente cinco destinos
+- AND el mapeo de ramas cubre Dashboard, Productos, Ventas, Reportes y Mas
 
 #### R9 [S1] Configuracion de URL base via dart-define
 
@@ -389,9 +415,9 @@ El sistema DEBE mostrar el listado de ventas consumiendo `GET /api/ventas`. Debe
 - WHEN se selecciona un rango
 - THEN la lista solo muestra ventas dentro del rango
 
-#### R18 [S3] Formulario POS de ventas con detalles y calculos
+#### R18 [S3] Formulario POS de ventas con detalles y calculos (modificado por app-movil-fixes-offline: R-M5)
 
-El sistema DEBE permitir crear ventas en formato POS. El usuario DEBE poder agregar lineas de detalle seleccionando producto, cantidad y precio unitario. El sistema DEBE calcular subtotal, descuento, iva y total, y enviar `POST /api/ventas` con el arreglo `detalles[]`.
+El sistema DEBE permitir crear ventas en formato POS. El usuario DEBE poder agregar lineas de detalle seleccionando producto, cantidad y precio unitario. El sistema DEBE calcular subtotal, descuento, iva y total, y enviar `POST /api/ventas` con el arreglo `detalles[]`. El formulario DEBE usar componentes compartidos (`AppFormField`, `AppDropdownField`, `AppFormSection` o equivalentes), aplicar `AppSpacing` de forma consistente, agrupar campos relacionados bajo titulos de seccion, mantenerse scrolleable con los botones en el flujo natural y garantizar labels legibles sin superposicion. Las validaciones existentes, la logica de negocio, los permisos, los modelos y los endpoints DEBEN permanecer sin cambios. Esta modificacion aplica a las ~10 pantallas de formulario: Venta, Compra, Movimiento, Gasto, Producto, Categoria, Proveedor, Cliente, Usuario y Rol.
 
 ##### Escenario: Venta con dos productos
 
@@ -713,23 +739,43 @@ Las secciones de precios, usuarios, roles, reportes y logs DEBEN respetar sus pe
 
 ### S5 — Chat y polish de entrega
 
-#### R37 [S5] Pantalla de chat
+#### R37 [S5] Pantalla de chat (modificado por app-movil-fixes-offline: R-M4)
 
-El sistema DEBE incluir una pantalla de chat que envie preguntas a `POST /api/chat` con `question` y, opcionalmente, `conversationId`. La respuesta DEBE mostrarse en un listado de burbujas de mensaje.
+El sistema DEBE incluir una pantalla de chat que envie preguntas a `POST /api/chat` con `question` y, opcionalmente, `conversationId`. El layout DEBE mostrar el indicador de carga como una burbuja de asistente colocada debajo del ultimo mensaje del usuario. Las burbujas de mensaje DEBEN usar un ancho relativo (aproximadamente el 85% del ancho disponible) en lugar de un ancho fijo de 700 dp. El composer DEBE respetar `MediaQuery.viewInsets`, tener una altura minima/maxima compacta, soportar scroll interno para texto largo, integrar el boton de enviar y mostrar un contador discreto `0/1000`. La lista de mensajes DEBE desplazarse suavemente al ultimo mensaje al enviar/recibir. El layout NO DEBE usar widgets `Positioned` absolutos, fuentes reducidas ni `FittedBox` para resolver el layout. La logica del chat, prompts, RAG y endpoints DEBEN permanecer sin cambios.
 
-##### Escenario: Enviar pregunta
+##### Escenario: Indicador de carga integrado al flujo
 
-- GIVEN un usuario autenticado en la pantalla de chat
-- WHEN escribe "que productos tienen bajo stock?" y envia
-- THEN se llama a `POST /api/chat` con el campo `question`
-- AND al recibir respuesta se muestra el mensaje del asistente
+- GIVEN el usuario acaba de enviar una pregunta
+- WHEN el asistente esta generando la respuesta
+- THEN aparece una burbuja de carga directamente debajo del ultimo mensaje del usuario
+- AND muestra un indicador animado
 
-##### Escenario: Continuar conversacion
+##### Escenario: Burbujas con ancho relativo
 
-- GIVEN una conversacion con `conversationId` previo
-- WHEN el usuario envia una nueva pregunta
-- THEN el request incluye el `conversationId`
-- AND el backend mantiene el contexto
+- GIVEN la app corre en un telefono angosto
+- WHEN se renderiza una burbuja de chat
+- THEN su ancho es aproximadamente el 85% del ancho disponible de la lista de mensajes
+- AND no esta limitada a 700 dp fijos
+
+##### Escenario: Scroll automatico suave
+
+- GIVEN la lista de mensajes esta scrolleada hacia arriba
+- WHEN se envia un nuevo mensaje del usuario o llega una respuesta del asistente
+- THEN la lista se anima suavemente hasta el final
+
+##### Escenario: Composer con teclado abierto
+
+- GIVEN el teclado de software es visible
+- WHEN el composer se renderiza
+- THEN permanece por encima del teclado usando `viewInsets`
+- AND ningun contenido queda oculto detras del teclado
+
+##### Escenario: Composer compacto con contador discreto
+
+- GIVEN el usuario escribe una pregunta larga
+- WHEN el texto excede la altura del composer
+- THEN el campo de texto hace scroll interno hasta la altura maxima
+- AND un contador pequeno `0/1000` permanece visible
 
 #### R38 [S5] Renderizado seguro de respuesta Markdown
 
@@ -769,7 +815,7 @@ Si la respuesta incluye `sources[]`, el sistema DEBE mostrarlas en un acordeon q
 - WHEN se renderiza el mensaje
 - THEN no aparece la seccion de fuentes
 
-#### R40 [S5] Manejo de conversationId y errores del chat
+#### R40 [S5] Manejo de conversationId y errores del chat (modificado por app-movil-fixes-offline: R-M4)
 
 El sistema DEBE conservar el `conversationId` devuelto por el backend en la sesion de UI para reutilizarlo en siguientes mensajes. Ante errores de red o respuestas vacias, el sistema DEBE mostrar un mensaje de fallback sin perder el historial.
 
@@ -968,39 +1014,42 @@ Cada tarjeta KPI DEBE mostrar un icono Material, una etiqueta y un valor. El col
 
 ---
 
-#### R52 [S6] Grafica de ventas por periodo
+#### R52 [S6] Grafica de ventas por periodo (modificado por app-movil-fixes-offline: R-M3)
 
-El sistema DEBE renderizar una grafica simple de barras de ventas por periodo en el dashboard. El selector DEBE ofrecer tres periodos: "Esta Semana", "Este Mes" y "Este Año". La grafica DEBE usar los datos existentes `ReporteDashboard.ventasPorDia` o llamar al mismo endpoint que usa la web para obtener ventas por fecha (`ReporteRepository.ventas(desde, hasta)`), agrupar los resultados por dia cuando el periodo es semana/mes o por mes cuando el periodo es anio, y renderizar las barras usando solo widgets built-in de Flutter (`CustomPaint`, `Row` de `Container`, o similar). NO SE PUEDE agregar ninguna dependencia nueva de graficas.
+El sistema DEBE renderizar una grafica simple de barras de ventas por periodo en el dashboard. El selector DEBE ofrecer tres periodos: "Esta Semana", "Este Mes" y "Este Año". El provider DEBE calcular el rango de fechas completo del periodo seleccionado y garantizar datos para cada intervalo de ese rango. DEBE usar `ventasPorDia` solo cuando cubre todo el rango; en caso contrario DEBE hacer fallback a `reportSalesProvider(range)`. La semana y el mes DEBEN agruparse por dia; el año DEBE agruparse por mes. La grafica DEBE renderizar las barras usando solo widgets built-in de Flutter (`CustomPaint`, `Row` de `Container`, o similar). NO SE PUEDE agregar ninguna dependencia nueva de graficas, ni modificar el backend ni el frontend Angular.
 
-##### Escenario: El periodo por defecto es el mes
+##### Escenario: Semana con datos parciales usa el fallback
 
-- GIVEN el usuario abre el dashboard
-- WHEN la seccion de la grafica carga
-- THEN el selector muestra "Este Mes" y la grafica muestra ventas agrupadas por dia del mes actual
-
-##### Escenario: Cambio a semana
-
-- GIVEN la grafica del dashboard visible
+- GIVEN el `ventasPorDia` del dashboard solo contiene datos de hoy
 - WHEN el usuario selecciona "Esta Semana"
-- THEN la grafica recalcula el rango desde el lunes actual hasta hoy y muestra ventas agrupadas por dia
+- THEN la app consulta `reportes/ventas` para el rango completo de la semana
+- AND la grafica muestra una barra por dia desde el lunes hasta hoy
 
-##### Escenario: Cambio a anio
+##### Escenario: Mes agrupado por dia
 
-- GIVEN la grafica del dashboard visible
-- WHEN el usuario selecciona "Este Año"
-- THEN la grafica recalcula el rango desde el 1 de enero hasta hoy y muestra ventas agrupadas por mes
+- GIVEN `ventasPorDia` esta vacio para el mes actual
+- WHEN el usuario selecciona "Este Mes"
+- THEN la app usa el endpoint de reportes
+- AND la grafica agrupa las ventas por dia del mes
 
-##### Escenario: La grafica formatea los valores como moneda
+##### Escenario: Año agrupado por mes
 
-- GIVEN la grafica con datos
-- WHEN el usuario ve las barras
-- THEN los valores se formatean con el formateador de moneda de la app (ej. "$1,250.00")
+- GIVEN el usuario selecciona "Este Año"
+- WHEN la grafica carga
+- THEN los datos se agrupan por mes
+- AND el rango cubre desde el 1 de enero hasta hoy
 
-##### Escenario: Estado vacio de la grafica
+##### Escenario: Nunca muestra un solo dia
 
-- GIVEN el periodo seleccionado sin ventas
+- GIVEN cualquier selector de periodo activo
 - WHEN la grafica se renderiza
-- THEN muestra un estado vacio como "Sin ventas registradas en el periodo" en lugar de inventar datos
+- THEN todos los intervalos del rango calculado estan representados, incluso si su valor es cero
+
+##### Escenario: Web y backend no se modifican
+
+- GIVEN el cambio se aplica solo a `flutter/`
+- WHEN se inspecciona el dashboard web Angular
+- THEN su comportamiento y los endpoints del backend permanecen sin cambios
 
 ---
 
@@ -1053,9 +1102,9 @@ El sistema DEBE manejar los estados `loading`, `empty` y `error` en el dashboard
 
 ---
 
-#### R55 [S6] NavigationBar de maximo cinco destinos
+#### R55 [S6] NavigationBar de maximo cinco destinos (modificado por app-movil-fixes-offline: R-M2)
 
-El sistema DEBE reducir la `NavigationBar` del shell a un maximo de cinco destinos: Dashboard, Productos, Ventas, Reportes y Mas. La NavigationBar de 15 destinos del estado anterior queda REMOVIDA; la barra NO DEBE contener mas de cinco destinos y todas las rutas previamente alcanzables siguen accesibles via `Mas` o deep links. La pestana seleccionada DEBE reflejar la rama actual del `StatefulShellRoute` y el estado por rama DEBE preservarse.
+El sistema DEBE reducir la `NavigationBar` del shell a un maximo de cinco destinos: Dashboard, Productos, Ventas, Reportes y Mas. La NavigationBar de 15 destinos del estado anterior queda REMOVIDA; la barra NO DEBE contener mas de cinco destinos y todas las rutas previamente alcanzables siguen accesibles via `Mas` o deep links. La pestana seleccionada DEBE reflejar la rama actual del `StatefulShellRoute` usando el mapeo canonico `branchIndex -> ruta inicial` de R-M2, y el estado por rama DEBE preservarse.
 
 ##### Escenario: Cinco pestanas visibles
 
@@ -1106,27 +1155,36 @@ El sistema DEBE agregar una pagina `Mas` (`/mas`) accesible desde el quinto tab.
 
 ---
 
-#### R57 [S6] Chat accesible via FAB flotante
+#### R57 [S6] Chat accesible via FAB flotante (modificado por app-movil-fixes-offline: R-M1)
 
-El sistema DEBE conservar el `ChatFloatingActionButton` existente como via principal de acceso al chat. El FAB DEBE ser visible para cualquier usuario autenticado y navegar a `/chat` al tocarlo. Una entrada secundaria de chat PUEDE colocarse en `Mas > SISTEMA`, pero NO DEBE reemplazar al FAB.
+El sistema DEBE conservar el `ChatFloatingActionButton` existente como via principal de acceso al chat y DEBE comportarse como un toggle. Cuando la ruta actual no es `/chat`, el FAB DEBE navegar a `/chat` y mostrar un icono de cerrar con tooltip/etiqueta semantica "Cerrar chat". Cuando la ruta actual es `/chat`, el FAB DEBE cerrar el chat y volver a la rama anterior cuando este disponible, o al dashboard como fallback seguro. El comportamiento arrastrable de `DraggableChatFab` DEBE preservarse. El FAB DEBE ser visible para cualquier usuario autenticado y NO DEBE mostrarse en la pantalla de login.
 
-##### Escenario: FAB visible para usuario autenticado
+##### Escenario: Abrir chat desde el dashboard
 
-- GIVEN un usuario autenticado
-- WHEN el shell se renderiza
-- THEN el FAB de chat es visible
-
-##### Escenario: El FAB navega al chat
-
-- GIVEN el usuario ve el FAB de chat
-- WHEN lo toca
+- GIVEN el usuario esta en `/dashboard` y ve el FAB de chat
+- WHEN toca el FAB
 - THEN la app navega a `/chat`
+- AND el icono del FAB cambia a `close` y el tooltip se vuelve "Cerrar chat"
 
-##### Escenario: FAB oculto al cerrar sesion
+##### Escenario: Cerrar chat vuelve a la rama anterior
 
-- GIVEN un usuario en la pantalla de login
-- WHEN la pantalla se renderiza
-- THEN el FAB de chat no se muestra
+- GIVEN el usuario abrio `/chat` desde la rama Ventas
+- WHEN toca el FAB nuevamente
+- THEN la app vuelve a `/ventas`
+- AND el icono del FAB vuelve a `chat_bubble_outline`
+
+##### Escenario: Cerrar chat sin rama anterior cae al dashboard
+
+- GIVEN el usuario abrio `/chat` directamente via deep link sin rama previa
+- WHEN toca el FAB para cerrar
+- THEN la app navega a `/dashboard`
+
+##### Escenario: Semantica y tooltip dinamicos
+
+- GIVEN la ruta actual es `/chat`
+- WHEN un lector de pantalla enfoca el FAB
+- THEN anuncia "Cerrar chat"
+- AND el tooltip coincide con la etiqueta
 
 ---
 
@@ -1292,9 +1350,9 @@ El sistema DEBE extraer widgets reutilizables del dashboard y de los estados com
 
 ---
 
-#### R65 [S6] Verificacion por fase y tests
+#### R65 [S6] Verificacion por fase y tests (modificado por app-movil-fixes-offline: R-M7)
 
-El sistema DEBE pasar `flutter analyze` con cero issues por fase. Los 52 tests existentes DEBEN permanecer verdes. Los nuevos widget tests DEBEN cubrir el dashboard (KPIs, grafica, estados empty/error/loading, acciones rapidas por permiso), la navegacion (5 tabs, items de Mas por permiso, deep links) y el selector de tema/presencia del icono.
+El sistema DEBE pasar `flutter analyze` con cero issues por fase. Los tests existentes DEBEN permanecer verdes (52 al cierre de S6, 77 como baseline previo a R-M7, 107 al cierre del cambio app-movil-fixes-offline). Los nuevos widget tests DEBEN cubrir el dashboard (KPIs, grafica, estados empty/error/loading, acciones rapidas por permiso), la navegacion (5 tabs, items de Mas por permiso, deep links) y el selector de tema/presencia del icono. Adicionalmente, los tests DEBEN cubrir la cola offline, retry/backoff, transiciones online/offline, manejo de expiracion JWT, toggle del FAB, navegacion del shell, agrupacion de la grafica del dashboard, layout del chat/composer y los componentes compartidos de formulario. `flutter analyze` DEBE permanecer limpio.
 
 ##### Escenario: flutter analyze limpio
 
@@ -1331,6 +1389,284 @@ El sistema DEBE pasar `flutter analyze` con cero issues por fase. Los 52 tests e
 - GIVEN la configuracion del launcher icon
 - WHEN el build corre
 - THEN los assets generados referencian el motivo hardware de FerrePlus y no el logo de Flutter
+
+---
+
+### S7 — Offline-first y fixes de la app movil
+
+Este slice incorpora el cambio `app-movil-fixes-offline` (archivado 2026-08-20): agrega una capa offline-first para las cuatro operaciones comerciales (ventas, gastos, compras y movimientos de stock), con cola durable cifrada, sincronizacion FIFO con backoff y jitter, manejo de JWT expirado, cache de listados persistida, notificaciones locales agrupadas y politica de conflictos last-write-wins. Tambien corrige la navegacion del shell, convierte el FAB de chat en toggle, ajusta la grafica del dashboard por periodo, rediseña el layout del chat, refactoriza los formularios con componentes compartidos y documenta la app Flutter en el README. No modifica contratos del backend, logica de negocio ni el frontend Angular.
+
+#### R66 [OFFLINE-QUEUE] Cola durable de operaciones offline
+
+El sistema DEBE persistir cada operacion comercial de escritura (ventas, gastos, compras, movimientos de stock) y sus anulaciones cuando el dispositivo esta offline. Cada operacion encolada DEBE almacenar el payload, el endpoint de destino, el metodo HTTP, el identificador de usuario, la clave de idempotencia local, el timestamp de creacion, el estado, el contador de intentos y un mensaje de error sanitizado. El sistema NO DEBE descartar operaciones encoladas cuando la app se reinicia ni cuando la sesion cierra sesion.
+
+##### Escenario: Crear una venta sin conectividad
+
+- GIVEN un usuario completa un formulario de venta mientras el dispositivo no tiene conectividad
+- WHEN toca "Guardar"
+- THEN la app almacena la operacion en una cola local durable con estado `pending`
+- AND la app muestra una confirmacion de que la venta se registro localmente
+
+##### Escenario: Crear un gasto sin conectividad
+
+- GIVEN un usuario completa un formulario de gasto mientras esta offline
+- WHEN lo guarda
+- THEN la operacion se encola localmente con metodo `POST`, endpoint `/api/gastos` y el payload completo
+- AND el gasto aparece en la lista local inmediatamente
+
+##### Escenario: Anular una compra sin conectividad
+
+- GIVEN un usuario con `COMPRAS_ELIMINAR` confirma la anulacion de una compra mientras esta offline
+- WHEN se solicita la anulacion
+- THEN la app encola una operacion `PUT /api/compras/{id}/anular`
+- AND la lista local refleja el estado anulado
+
+##### Escenario: La cola sobrevive al reinicio de la app
+
+- GIVEN hay operaciones pendientes en la cola local
+- WHEN la app se cierra y se reabre
+- THEN todas las operaciones encoladas permanecen disponibles con su payload y estado originales
+
+##### Escenario: Operacion online no deja registro pendiente innecesario
+
+- GIVEN el dispositivo esta online y el backend acepta la solicitud
+- WHEN una operacion comercial se envia y confirma
+- THEN no queda un registro pendiente duplicado en la cola local
+
+---
+
+#### R67 [OFFLINE-SYNC] Sincronizacion automatica al recuperar la red
+
+El sistema DEBE escuchar los eventos de conectividad y, cuando este online, procesar las operaciones pendientes en orden FIFO. El sync DEBE reintentar las operaciones fallidas con backoff exponencial acotado y jitter. Despues de un maximo configurable de intentos, el sistema DEBE marcar la operacion como fallida de forma terminal y mostrarla mediante una notificacion local. El sistema DEBE suprimir duplicados usando la clave de idempotencia local y DEBE actualizar los registros locales con la respuesta del backend (ID de servidor, timestamps, estado final).
+
+##### Escenario: Sincronizacion al recuperar conectividad
+
+- GIVEN hay operaciones pendientes y el dispositivo recupera conectividad
+- WHEN el worker de sync corre
+- THEN las operaciones se envian al backend en el mismo orden en que fueron encoladas
+- AND las operaciones exitosas se marcan como `completed` localmente
+
+##### Escenario: Reintento con backoff ante error transitorio
+
+- GIVEN una operacion pendiente falla con 5xx o timeout
+- WHEN el worker de sync reintenta
+- THEN cada reintento espera mas que el intento anterior hasta un maximo de retraso
+
+##### Escenario: Maximo de intentos marca error terminal
+
+- GIVEN una operacion pendiente falla repetidamente
+- WHEN el contador de intentos excede el maximo configurado
+- THEN la operacion se marca como `error`
+- AND una notificacion local informa al usuario que se requiere revision manual
+
+##### Escenario: Idempotencia evita duplicados
+
+- GIVEN una operacion encolada se reintenta despues de un timeout de red
+- WHEN la misma clave de idempotencia local llega al backend dos veces
+- THEN la operacion se aplica solo una vez y el estado local refleja la unica respuesta del servidor
+
+##### Escenario: Actualizacion del registro local con respuesta del servidor
+
+- GIVEN una venta encolada se sincroniza exitosamente
+- WHEN el backend devuelve la venta creada con su ID de servidor y timestamps
+- THEN el registro local se actualiza con esos valores
+- AND la lista local muestra la venta como sincronizada
+
+---
+
+#### R68 [OFFLINE-AUTH] JWT expirado durante la sincronizacion
+
+El sistema DEBE detectar una respuesta HTTP 401 durante la sincronizacion y transicionar la cola a un estado `auth_required`. Mientras esta en ese estado, el sistema DEBE pausar los reintentos automaticos, preservar todas las operaciones pendientes de forma segura y reanudar la sincronizacion solo despues de restaurar una sesion valida. El sistema NO DEBE descartar operaciones encoladas cuando el `AuthInterceptor` existente dispara un logout por 401.
+
+##### Escenario: 401 durante la sincronizacion pausa la cola
+
+- GIVEN el token de autenticacion ha expirado mientras existen operaciones pendientes
+- WHEN el worker de sync recibe HTTP 401 del backend
+- THEN la cola transiciona a `auth_required`
+- AND los reintentos automaticos se pausan
+
+##### Escenario: Logout por 401 conserva las operaciones pendientes
+
+- GIVEN existen operaciones pendientes y el interceptor recibe un 401
+- WHEN la app limpia la sesion y redirige a `/login`
+- THEN la cola local permanece intacta y cifrada/exposicion minima
+
+##### Escenario: Reanudacion tras nuevo login
+
+- GIVEN la cola esta en estado `auth_required`
+- WHEN el usuario inicia sesion nuevamente y obtiene un token valido
+- THEN el worker de sync se reanuda automaticamente
+- AND las operaciones pendientes se envian en orden FIFO
+
+##### Escenario: Sin perdida de datos tras dias offline
+
+- GIVEN el dispositivo ha estado offline varios dias y el token ha expirado
+- WHEN el usuario abre la app e inicia sesion nuevamente
+- THEN todas las operaciones encoladas siguen presentes
+- AND la sincronizacion comienza sin requerir que el usuario recree ninguna operacion
+
+---
+
+#### R69 [OFFLINE-BATTERY] Eficiencia de bateria y memoria
+
+El sistema NO DEBE depender de polling agresivo para detectar conectividad. DEBE escuchar los eventos de conectividad de la plataforma con debounce. La sincronizacion DEBE procesar las operaciones pendientes en lotes pequenos y DEBE disponer las suscripciones cuando no se necesiten. El sistema DEBE podar las operaciones completadas mas antiguas que una ventana de retencion configurable y DEBE limitar el tamano total de la cola local. El sync en segundo plano via workmanager/background tasks PUEDE usarse solo si aporta valor medible y se configura con restricciones de red y bateria.
+
+##### Escenario: Sin polling continuo
+
+- GIVEN la app esta inactiva sin cambios de conectividad
+- WHEN pasan varios minutos
+- THEN ningun timer periodico se dispara solo para verificar conectividad
+
+##### Escenario: Debounce de cambios de conectividad
+
+- GIVEN la senal de conectividad oscila rapidamente entre offline y online
+- WHEN la senal se estabiliza
+- THEN la sincronizacion corre solo una vez, no en cada fluctuacion
+
+##### Escenario: Procesamiento por lotes
+
+- GIVEN hay muchas operaciones pendientes
+- WHEN la sincronizacion corre
+- THEN el sistema envia operaciones en lotes pequenos
+- AND no carga toda la cola en memoria a la vez
+
+##### Escenario: Dispose de subscriptions
+
+- GIVEN un listener de sync activo
+- WHEN el usuario cierra sesion o el ciclo de vida de la app dispone el listener
+- THEN todas las suscripciones de conectividad se cancelan
+
+##### Escenario: Limpieza de operaciones sincronizadas antiguas
+
+- GIVEN existen operaciones completadas mas antiguas que la ventana de retencion
+- WHEN la limpieza corre
+- THEN esos registros se eliminan del almacen local
+
+##### Escenario: Background sync opcional con restricciones
+
+- GIVEN el background sync esta habilitado
+- WHEN se configura
+- THEN corre solo bajo restricciones de red y bateria que eviten wake-ups agresivos
+
+---
+
+#### R70 [OFFLINE-CONFLICTS] Politica de conflictos offline
+
+El sistema DEBE adoptar una politica `last-write-wins` para las operaciones locales encoladas contra el estado cacheado del servidor. Para los conflictos que afectan inventario, la respuesta del backend DEBE tratarse como autoritativa. Las respuestas HTTP 409/422 de validacion o conflicto NO DEBEN reintentarse indefinidamente; el sistema DEBE transicionar la operacion a un estado de error terminal y presentar un mensaje claro y accionable al usuario.
+
+##### Escenario: Last-write-wins para operacion local
+
+- GIVEN una venta local encolada difiere del ultimo estado conocido del servidor
+- WHEN la operacion se sincroniza exitosamente
+- THEN el servidor refleja el payload creado localmente
+- AND el registro local se actualiza en consecuencia
+
+##### Escenario: Conflicto de stock no reintenta indefinidamente
+
+- GIVEN una venta es rechazada por el backend por stock insuficiente (409/422)
+- WHEN el worker de sync procesa la respuesta
+- THEN la operacion se marca como error terminal
+- AND el usuario ve un mensaje que explica la falla
+
+##### Escenario: Idempotencia local previene duplicados
+
+- GIVEN la misma clave de idempotencia se envia dos veces debido a un reintento
+- WHEN el backend procesa la solicitud
+- THEN solo se crea un recurso
+- AND el estado local almacena la unica respuesta del servidor
+
+---
+
+#### R71 [OFFLINE-SCHEMA] Esquema SQLite versionado
+
+El sistema DEBE usar un esquema SQLite local versionado con migraciones incrementales. La version del esquema DEBE estar codificada en el codigo de la aplicacion. Las migraciones DEBEN preservar las operaciones encoladas y los datos de cache local a traves de las actualizaciones de la app.
+
+##### Escenario: Version de esquema visible
+
+- GIVEN el modulo offline esta construido
+- WHEN un desarrollador inspecciona la configuracion de la base de datos
+- THEN se define una version de esquema mayor que cero
+
+##### Escenario: Migracion conserva datos
+
+- GIVEN existen operaciones pendientes en la version de esquema N
+- WHEN la app se actualiza a la version de esquema N+1
+- THEN el esquema se migra
+- AND todas las operaciones encoladas y los datos de listas en cache permanecen intactos
+
+---
+
+#### R72 [OFFLINE-NOTIFICATIONS] Notificaciones locales de sincronizacion
+
+El sistema DEBE mostrar una notificacion local agrupada cuando existen operaciones pendientes o cuando ocurre un error terminal de sync. Las notificaciones NO DEBEN incluir datos comerciales sensibles (nombres de clientes, montos, detalles de productos) y DEBEN respetar los permisos de notificacion de la plataforma. El sistema DEBE degradarse correctamente si el permiso es denegado.
+
+##### Escenario: Notificacion de operaciones pendientes
+
+- GIVEN hay operaciones pendientes
+- WHEN la app esta en primer o segundo plano
+- THEN una notificacion local muestra el conteo y un mensaje generico como "Operaciones pendientes de sincronizar"
+
+##### Escenario: Notificacion de error terminal sin datos sensibles
+
+- GIVEN una operacion alcanza el maximo de reintentos
+- WHEN el error terminal se registra
+- THEN aparece una notificacion local con un titulo generico como "Error de sincronizacion"
+- AND no expone detalles del payload
+
+##### Escenario: Permiso denegado no crashea
+
+- GIVEN el usuario deniega el permiso de notificacion
+- WHEN la app intenta mostrar una notificacion
+- THEN la app sigue funcionando sin crashear
+- AND las operaciones pendientes permanecen en la cola
+
+---
+
+#### R73 [OFFLINE-LIST] Lectura offline de listados
+
+El sistema DEBE cachear los datos de listado de los cuatro modulos comerciales para que las pantallas de lista puedan mostrar los ultimos datos conocidos cuando estan offline. Al mostrar datos en cache, el sistema DEBE mostrar un indicador offline visible. Si no existe cache y el dispositivo esta offline, el sistema DEBE mostrar un estado vacio con un mensaje especifico de offline.
+
+##### Escenario: Listado de ventas desde cache offline
+
+- GIVEN la lista de ventas se cargo previamente mientras estaba online
+- WHEN el usuario abre Ventas mientras esta offline
+- THEN se muestra la ultima lista conocida con un indicador offline
+
+##### Escenario: Cache se invalida tras sincronizacion
+
+- GIVEN existen datos de listado en cache
+- WHEN se sincronizan nuevos datos desde el backend
+- THEN la cache se refresca con los datos mas recientes del servidor
+
+##### Escenario: Sin cache y sin red
+
+- GIVEN el dispositivo esta offline y no existen datos de listado en cache
+- WHEN el usuario abre una lista comercial
+- THEN se muestra un estado vacio con un mensaje de offline
+
+---
+
+#### R-M6 [README] Seccion de la app Flutter en el README
+
+El `README.md` DEBE incluir una seccion de la app Flutter que describa el stack movil, la estructura del directorio `flutter/`, como ejecutar los tests, los comandos de build comunes y un resumen de las nuevas funcionalidades de UX/offline.
+
+##### Escenario: Seccion Flutter presente
+
+- GIVEN se abre el archivo `README.md`
+- WHEN se localiza la seccion Flutter
+- THEN explica el proposito del directorio `flutter/`
+
+##### Escenario: Comandos documentados
+
+- GIVEN la seccion Flutter del README
+- WHEN se leen los comandos
+- THEN `flutter pub get`, `flutter analyze`, `flutter test` y `flutter build apk` estan listados con el ejemplo de `--dart-define` requerido
+
+##### Escenario: Offline y redisenos documentados
+
+- GIVEN la seccion Flutter del README
+- WHEN se leen las funcionalidades
+- THEN resume la cola/sync offline, las notificaciones locales, el rediseno del layout de chat y el refactor de formularios
 
 ---
 
@@ -1390,9 +1726,9 @@ El sistema DEBE ocultar o deshabilitar cualquier boton, menu, ruta o accion que 
 - WHEN intenta navegar a `/usuarios`
 - THEN el sistema redirige a una ruta permitida
 
-#### R47 [Cross-cutting] Calidad de codigo y tests por slice
+#### R47 [Cross-cutting] Calidad de codigo y tests por slice (modificado por app-movil-fixes-offline: R-M7)
 
-Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, providers) y widget tests representativos. El proyecto DEBE mantener `flutter analyze` sin warnings y una cobertura minima acordada por slice.
+Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, providers) y widget tests representativos. El proyecto DEBE mantener `flutter analyze` sin warnings y una cobertura minima acordada por slice. Los 77 tests existentes al iniciar el cambio `app-movil-fixes-offline` DEBEN permanecer verdes; los tests nuevos DEBEN cubrir la cola offline, retry/backoff, transiciones online/offline, manejo de JWT expirado, toggle del FAB, navegacion del shell, agrupacion de la grafica del dashboard, layout del chat/composer y los componentes compartidos de formulario. El cierre del cambio alcanza 107 tests verdes y `flutter analyze` limpio.
 
 ##### Escenario: Tests de S1
 
@@ -1490,6 +1826,15 @@ Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, prov
 | R63 | Cumplimiento de accesibilidad | S6 | 5 |
 | R64 | Extraccion de componentes reutilizables | S6 | 3 |
 | R65 | Verificacion por fase y tests | S6 | 6 |
+| R66 | Cola durable de operaciones offline | S7 | 5 |
+| R67 | Sincronizacion automatica al recuperar red | S7 | 5 |
+| R68 | JWT expirado durante sincronizacion | S7 | 4 |
+| R69 | Eficiencia de bateria y memoria | S7 | 6 |
+| R70 | Politica de conflictos offline | S7 | 3 |
+| R71 | Esquema SQLite versionado | S7 | 2 |
+| R72 | Notificaciones locales de sincronizacion | S7 | 3 |
+| R73 | Lectura offline de listados | S7 | 3 |
+| R-M6 | Seccion de la app Flutter en el README | S7 | 3 |
 
 ### Conteo por slice
 
@@ -1502,9 +1847,12 @@ Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, prov
 | S5 | 7 | 16 |
 | Cross-cutting | 4 | 9 |
 | S6 | 18 | 62 |
-| **Total** | **65** | **168** |
+| S7 | 9 | 34 |
+| **Total** | **74** | **202** |
 
 > Nota: el cambio `app-movil-flutter-ui-ux` (archivado 2026-08-18) agrego 18 requisitos (R48-R65), modifico 3 (R8, R32, R43) y removio 2 implementaciones previas (NavigationBar de 15 destinos e icono launcher generico de Flutter). El conteo base fue normalizado a su contenido real (47 requisitos / 100 escenarios; el resumen previo declaraba 46/96 por un error de conteo en S3 y S4).
+>
+> Nota: el cambio `app-movil-fixes-offline` (archivado 2026-08-20) agrego 8 requisitos (R66-R73) mas la seccion README (R-M6), modifico 7 (R6, R8, R55, R57, R52, R37, R40, R18, R47, R65 via deltas R-M1..R-M7) y no removio requisitos. Los deltas R-M1..R-M7 documentan la trazabilidad: R-M1 modifica R57 (FAB toggle), R-M2 modifica R6/R8/R55 (navegacion determinista), R-M3 modifica R52 (dashboard por periodo), R-M4 modifica R37/R40 (layout chat), R-M5 modifica R18 y formularios (~10 pantallas), R-M6 agrega seccion README, R-M7 modifica R47/R65 (tests).
 
 ### Cobertura
 
@@ -1515,4 +1863,4 @@ Cada slice DEBE incluir tests unitarios (modelos, mapeadores, repositorios, prov
 
 ### Next step
 
-Ambos cambios de la app movil (`app-movil-flutter` y `app-movil-flutter-ui-ux`) estan implementados, verificados y archivados. Este spec es la fuente de verdad consolidada para `flutter/`. Nuevos cambios deberan usar deltas sobre este spec.
+Los tres cambios de la app movil (`app-movil-flutter`, `app-movil-flutter-ui-ux` y `app-movil-fixes-offline`) estan implementados, verificados y archivados. Este spec es la fuente de verdad consolidada para `flutter/`. Nuevos cambios deberan usar deltas sobre este spec.

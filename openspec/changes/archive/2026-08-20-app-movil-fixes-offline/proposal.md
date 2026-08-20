@@ -1,5 +1,7 @@
 # Proposal: App movil fixes offline
 
+> **Status**: archived — 2026-08-20 — commit final: `69f7998` — APROBADO por Judgment Day Ronda 10 (ambos jueces APPROVED).
+
 ## Title
 
 `app-movil-fixes-offline` — Correcciones de navegacion, dashboard y UX, mas operacion offline automatica para Flutter.
