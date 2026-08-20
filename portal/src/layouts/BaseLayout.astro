@@ -1,0 +1,9 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SeoHead from '../components/SeoHead.astro';
+import '../styles/global.css';
+interface Props { title: string; description: string; canonical?: string; type?: string; jsonLd?: Record<string, unknown>; }
+const { title, description, canonical, type, jsonLd = { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Ferreplus', url: canonical ?? Astro.url.origin } } = Astro.props;
+---
+<!doctype html><html lang="es"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width" /><SeoHead title={title} description={description} canonical={canonical} type={type} jsonLd={jsonLd} /></head><body><Header /><main><slot /></main><Footer /></body></html>

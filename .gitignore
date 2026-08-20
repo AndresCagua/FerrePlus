@@ -36,4 +36,3 @@ bitacoras/
 
 # === Docker ===
 admin-api/Dockerfile
-docker-compose.yml

@@ -1,0 +1,6 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'; import { publicApi } from '../../lib/api-client/public-api'; import type { Convocatoria } from '../../lib/api-client/types'; import ApplicationForm from '../../components/ApplicationForm.astro';
+export async function getStaticPaths() { let items: Convocatoria[] = []; try { items = await publicApi.convocatorias(); } catch {} return items.map((item) => ({ params: { id: item.id }, props: { item } })); }
+const { item } = Astro.props as { item: Convocatoria }; const jsonLd = { '@context':'https://schema.org', '@type':'JobPosting', title:item.titulo, description:item.descripcion, datePosted:item.fechaApertura, validThrough:item.fechaCierre, employmentType:'FULL_TIME' };
+---
+<BaseLayout title={item.titulo} description={item.descripcion} type="website" jsonLd={jsonLd}><section class="section"><div class="container grid"><article class="article"><div class="eyebrow">{item.modalidad ?? 'Convocatoria abierta'}</div><h1>{item.titulo}</h1><p class="lede">{item.descripcion}</p><p><strong>Ubicacion:</strong> {item.ubicacion ?? 'Por definir'}</p><h2>Requisitos</h2><ul>{(item.requisitos ?? []).map((requirement) => <li>{requirement}</li>)}</ul></article><ApplicationForm convocatoriaId={item.id} /></div></section></BaseLayout>

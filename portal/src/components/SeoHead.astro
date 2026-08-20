@@ -1,0 +1,13 @@
+---
+interface Props { title: string; description: string; canonical?: string; type?: string; jsonLd?: Record<string, unknown>; }
+const { title, description, canonical = Astro.url.href, type = 'website', jsonLd } = Astro.props;
+const siteName = 'Ferreplus';
+---
+<title>{title} | {siteName}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta name="robots" content="index,follow" />
+<meta property="og:type" content={type} /><meta property="og:site_name" content={siteName} />
+<meta property="og:title" content={`${title} | ${siteName}`} /><meta property="og:description" content={description} /><meta property="og:url" content={canonical} />
+<meta name="twitter:card" content="summary" /><meta name="twitter:title" content={`${title} | ${siteName}`} /><meta name="twitter:description" content={description} />
+{jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
