@@ -29,7 +29,9 @@ class CachedExpensesDao extends DatabaseAccessor<AppDatabase>
           ))
           .go();
       for (final Gasto value in values) {
-        await into(cachedExpenses).insert(await _companion(value));
+        await into(
+          cachedExpenses,
+        ).insert(await _companion(value), mode: InsertMode.insertOrReplace);
       }
       for (final CachedExpense row in pending) {
         await into(

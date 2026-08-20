@@ -71,6 +71,11 @@ class OfflineVentaRepository implements VentaRepository {
         (Venta value) => value.id == id,
       );
       final Venta? current = matches.isEmpty ? null : matches.first;
+      if (current != null && current.id < 0) {
+        // Un alta local anulada se resuelve localmente; nunca se envia el id provisional.
+        await _cacheOptimistically(current.copyWith(estado: 'ANULADA'));
+        return;
+      }
       final operation = adapter.voidOperation(
         id,
         _requireCurrentUserId(current),
@@ -102,7 +107,7 @@ class OfflineVentaRepository implements VentaRepository {
     return request.copyWith(usuarioId: userId);
   }
 
-  Future<void> _cacheOptimistically(Venta value, String key) async {
+  Future<void> _cacheOptimistically(Venta value, [String? key]) async {
     final OfflineCache<Venta> cache = _cache;
     if (cache case final OptimisticOfflineCache<Venta> optimistic) {
       await optimistic.upsertOptimistic(value, idempotencyKey: key);

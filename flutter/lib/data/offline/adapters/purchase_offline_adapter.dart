@@ -11,6 +11,15 @@ PendingOperation toOperation(CompraRequest request) => buildOperation(
   userId: requireUserId(request.usuarioId),
   payload: request.toJson(),
 );
+PendingOperation updateOperation(int id, CompraRequest request) =>
+    buildOperation(
+      type: OfflineOperationType.purchase,
+      endpoint: '/api/compras/$id',
+      method: 'PUT',
+      userId: requireUserId(request.usuarioId),
+      payload: request.toJson(),
+      localRecordKey: id.toString(),
+    );
 PendingOperation voidOperation(int id, int userId) => buildOperation(
   type: OfflineOperationType.purchaseVoid,
   endpoint: '/api/compras/$id/anular',

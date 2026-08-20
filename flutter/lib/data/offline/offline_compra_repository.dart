@@ -67,9 +67,7 @@ class OfflineCompraRepository implements CompraRepository {
     } on NetworkFailure {
       final CompraRequest offlineRequest = _requestWithSessionUser(request);
       final Compra local = _local(offlineRequest, id: id);
-      final operation = adapter
-          .toOperation(offlineRequest)
-          .copyWith(localRecordKey: local.id.toString());
+      final operation = adapter.updateOperation(id, offlineRequest);
       await _queue.enqueue(operation);
       await _cacheOptimistically(local, operation.idempotencyKey);
       return local;
@@ -86,6 +84,11 @@ class OfflineCompraRepository implements CompraRepository {
         (Compra value) => value.id == id,
       );
       final Compra? current = matches.isEmpty ? null : matches.first;
+      if (current != null && current.id < 0) {
+        // Un alta local anulada no debe enviar su identificador provisional al API.
+        await _cacheOptimistically(current.copyWith(estado: 'ANULADA'));
+        return;
+      }
       final operation = adapter.voidOperation(
         id,
         _requireCurrentUserId(current),
@@ -117,7 +120,7 @@ class OfflineCompraRepository implements CompraRepository {
     return request.copyWith(usuarioId: userId);
   }
 
-  Future<void> _cacheOptimistically(Compra value, String key) async {
+  Future<void> _cacheOptimistically(Compra value, [String? key]) async {
     if (_cache case final OptimisticOfflineCache<Compra> optimistic) {
       await optimistic.upsertOptimistic(value, idempotencyKey: key);
     }

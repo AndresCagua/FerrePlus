@@ -29,7 +29,9 @@ class CachedMovementsDao extends DatabaseAccessor<AppDatabase>
           ))
           .go();
       for (final MovimientoStock value in values) {
-        await into(cachedMovements).insert(await _companion(value));
+        await into(
+          cachedMovements,
+        ).insert(await _companion(value), mode: InsertMode.insertOrReplace);
       }
       for (final CachedMovement row in pending) {
         await into(

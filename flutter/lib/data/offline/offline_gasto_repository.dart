@@ -79,9 +79,7 @@ class OfflineGastoRepository implements GastoRepository {
         observaciones: offlineRequest.observaciones,
         usuarioId: offlineRequest.usuarioId,
       );
-      final operation = adapter
-          .toOperation(offlineRequest)
-          .copyWith(localRecordKey: id.toString());
+      final operation = adapter.updateOperation(id, offlineRequest);
       await _queue.enqueue(operation);
       if (_cache case final OptimisticOfflineCache<Gasto> optimistic) {
         await optimistic.upsertOptimistic(

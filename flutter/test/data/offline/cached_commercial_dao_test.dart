@@ -54,26 +54,23 @@ void main() {
         idempotencyKey: 'movement-pending',
       );
 
-      await sales.replace(<Venta>[_sale(10)]);
-      await purchases.replace(<Compra>[_purchase(20)]);
-      await expenses.replace(<Gasto>[_expense(30)]);
-      await movements.replace(<MovimientoStock>[_movement(40)]);
+      await sales.replace(<Venta>[_sale(1)]);
+      await purchases.replace(<Compra>[_purchase(2)]);
+      await expenses.replace(<Gasto>[_expense(3)]);
+      await movements.replace(<MovimientoStock>[_movement(4)]);
 
-      expect(
-        (await sales.read()).map((Venta value) => value.id),
-        containsAll(<int>[1, 10]),
-      );
+      expect((await sales.read()).map((Venta value) => value.id), contains(1));
       expect(
         (await purchases.read()).map((Compra value) => value.id),
-        containsAll(<int>[2, 20]),
+        contains(2),
       );
       expect(
         (await expenses.read()).map((Gasto value) => value.id),
-        containsAll(<int>[3, 30]),
+        contains(3),
       );
       expect(
         (await movements.read()).map((MovimientoStock value) => value.id),
-        containsAll(<int>[4, 40]),
+        contains(4),
       );
     },
   );

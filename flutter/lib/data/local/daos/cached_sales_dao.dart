@@ -26,7 +26,9 @@ class CachedSalesDao extends DatabaseAccessor<AppDatabase>
         cachedSales,
       )..where(($CachedSalesTable row) => row.syncState.equals('synced'))).go();
       for (final Venta value in values) {
-        await into(cachedSales).insert(await _companion(value));
+        await into(
+          cachedSales,
+        ).insert(await _companion(value), mode: InsertMode.insertOrReplace);
       }
       for (final CachedSale row in pending) {
         await into(

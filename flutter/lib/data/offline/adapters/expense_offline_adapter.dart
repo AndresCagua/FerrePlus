@@ -11,3 +11,12 @@ PendingOperation toOperation(GastoRequest request) => buildOperation(
   userId: requireUserId(request.usuarioId),
   payload: request.toJson(),
 );
+PendingOperation updateOperation(int id, GastoRequest request) =>
+    buildOperation(
+      type: OfflineOperationType.expense,
+      endpoint: '/api/gastos/$id',
+      method: 'PUT',
+      userId: requireUserId(request.usuarioId),
+      payload: request.toJson(),
+      localRecordKey: id.toString(),
+    );

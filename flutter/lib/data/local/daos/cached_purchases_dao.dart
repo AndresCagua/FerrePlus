@@ -29,7 +29,9 @@ class CachedPurchasesDao extends DatabaseAccessor<AppDatabase>
           ))
           .go();
       for (final Compra value in values) {
-        await into(cachedPurchases).insert(await _companion(value));
+        await into(
+          cachedPurchases,
+        ).insert(await _companion(value), mode: InsertMode.insertOrReplace);
       }
       for (final CachedPurchase row in pending) {
         await into(
