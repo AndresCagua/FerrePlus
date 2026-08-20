@@ -15,6 +15,7 @@ final ventaRepositoryProvider = Provider<VentaRepository>(
     remote: VentaRepositoryImpl(ref.watch(apiClientProvider).dio),
     queue: ref.watch(offlineQueueProvider),
     cache: ref.watch(salesCacheProvider),
+    currentUserId: () => ref.read(offlineCoordinatorProvider).currentUserId,
   ),
 );
 final compraRepositoryProvider = Provider<CompraRepository>(
@@ -22,6 +23,7 @@ final compraRepositoryProvider = Provider<CompraRepository>(
     remote: CompraRepositoryImpl(ref.watch(apiClientProvider).dio),
     queue: ref.watch(offlineQueueProvider),
     cache: ref.watch(purchasesCacheProvider),
+    currentUserId: () => ref.read(offlineCoordinatorProvider).currentUserId,
   ),
 );
 final movimientoRepositoryProvider = Provider<MovimientoRepository>(
@@ -29,6 +31,7 @@ final movimientoRepositoryProvider = Provider<MovimientoRepository>(
     remote: MovimientoRepositoryImpl(ref.watch(apiClientProvider).dio),
     queue: ref.watch(offlineQueueProvider),
     cache: ref.watch(movementsCacheProvider),
+    currentUserId: () => ref.read(offlineCoordinatorProvider).currentUserId,
   ),
 );
 final gastoRepositoryProvider = Provider<GastoRepository>(
@@ -36,6 +39,7 @@ final gastoRepositoryProvider = Provider<GastoRepository>(
     remote: GastoRepositoryImpl(ref.watch(apiClientProvider).dio),
     queue: ref.watch(offlineQueueProvider),
     cache: ref.watch(expensesCacheProvider),
+    currentUserId: () => ref.read(offlineCoordinatorProvider).currentUserId,
   ),
 );
 

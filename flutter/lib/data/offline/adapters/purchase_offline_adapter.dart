@@ -8,7 +8,7 @@ PendingOperation toOperation(CompraRequest request) => buildOperation(
   type: OfflineOperationType.purchase,
   endpoint: '/api/compras',
   method: 'POST',
-  userId: request.usuarioId ?? 0,
+  userId: requireUserId(request.usuarioId),
   payload: request.toJson(),
 );
 PendingOperation voidOperation(int id, int userId) => buildOperation(

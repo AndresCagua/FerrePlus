@@ -8,6 +8,6 @@ PendingOperation toOperation(GastoRequest request) => buildOperation(
   type: OfflineOperationType.expense,
   endpoint: '/api/gastos',
   method: 'POST',
-  userId: request.usuarioId ?? 0,
+  userId: requireUserId(request.usuarioId),
   payload: request.toJson(),
 );

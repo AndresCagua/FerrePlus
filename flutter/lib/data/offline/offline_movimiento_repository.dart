@@ -9,12 +9,15 @@ class OfflineMovimientoRepository implements MovimientoRepository {
     required MovimientoRepository remote,
     required OfflineQueue queue,
     required OfflineCache<MovimientoStock> cache,
+    int? Function()? currentUserId,
   }) : _remote = remote,
        _queue = queue,
-       _cache = cache;
+       _cache = cache,
+       _currentUserId = currentUserId;
   final MovimientoRepository _remote;
   final OfflineQueue _queue;
   final OfflineCache<MovimientoStock> _cache;
+  final int? Function()? _currentUserId;
   @override
   Future<List<MovimientoStock>> list({
     int? productoId,
@@ -41,18 +44,19 @@ class OfflineMovimientoRepository implements MovimientoRepository {
     try {
       return await _remote.create(r);
     } on NetworkFailure {
+      final MovimientoStockRequest offlineRequest = _requestWithSessionUser(r);
       final MovimientoStock local = MovimientoStock(
         id: -DateTime.now().microsecondsSinceEpoch,
-        productoId: r.productoId,
-        cantidad: r.cantidad,
-        tipo: r.tipo,
-        referencia: r.referencia,
-        motivo: r.motivo,
-        precioUnitario: r.precioUnitario,
-        usuarioId: r.usuarioId,
+        productoId: offlineRequest.productoId,
+        cantidad: offlineRequest.cantidad,
+        tipo: offlineRequest.tipo,
+        referencia: offlineRequest.referencia,
+        motivo: offlineRequest.motivo,
+        precioUnitario: offlineRequest.precioUnitario,
+        usuarioId: offlineRequest.usuarioId,
       );
       final operation = adapter
-          .toOperation(r)
+          .toOperation(offlineRequest)
           .copyWith(localRecordKey: local.id.toString());
       await _queue.enqueue(operation);
       if (_cache
@@ -64,5 +68,16 @@ class OfflineMovimientoRepository implements MovimientoRepository {
       }
       return local;
     }
+  }
+
+  MovimientoStockRequest _requestWithSessionUser(
+    MovimientoStockRequest request,
+  ) {
+    if (request.usuarioId != null) return request;
+    final int? userId = _currentUserId?.call();
+    if (userId == null) {
+      throw StateError('No hay una sesion activa para encolar la operacion.');
+    }
+    return request.copyWith(usuarioId: userId);
   }
 }

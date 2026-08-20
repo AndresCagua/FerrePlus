@@ -1,13 +1,48 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ferreplus/core/errors/failure.dart';
 import 'package:ferreplus/data/offline/adapters/sale_offline_adapter.dart'
     as sale_adapter;
+import 'package:ferreplus/data/offline/offline_venta_repository.dart';
 import 'package:ferreplus/data/services/sync_engine.dart';
 import 'package:ferreplus/data/services/sync_notification_service.dart';
+import 'package:ferreplus/domain/models/commercial_models.dart';
 import 'package:ferreplus/domain/models/offline_models.dart';
 import 'package:ferreplus/domain/repositories/offline_repository.dart';
+import 'package:ferreplus/domain/repositories/commercial_repositories.dart';
 
 void main() {
+  test('anulacion sin cache usa usuario activo y se sincroniza', () async {
+    final FakeQueue queue = FakeQueue(<PendingOperation>[]);
+    final OfflineVentaRepository repository = OfflineVentaRepository(
+      remote: OfflineVentaRemote(),
+      queue: queue,
+      cache: EmptyVentaCache(),
+      currentUserId: () => 7,
+    );
+
+    await repository.anular(42);
+
+    final PendingOperation queued = queue.operation(1);
+    expect(queued.userId, 7);
+    expect(queued.userId, isNot(0));
+
+    final List<int> sentIds = <int>[];
+    final SyncEngine engine = _engine(
+      queue: queue,
+      activeUserId: 7,
+      sender: (PendingOperationEnvelope envelope) async {
+        sentIds.add(envelope.operation.userId);
+        return <String, Object?>{};
+      },
+    );
+
+    await engine.syncNow();
+
+    expect(sentIds, <int>[7]);
+    expect(queue.operation(1).status, PendingOperationStatus.completed);
+  });
+
   test(
     'sincroniza exclusivamente las operaciones del usuario activo',
     () async {
@@ -137,7 +172,8 @@ class FakeQueue
 
   @override
   Future<void> enqueue(PendingOperation operation) async {
-    _operations[operation.id!] = operation;
+    final int id = operation.id ?? (_operations.length + 1);
+    _operations[id] = operation.copyWith(id: id);
   }
 
   @override
@@ -246,4 +282,37 @@ class FakeCache
     syncState = 'synced';
     idempotencyKey = null;
   }
+}
+
+class EmptyVentaCache implements OfflineCache<Venta> {
+  @override
+  Future<List<Venta>> read() async => <Venta>[];
+
+  @override
+  Future<void> replace(List<Venta> values) async {}
+}
+
+class OfflineVentaRemote implements VentaRepository {
+  @override
+  Future<void> anular(int id) async {
+    throw const NetworkFailure('offline');
+  }
+
+  @override
+  Future<Venta> create(VentaRequest request) => throw UnimplementedError();
+
+  @override
+  Future<Venta> getById(int id) => throw UnimplementedError();
+
+  @override
+  Future<List<Venta>> list({
+    DateTime? desde,
+    DateTime? hasta,
+    String? estado,
+    int? clienteId,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<List<Venta>> reportePorFecha(DateTime desde, DateTime hasta) =>
+      throw UnimplementedError();
 }

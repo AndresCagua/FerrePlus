@@ -9,7 +9,7 @@ PendingOperation toOperation(VentaRequest request) => buildOperation(
   type: OfflineOperationType.sale,
   endpoint: '/api/ventas',
   method: 'POST',
-  userId: request.usuarioId ?? 0,
+  userId: requireUserId(request.usuarioId),
   payload: salePayload(request),
 );
 PendingOperation voidOperation(int id, int userId) => buildOperation(

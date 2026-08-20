@@ -24,6 +24,8 @@ class OfflineCoordinator with WidgetsBindingObserver {
   final SyncNotificationService _notifications;
   int? _currentUserId;
   late final StreamSubscription<bool> _subscription;
+
+  int? get currentUserId => _currentUserId;
   Future<void> syncNow({int? userId}) async {
     final int? effectiveUserId = userId ?? _currentUserId;
     if (effectiveUserId == null) return;

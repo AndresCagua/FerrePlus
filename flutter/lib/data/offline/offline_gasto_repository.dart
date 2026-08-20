@@ -9,12 +9,15 @@ class OfflineGastoRepository implements GastoRepository {
     required GastoRepository remote,
     required OfflineQueue queue,
     required OfflineCache<Gasto> cache,
+    int? Function()? currentUserId,
   }) : _remote = remote,
        _queue = queue,
-       _cache = cache;
+       _cache = cache,
+       _currentUserId = currentUserId;
   final GastoRepository _remote;
   final OfflineQueue _queue;
   final OfflineCache<Gasto> _cache;
+  final int? Function()? _currentUserId;
   @override
   Future<List<Gasto>> list() async {
     try {
@@ -33,19 +36,20 @@ class OfflineGastoRepository implements GastoRepository {
     try {
       return await _remote.create(r);
     } on NetworkFailure {
+      final GastoRequest offlineRequest = _requestWithSessionUser(r);
       final Gasto local = Gasto(
         id: -DateTime.now().microsecondsSinceEpoch,
-        descripcion: r.descripcion,
-        monto: r.monto,
-        categoria: r.categoria,
-        metodoPago: r.metodoPago,
-        numeroComprobante: r.numeroComprobante,
-        fechaGasto: r.fechaGasto,
-        observaciones: r.observaciones,
-        usuarioId: r.usuarioId,
+        descripcion: offlineRequest.descripcion,
+        monto: offlineRequest.monto,
+        categoria: offlineRequest.categoria,
+        metodoPago: offlineRequest.metodoPago,
+        numeroComprobante: offlineRequest.numeroComprobante,
+        fechaGasto: offlineRequest.fechaGasto,
+        observaciones: offlineRequest.observaciones,
+        usuarioId: offlineRequest.usuarioId,
       );
       final operation = adapter
-          .toOperation(r)
+          .toOperation(offlineRequest)
           .copyWith(localRecordKey: local.id.toString());
       await _queue.enqueue(operation);
       if (_cache case final OptimisticOfflineCache<Gasto> optimistic) {
@@ -63,19 +67,20 @@ class OfflineGastoRepository implements GastoRepository {
     try {
       return await _remote.update(id, r);
     } on NetworkFailure {
+      final GastoRequest offlineRequest = _requestWithSessionUser(r);
       final Gasto local = Gasto(
         id: id,
-        descripcion: r.descripcion,
-        monto: r.monto,
-        categoria: r.categoria,
-        metodoPago: r.metodoPago,
-        numeroComprobante: r.numeroComprobante,
-        fechaGasto: r.fechaGasto,
-        observaciones: r.observaciones,
-        usuarioId: r.usuarioId,
+        descripcion: offlineRequest.descripcion,
+        monto: offlineRequest.monto,
+        categoria: offlineRequest.categoria,
+        metodoPago: offlineRequest.metodoPago,
+        numeroComprobante: offlineRequest.numeroComprobante,
+        fechaGasto: offlineRequest.fechaGasto,
+        observaciones: offlineRequest.observaciones,
+        usuarioId: offlineRequest.usuarioId,
       );
       final operation = adapter
-          .toOperation(r)
+          .toOperation(offlineRequest)
           .copyWith(localRecordKey: id.toString());
       await _queue.enqueue(operation);
       if (_cache case final OptimisticOfflineCache<Gasto> optimistic) {
@@ -90,4 +95,13 @@ class OfflineGastoRepository implements GastoRepository {
 
   @override
   Future<void> delete(int id) => _remote.delete(id);
+
+  GastoRequest _requestWithSessionUser(GastoRequest request) {
+    if (request.usuarioId != null) return request;
+    final int? userId = _currentUserId?.call();
+    if (userId == null) {
+      throw StateError('No hay una sesion activa para encolar la operacion.');
+    }
+    return request.copyWith(usuarioId: userId);
+  }
 }

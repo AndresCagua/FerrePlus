@@ -9,12 +9,15 @@ class OfflineCompraRepository implements CompraRepository {
     required CompraRepository remote,
     required OfflineQueue queue,
     required OfflineCache<Compra> cache,
+    int? Function()? currentUserId,
   }) : _remote = remote,
        _queue = queue,
-       _cache = cache;
+       _cache = cache,
+       _currentUserId = currentUserId;
   final CompraRepository _remote;
   final OfflineQueue _queue;
   final OfflineCache<Compra> _cache;
+  final int? Function()? _currentUserId;
   @override
   Future<List<Compra>> list({
     DateTime? desde,
@@ -46,9 +49,10 @@ class OfflineCompraRepository implements CompraRepository {
     try {
       return await _remote.create(request);
     } on NetworkFailure {
-      final Compra local = _local(request);
+      final CompraRequest offlineRequest = _requestWithSessionUser(request);
+      final Compra local = _local(offlineRequest);
       final operation = adapter
-          .toOperation(request)
+          .toOperation(offlineRequest)
           .copyWith(localRecordKey: local.id.toString());
       await _queue.enqueue(operation);
       await _cacheOptimistically(local, operation.idempotencyKey);
@@ -61,9 +65,10 @@ class OfflineCompraRepository implements CompraRepository {
     try {
       return await _remote.update(id, request);
     } on NetworkFailure {
-      final Compra local = _local(request, id: id);
+      final CompraRequest offlineRequest = _requestWithSessionUser(request);
+      final Compra local = _local(offlineRequest, id: id);
       final operation = adapter
-          .toOperation(request)
+          .toOperation(offlineRequest)
           .copyWith(localRecordKey: local.id.toString());
       await _queue.enqueue(operation);
       await _cacheOptimistically(local, operation.idempotencyKey);
@@ -81,7 +86,10 @@ class OfflineCompraRepository implements CompraRepository {
         (Compra value) => value.id == id,
       );
       final Compra? current = matches.isEmpty ? null : matches.first;
-      final operation = adapter.voidOperation(id, current?.usuarioId ?? 0);
+      final operation = adapter.voidOperation(
+        id,
+        _requireCurrentUserId(current),
+      );
       await _queue.enqueue(operation);
       if (current != null) {
         await _cacheOptimistically(
@@ -90,6 +98,23 @@ class OfflineCompraRepository implements CompraRepository {
         );
       }
     }
+  }
+
+  int _requireCurrentUserId(Compra? cachedPurchase) {
+    final int? userId = cachedPurchase?.usuarioId ?? _currentUserId?.call();
+    if (userId == null) {
+      throw StateError('No hay una sesion activa para encolar la anulacion.');
+    }
+    return userId;
+  }
+
+  CompraRequest _requestWithSessionUser(CompraRequest request) {
+    if (request.usuarioId != null) return request;
+    final int? userId = _currentUserId?.call();
+    if (userId == null) {
+      throw StateError('No hay una sesion activa para encolar la operacion.');
+    }
+    return request.copyWith(usuarioId: userId);
   }
 
   Future<void> _cacheOptimistically(Compra value, String key) async {

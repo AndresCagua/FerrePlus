@@ -9,12 +9,15 @@ class OfflineVentaRepository implements VentaRepository {
     required VentaRepository remote,
     required OfflineQueue queue,
     required OfflineCache<Venta> cache,
+    int? Function()? currentUserId,
   }) : _remote = remote,
        _queue = queue,
-       _cache = cache;
+       _cache = cache,
+       _currentUserId = currentUserId;
   final VentaRepository _remote;
   final OfflineQueue _queue;
   final OfflineCache<Venta> _cache;
+  final int? Function()? _currentUserId;
   @override
   Future<List<Venta>> list({
     DateTime? desde,
@@ -47,9 +50,10 @@ class OfflineVentaRepository implements VentaRepository {
       final Venta result = await _remote.create(request);
       return result;
     } on NetworkFailure {
-      final Venta local = _local(request);
+      final VentaRequest offlineRequest = _requestWithSessionUser(request);
+      final Venta local = _local(offlineRequest);
       final operation = adapter
-          .toOperation(request)
+          .toOperation(offlineRequest)
           .copyWith(localRecordKey: local.id.toString());
       await _queue.enqueue(operation);
       await _cacheOptimistically(local, operation.idempotencyKey);
@@ -67,7 +71,10 @@ class OfflineVentaRepository implements VentaRepository {
         (Venta value) => value.id == id,
       );
       final Venta? current = matches.isEmpty ? null : matches.first;
-      final operation = adapter.voidOperation(id, current?.usuarioId ?? 0);
+      final operation = adapter.voidOperation(
+        id,
+        _requireCurrentUserId(current),
+      );
       await _queue.enqueue(operation);
       if (current != null) {
         await _cacheOptimistically(
@@ -76,6 +83,23 @@ class OfflineVentaRepository implements VentaRepository {
         );
       }
     }
+  }
+
+  int _requireCurrentUserId(Venta? cachedSale) {
+    final int? userId = cachedSale?.usuarioId ?? _currentUserId?.call();
+    if (userId == null) {
+      throw StateError('No hay una sesion activa para encolar la anulacion.');
+    }
+    return userId;
+  }
+
+  VentaRequest _requestWithSessionUser(VentaRequest request) {
+    if (request.usuarioId != null) return request;
+    final int? userId = _currentUserId?.call();
+    if (userId == null) {
+      throw StateError('No hay una sesion activa para encolar la operacion.');
+    }
+    return request.copyWith(usuarioId: userId);
   }
 
   Future<void> _cacheOptimistically(Venta value, String key) async {

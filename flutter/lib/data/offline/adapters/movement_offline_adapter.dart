@@ -9,6 +9,6 @@ PendingOperation toOperation(MovimientoStockRequest request) => buildOperation(
   type: OfflineOperationType.movement,
   endpoint: '/api/movimientos-stock',
   method: 'POST',
-  userId: request.usuarioId ?? 0,
+  userId: requireUserId(request.usuarioId),
   payload: request.toJson(),
 );

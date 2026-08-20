@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
 
 import 'package:ferreplus/data/local/app_database.dart';
 import 'package:ferreplus/data/local/daos/cached_sales_dao.dart';
@@ -8,10 +10,44 @@ import 'package:ferreplus/data/local/daos/pending_operations_dao.dart';
 import 'package:ferreplus/data/offline/payload_codec.dart';
 import 'package:ferreplus/data/repositories/auth_repository_impl.dart';
 import 'package:ferreplus/data/services/token_storage.dart';
+import 'package:ferreplus/core/providers/auth_providers.dart';
+import 'package:ferreplus/core/providers/offline_providers.dart';
+import 'package:ferreplus/data/services/offline_coordinator.dart';
+import 'package:ferreplus/domain/repositories/auth_repository.dart';
 import 'package:ferreplus/domain/models/commercial_models.dart';
 import 'package:ferreplus/domain/models/offline_models.dart' as domain;
+import 'package:ferreplus/domain/models/usuario.dart';
 
 void main() {
+  test('restoreSession reanuda sync para la sesion restaurada', () async {
+    final MockAuthRepository authRepository = MockAuthRepository();
+    final MockOfflineCoordinator coordinator = MockOfflineCoordinator();
+    const Usuario user = Usuario(
+      id: 7,
+      nombre: 'Usuario',
+      email: 'usuario@test.local',
+    );
+    when(() => authRepository.isAuthenticated()).thenAnswer((_) async => true);
+    when(() => authRepository.getCurrentUser()).thenAnswer((_) async => user);
+    when(
+      () => coordinator.resumeAfterLogin(userId: 7),
+    ).thenAnswer((_) async {});
+
+    final ProviderContainer container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(authRepository),
+        offlineCoordinatorProvider.overrideWithValue(coordinator),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(authNotifierProvider);
+    await Future<void>.delayed(Duration.zero);
+
+    verify(() => coordinator.setCurrentUserId(7)).called(1);
+    verify(() => coordinator.resumeAfterLogin(userId: 7)).called(1);
+  });
+
   test('logout elimina solo la sesion y conserva la clave offline', () async {
     final FakeSecureStorage secureStorage = FakeSecureStorage();
     await secureStorage.write(key: 'ferreplus_offline_key', value: 'offline');
@@ -131,3 +167,7 @@ class FakeSecureStorage extends FlutterSecureStorage {
     _values.remove(key);
   }
 }
+
+class MockAuthRepository extends Mock implements AuthRepository {}
+
+class MockOfflineCoordinator extends Mock implements OfflineCoordinator {}

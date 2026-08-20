@@ -2,6 +2,13 @@ import 'package:uuid/uuid.dart';
 
 import '../../../domain/models/offline_models.dart';
 
+int requireUserId(int? userId) {
+  if (userId == null) {
+    throw StateError('No hay una sesion activa para encolar la operacion.');
+  }
+  return userId;
+}
+
 PendingOperation buildOperation({
   required OfflineOperationType type,
   required String endpoint,
