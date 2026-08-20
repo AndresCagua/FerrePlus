@@ -13,6 +13,11 @@ abstract interface class OfflineQueue {
   Future<int> totalPayloadSize(int userId);
 }
 
+/// Optional FIFO query scoped to the authenticated user.
+abstract interface class UserScopedOfflineQueue {
+  Future<List<PendingOperation>> nextBatchForUser(int userId, {int limit = 10});
+}
+
 /// Optional operations used by the synchronizer without changing commercial
 /// repository contracts.
 abstract interface class AuthRequiredOfflineQueue {

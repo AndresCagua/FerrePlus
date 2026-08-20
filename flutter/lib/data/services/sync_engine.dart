@@ -95,6 +95,7 @@ class SyncEngine implements OfflineQueue {
     int maxAttempts = 5,
     DateTime Function()? clock,
     Random? random,
+    int? activeUserId,
   }) : _queue = queue,
        _sender = sender.send,
        _notifications = notifications,
@@ -102,7 +103,8 @@ class SyncEngine implements OfflineQueue {
            caches ?? const <OfflineOperationType, SynchronizableOfflineCache>{},
        _maxAttempts = maxAttempts,
        _clock = clock ?? DateTime.now,
-       _random = random ?? Random();
+       _random = random ?? Random(),
+       _activeUserId = activeUserId;
   final OfflineQueue _queue;
   final PendingOperationSender _sender;
   final SyncNotificationService _notifications;
@@ -110,6 +112,7 @@ class SyncEngine implements OfflineQueue {
   final int _maxAttempts;
   final DateTime Function() _clock;
   final Random _random;
+  int? _activeUserId;
   final ValueNotifier<bool> syncing = ValueNotifier<bool>(false);
   final ValueNotifier<bool> authRequired = ValueNotifier<bool>(false);
   bool _running = false;
@@ -125,7 +128,12 @@ class SyncEngine implements OfflineQueue {
     bool retryPending = false;
     try {
       while (true) {
-        final List<PendingOperation> batch = await _queue.nextBatch(limit: 10);
+        final int? userId = _activeUserId;
+        if (userId == null) break;
+        final List<PendingOperation> batch = await _nextBatchForUser(
+          userId,
+          limit: 10,
+        );
         if (batch.isEmpty) break;
         for (final PendingOperation operation in batch) {
           try {
@@ -182,36 +190,34 @@ class SyncEngine implements OfflineQueue {
     }
   }
 
-  Future<void> resumeAfterLogin() async {
+  Future<void> resumeAfterLogin({int? userId}) async {
+    if (userId != null) _activeUserId = userId;
+    final int? activeUserId = _activeUserId;
+    if (activeUserId == null) return;
     _paused = false;
     authRequired.value = false;
     if (_queue case final AuthResumableOfflineQueue queue) {
       // Resetear tambien el backoff garantiza que el FIFO se reactive completo
       // despues de restaurar una sesion valida.
-      await queue.resetAuthRequiredToPending();
+      await queue.resetAuthRequiredToPending(userId: activeUserId);
     }
     await syncNow();
   }
 
   Future<void> onUnauthorized() async {
+    final int? activeUserId = _activeUserId;
+    if (activeUserId == null) return;
     _paused = true;
     authRequired.value = true;
-    final List<PendingOperation> operations = await _queue.nextBatch(
-      limit: 500,
-    );
-    final Set<int> userIds = operations
-        .map((PendingOperation item) => item.userId)
-        .toSet();
-    for (final int userId in userIds) {
-      await _markAllAuthRequired(userId);
-    }
+    await _markAllAuthRequired(activeUserId);
   }
 
   Future<void> _markAllAuthRequired(int userId) async {
     if (_queue case final AuthRequiredOfflineQueue queue) {
       await queue.markAllAuthRequired(userId);
     } else {
-      final List<PendingOperation> operations = await _queue.nextBatch(
+      final List<PendingOperation> operations = await _nextBatchForUser(
+        userId,
         limit: 500,
       );
       for (final PendingOperation item in operations.where(
@@ -220,6 +226,21 @@ class SyncEngine implements OfflineQueue {
         if (item.id != null) await _queue.markAuthRequired(item.id!);
       }
     }
+  }
+
+  Future<List<PendingOperation>> _nextBatchForUser(
+    int userId, {
+    required int limit,
+  }) async {
+    if (_queue case final UserScopedOfflineQueue scopedQueue) {
+      return scopedQueue.nextBatchForUser(userId, limit: limit);
+    }
+    final List<PendingOperation> operations = await _queue.nextBatch(
+      limit: limit,
+    );
+    return operations
+        .where((PendingOperation operation) => operation.userId == userId)
+        .toList();
   }
 
   Future<void> _retry(PendingOperation operation, String error) async {
@@ -337,4 +358,6 @@ class SyncEngine implements OfflineQueue {
     syncing.dispose();
     authRequired.dispose();
   }
+
+  void setActiveUserId(int? userId) => _activeUserId = userId;
 }

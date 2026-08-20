@@ -59,6 +59,7 @@ class AuthNotifier extends Notifier<AuthState> {
         user: user,
         permisos: user.permisos.toSet(),
       );
+      ref.read(offlineCoordinatorProvider).setCurrentUserId(user.id);
     } catch (error) {
       await _repository.logout();
       state = AuthState(status: AuthStatus.failure, error: error.toString());

@@ -11,6 +11,7 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
         RetryableOfflineQueue,
         AuthRequiredOfflineQueue,
         AuthResumableOfflineQueue,
+        UserScopedOfflineQueue,
         PendingCountOfflineQueue,
         UserPendingCountOfflineQueue {
   /// ADR-31 limits the durable queue to 500 operations and 20 MiB of payload.
@@ -60,13 +61,24 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
 
   @override
   Future<List<domain.PendingOperation>> nextBatch({int limit = 10}) async {
+    return nextBatchForUser(null, limit: limit);
+  }
+
+  @override
+  Future<List<domain.PendingOperation>> nextBatchForUser(
+    int? userId, {
+    int limit = 10,
+  }) async {
     final DateTime now = DateTime.now();
     final query = select(pendingOperations)
       ..where(
         ($PendingOperationsTable row) =>
             row.status.equals(domain.PendingOperationStatus.pending.value) &
             (row.nextRetryAt.isNull() |
-                row.nextRetryAt.isSmallerOrEqualValue(now)),
+                row.nextRetryAt.isSmallerOrEqualValue(now)) &
+            (userId == null
+                ? const Constant<bool>(true)
+                : row.userId.equals(userId)),
       )
       ..orderBy(<OrderingTerm Function($PendingOperationsTable)>[
         ($PendingOperationsTable row) => OrderingTerm.asc(row.createdAt),

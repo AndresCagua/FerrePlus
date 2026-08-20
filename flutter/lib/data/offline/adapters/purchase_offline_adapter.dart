@@ -17,4 +17,5 @@ PendingOperation voidOperation(int id, int userId) => buildOperation(
   method: 'PUT',
   userId: userId,
   payload: <String, Object?>{'id': id, 'usuarioId': userId},
+  localRecordKey: id.toString(),
 );
