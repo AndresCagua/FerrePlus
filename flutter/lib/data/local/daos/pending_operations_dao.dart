@@ -10,7 +10,9 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
         OfflineQueue,
         RetryableOfflineQueue,
         AuthRequiredOfflineQueue,
-        PendingCountOfflineQueue {
+        AuthResumableOfflineQueue,
+        PendingCountOfflineQueue,
+        UserPendingCountOfflineQueue {
   /// ADR-31 limits the durable queue to 500 operations and 20 MiB of payload.
   static const int maxOperations = 500;
   static const int maxPayloadBytes = 20 * 1024 * 1024;
@@ -108,6 +110,28 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
           .then((int _) {});
 
   @override
+  Future<void> resetAuthRequiredToPending({int? userId}) async {
+    final updateQuery = update(pendingOperations);
+    if (userId == null) {
+      updateQuery.where(
+        ($PendingOperationsTable row) => row.status.equals('auth_required'),
+      );
+    } else {
+      updateQuery.where(
+        ($PendingOperationsTable row) =>
+            row.userId.equals(userId) & row.status.equals('auth_required'),
+      );
+    }
+    await updateQuery.write(
+      const PendingOperationsCompanion(
+        status: Value('pending'),
+        attemptCount: Value(0),
+        nextRetryAt: Value(null),
+      ),
+    );
+  }
+
+  @override
   Future<void> markFailed(int id, String error) => _update(
     id,
     PendingOperationsCompanion(
@@ -161,6 +185,20 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
               'syncing',
               'auth_required',
             ]),
+          ))
+          .get()
+          .then((List<PendingOperation> rows) => rows.length);
+
+  @override
+  Future<int> countPendingForUser(int userId) async =>
+      (select(pendingOperations)..where(
+            ($PendingOperationsTable row) =>
+                row.userId.equals(userId) &
+                row.status.isIn(<String>[
+                  'pending',
+                  'syncing',
+                  'auth_required',
+                ]),
           ))
           .get()
           .then((List<PendingOperation> rows) => rows.length);

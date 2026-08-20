@@ -8,7 +8,8 @@ import '../../offline/payload_codec.dart';
 class CachedMovementsDao extends DatabaseAccessor<AppDatabase>
     implements
         OptimisticOfflineCache<MovimientoStock>,
-        SynchronizableOfflineCache {
+        SynchronizableOfflineCache,
+        EmptyResponseOfflineCache {
   CachedMovementsDao(super.db, {PayloadCodec? codec})
     : _codec = codec ?? PayloadCodec();
   final PayloadCodec _codec;
@@ -64,6 +65,21 @@ class CachedMovementsDao extends DatabaseAccessor<AppDatabase>
           ),
         );
   }
+
+  @override
+  Future<void> markSynchronizedWithoutServerId({
+    required String localRecordKey,
+  }) =>
+      (update(cachedMovements)..where(
+            ($CachedMovementsTable row) => row.localKey.equals(localRecordKey),
+          ))
+          .write(
+            const CachedMovementsCompanion(
+              syncState: Value('synced'),
+              idempotencyKey: Value(null),
+            ),
+          )
+          .then((int _) {});
 
   Future<CachedMovementsCompanion> _companion(
     MovimientoStock value, {

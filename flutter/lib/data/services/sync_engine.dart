@@ -122,6 +122,7 @@ class SyncEngine implements OfflineQueue {
     int completed = 0;
     int failed = 0;
     bool authRequired = false;
+    bool retryPending = false;
     try {
       while (true) {
         final List<PendingOperation> batch = await _queue.nextBatch(limit: 10);
@@ -153,15 +154,21 @@ class SyncEngine implements OfflineQueue {
               await _notifications.showFailure();
             } else {
               await _retry(operation, sanitizeError(error));
-              // FIFO estricto: esperar al siguiente sync antes de continuar.
+              retryPending = true;
+              // FIFO estricto: no se pueden procesar operaciones posteriores.
               break;
             }
           } on Failure catch (error) {
+            if (error is NetworkFailure) {
+              await _retry(operation, sanitizeError(error));
+              retryPending = true;
+              break;
+            }
             await _queue.markFailed(operation.id!, sanitizeError(error));
             failed++;
           }
         }
-        if (authRequired) break;
+        if (authRequired || retryPending) break;
       }
       await _queue.cleanupCompleted();
       return OfflineSyncResult(
@@ -178,6 +185,11 @@ class SyncEngine implements OfflineQueue {
   Future<void> resumeAfterLogin() async {
     _paused = false;
     authRequired.value = false;
+    if (_queue case final AuthResumableOfflineQueue queue) {
+      // Resetear tambien el backoff garantiza que el FIFO se reactive completo
+      // despues de restaurar una sesion valida.
+      await queue.resetAuthRequiredToPending();
+    }
     await syncNow();
   }
 
@@ -232,7 +244,7 @@ class SyncEngine implements OfflineQueue {
   ) async {
     final String? localKey = operation.localRecordKey;
     final int? serverId = _serverId(response);
-    if (localKey == null || serverId == null) return;
+    if (localKey == null) return;
     final OfflineOperationType cacheType = switch (operation.operationType) {
       OfflineOperationType.saleVoid => OfflineOperationType.sale,
       OfflineOperationType.purchaseVoid => OfflineOperationType.purchase,
@@ -240,6 +252,14 @@ class SyncEngine implements OfflineQueue {
     };
     final SynchronizableOfflineCache? cache = _caches[cacheType];
     if (cache == null) return;
+    if (serverId == null) {
+      if (cache case final EmptyResponseOfflineCache emptyResponseCache) {
+        await emptyResponseCache.markSynchronizedWithoutServerId(
+          localRecordKey: localKey,
+        );
+      }
+      return;
+    }
     await cache.markSynchronized(
       localRecordKey: localKey,
       serverId: serverId,
@@ -307,6 +327,11 @@ class SyncEngine implements OfflineQueue {
   Future<int> totalPayloadSize(int userId) => _queue.totalPayloadSize(userId);
   Future<int> countPending() async => _queue is PendingCountOfflineQueue
       ? (_queue as PendingCountOfflineQueue).countPending()
+      : 0;
+
+  Future<int> countPendingForUser(int userId) async =>
+      _queue is UserPendingCountOfflineQueue
+      ? (_queue as UserPendingCountOfflineQueue).countPendingForUser(userId)
       : 0;
   Future<void> dispose() async {
     syncing.dispose();

@@ -19,6 +19,11 @@ abstract interface class AuthRequiredOfflineQueue {
   Future<void> markAllAuthRequired(int userId);
 }
 
+/// Optional resume hook kept separate to preserve existing queue fakes.
+abstract interface class AuthResumableOfflineQueue {
+  Future<void> resetAuthRequiredToPending({int? userId});
+}
+
 abstract interface class RetryableOfflineQueue {
   Future<void> markRetry(
     int id, {
@@ -30,6 +35,11 @@ abstract interface class RetryableOfflineQueue {
 
 abstract interface class PendingCountOfflineQueue {
   Future<int> countPending();
+}
+
+/// Optional user-scoped count used by grouped notifications.
+abstract interface class UserPendingCountOfflineQueue {
+  Future<int> countPendingForUser(int userId);
 }
 
 abstract interface class OfflineCache<T> {
@@ -49,6 +59,13 @@ abstract interface class SynchronizableOfflineCache {
     required int serverId,
     required DateTime serverUpdatedAt,
     required Map<String, Object?> response,
+  });
+}
+
+/// Completion hook for successful responses that intentionally have no body.
+abstract interface class EmptyResponseOfflineCache {
+  Future<void> markSynchronizedWithoutServerId({
+    required String localRecordKey,
   });
 }
 

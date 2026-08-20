@@ -22,10 +22,13 @@ class OfflineCoordinator with WidgetsBindingObserver {
   }
   final SyncEngine _engine;
   final SyncNotificationService _notifications;
+  int? _currentUserId;
   late final StreamSubscription<bool> _subscription;
-  Future<void> syncNow() async {
+  Future<void> syncNow({int? userId}) async {
     final OfflineSyncResult result = await _engine.syncNow();
-    final int pending = await _engine.countPending();
+    final int? effectiveUserId = userId ?? _currentUserId;
+    if (effectiveUserId == null) return;
+    final int pending = await _engine.countPendingForUser(effectiveUserId);
     if (result.completed > 0 || result.failed > 0 || pending > 0) {
       await _notifications.showPending(pending);
     }
@@ -37,7 +40,12 @@ class OfflineCoordinator with WidgetsBindingObserver {
   }
 
   void onUnauthorized() => _engine.onUnauthorized();
-  Future<void> resumeAfterLogin() => _engine.resumeAfterLogin();
+  void setCurrentUserId(int? userId) => _currentUserId = userId;
+  Future<void> resumeAfterLogin({int? userId}) async {
+    if (userId != null) _currentUserId = userId;
+    await _engine.resumeAfterLogin();
+  }
+
   Future<void> dispose() async {
     WidgetsBinding.instance.removeObserver(this);
     await _subscription.cancel();

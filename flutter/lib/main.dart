@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/providers/theme_provider.dart';
+import 'core/providers/offline_providers.dart';
 import 'core/routing/app_router.dart';
 import 'presentation/theme/app_theme.dart';
 
@@ -22,6 +23,9 @@ class FerrePlusApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // El coordinator debe observar lifecycle/connectivity desde el arranque;
+    // los providers Riverpod son lazy por defecto.
+    ref.read(offlineCoordinatorProvider);
     final router = ref.watch(routerProvider);
     final ThemeMode themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(

@@ -6,7 +6,10 @@ import '../app_database.dart';
 import '../../offline/payload_codec.dart';
 
 class CachedPurchasesDao extends DatabaseAccessor<AppDatabase>
-    implements OptimisticOfflineCache<Compra>, SynchronizableOfflineCache {
+    implements
+        OptimisticOfflineCache<Compra>,
+        SynchronizableOfflineCache,
+        EmptyResponseOfflineCache {
   CachedPurchasesDao(super.db, {PayloadCodec? codec})
     : _codec = codec ?? PayloadCodec();
   final PayloadCodec _codec;
@@ -59,6 +62,21 @@ class CachedPurchasesDao extends DatabaseAccessor<AppDatabase>
           ),
         );
   }
+
+  @override
+  Future<void> markSynchronizedWithoutServerId({
+    required String localRecordKey,
+  }) =>
+      (update(cachedPurchases)..where(
+            ($CachedPurchasesTable row) => row.localKey.equals(localRecordKey),
+          ))
+          .write(
+            const CachedPurchasesCompanion(
+              syncState: Value('synced'),
+              idempotencyKey: Value(null),
+            ),
+          )
+          .then((int _) {});
 
   Future<CachedPurchasesCompanion> _companion(
     Compra value, {

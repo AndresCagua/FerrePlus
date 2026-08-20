@@ -49,6 +49,7 @@ class AuthNotifier extends Notifier<AuthState> {
     if (state.status != AuthStatus.unknown) return;
     try {
       if (!await _repository.isAuthenticated()) {
+        ref.read(offlineCoordinatorProvider).setCurrentUserId(null);
         state = const AuthState(status: AuthStatus.unauthenticated);
         return;
       }
@@ -75,8 +76,11 @@ class AuthNotifier extends Notifier<AuthState> {
         status: AuthStatus.authenticated,
         permisos: response.permisos.toSet(),
       );
+      ref.read(offlineCoordinatorProvider).setCurrentUserId(response.usuarioId);
       await refreshUser();
-      await ref.read(offlineCoordinatorProvider).resumeAfterLogin();
+      await ref
+          .read(offlineCoordinatorProvider)
+          .resumeAfterLogin(userId: response.usuarioId);
     } catch (error) {
       state = AuthState(status: AuthStatus.failure, error: error.toString());
     }
@@ -89,10 +93,12 @@ class AuthNotifier extends Notifier<AuthState> {
       user: user,
       permisos: user.permisos.toSet(),
     );
+    ref.read(offlineCoordinatorProvider).setCurrentUserId(user.id);
   }
 
   Future<void> logout() async {
     await _repository.logout();
+    ref.read(offlineCoordinatorProvider).setCurrentUserId(null);
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
