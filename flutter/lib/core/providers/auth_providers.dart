@@ -49,7 +49,7 @@ class AuthNotifier extends Notifier<AuthState> {
     if (state.status != AuthStatus.unknown) return;
     try {
       if (!await _repository.isAuthenticated()) {
-        ref.read(offlineCoordinatorProvider).setCurrentUserId(null);
+        await ref.read(offlineCoordinatorProvider).setCurrentUserId(null);
         state = const AuthState(status: AuthStatus.unauthenticated);
         return;
       }
@@ -59,11 +59,12 @@ class AuthNotifier extends Notifier<AuthState> {
         user: user,
         permisos: user.permisos.toSet(),
       );
-      ref.read(offlineCoordinatorProvider).setCurrentUserId(user.id);
+      await ref.read(offlineCoordinatorProvider).setCurrentUserId(user.id);
       await ref
           .read(offlineCoordinatorProvider)
           .resumeAfterLogin(userId: user.id);
     } catch (error) {
+      await ref.read(offlineCoordinatorProvider).setCurrentUserId(null);
       await _repository.logout();
       state = AuthState(status: AuthStatus.failure, error: error.toString());
       state = const AuthState(status: AuthStatus.unauthenticated);
@@ -80,7 +81,9 @@ class AuthNotifier extends Notifier<AuthState> {
         status: AuthStatus.authenticated,
         permisos: response.permisos.toSet(),
       );
-      ref.read(offlineCoordinatorProvider).setCurrentUserId(response.usuarioId);
+      await ref
+          .read(offlineCoordinatorProvider)
+          .setCurrentUserId(response.usuarioId);
       await refreshUser();
       await ref
           .read(offlineCoordinatorProvider)
@@ -97,12 +100,12 @@ class AuthNotifier extends Notifier<AuthState> {
       user: user,
       permisos: user.permisos.toSet(),
     );
-    ref.read(offlineCoordinatorProvider).setCurrentUserId(user.id);
+    await ref.read(offlineCoordinatorProvider).setCurrentUserId(user.id);
   }
 
   Future<void> logout() async {
     await _repository.logout();
-    ref.read(offlineCoordinatorProvider).setCurrentUserId(null);
+    await ref.read(offlineCoordinatorProvider).setCurrentUserId(null);
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 

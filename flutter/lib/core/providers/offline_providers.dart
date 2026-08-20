@@ -96,6 +96,12 @@ final offlineCoordinatorProvider = Provider<OfflineCoordinator>((ref) {
     monitor: ref.watch(connectivityMonitorProvider),
     engine: ref.watch(syncEngineProvider),
     notifications: ref.watch(syncNotificationServiceProvider),
+    caches: <ClearableOfflineCache>[
+      ref.watch(salesCacheProvider) as ClearableOfflineCache,
+      ref.watch(purchasesCacheProvider) as ClearableOfflineCache,
+      ref.watch(expensesCacheProvider) as ClearableOfflineCache,
+      ref.watch(movementsCacheProvider) as ClearableOfflineCache,
+    ],
   );
   ref.onDispose(coordinator.dispose);
   return coordinator;

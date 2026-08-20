@@ -32,6 +32,7 @@ void main() {
     when(
       () => coordinator.resumeAfterLogin(userId: 7),
     ).thenAnswer((_) async {});
+    when(() => coordinator.setCurrentUserId(any())).thenAnswer((_) async {});
 
     final ProviderContainer container = ProviderContainer(
       overrides: [
@@ -46,6 +47,29 @@ void main() {
 
     verify(() => coordinator.setCurrentUserId(7)).called(1);
     verify(() => coordinator.resumeAfterLogin(userId: 7)).called(1);
+  });
+
+  test('restoreSession fallida limpia el usuario del coordinador', () async {
+    final MockAuthRepository authRepository = MockAuthRepository();
+    final MockOfflineCoordinator coordinator = MockOfflineCoordinator();
+    when(() => authRepository.isAuthenticated()).thenAnswer((_) async => true);
+    when(() => authRepository.getCurrentUser()).thenThrow(Exception('expired'));
+    when(() => authRepository.logout()).thenAnswer((_) async {});
+    when(() => coordinator.setCurrentUserId(any())).thenAnswer((_) async {});
+
+    final ProviderContainer container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(authRepository),
+        offlineCoordinatorProvider.overrideWithValue(coordinator),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(authNotifierProvider);
+    await Future<void>.delayed(Duration.zero);
+
+    verify(() => coordinator.setCurrentUserId(null)).called(1);
+    verify(() => authRepository.logout()).called(1);
   });
 
   test('logout elimina solo la sesion y conserva la clave offline', () async {

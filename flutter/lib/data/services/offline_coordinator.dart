@@ -12,8 +12,10 @@ class OfflineCoordinator with WidgetsBindingObserver {
     required ConnectivityMonitor monitor,
     required SyncEngine engine,
     required SyncNotificationService notifications,
+    Iterable<ClearableOfflineCache> caches = const <ClearableOfflineCache>[],
   }) : _engine = engine,
-       _notifications = notifications {
+       _notifications = notifications,
+       _caches = List<ClearableOfflineCache>.unmodifiable(caches) {
     WidgetsBinding.instance.addObserver(this);
     unawaited(_notifications.initialize());
     _subscription = monitor.stabilizedOnline.listen((bool online) {
@@ -22,6 +24,7 @@ class OfflineCoordinator with WidgetsBindingObserver {
   }
   final SyncEngine _engine;
   final SyncNotificationService _notifications;
+  final List<ClearableOfflineCache> _caches;
   int? _currentUserId;
   late final StreamSubscription<bool> _subscription;
 
@@ -43,9 +46,15 @@ class OfflineCoordinator with WidgetsBindingObserver {
   }
 
   void onUnauthorized() => _engine.onUnauthorized();
-  void setCurrentUserId(int? userId) {
+  Future<void> setCurrentUserId(int? userId) async {
     _currentUserId = userId;
     _engine.setActiveUserId(userId);
+    if (userId == null) {
+      // Cache tables have no user_id; logout is the session isolation boundary.
+      await Future.wait(
+        _caches.map((ClearableOfflineCache cache) => cache.clear()),
+      );
+    }
   }
 
   Future<void> resumeAfterLogin({int? userId}) async {

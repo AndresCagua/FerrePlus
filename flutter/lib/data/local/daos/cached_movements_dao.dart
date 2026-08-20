@@ -9,7 +9,8 @@ class CachedMovementsDao extends DatabaseAccessor<AppDatabase>
     implements
         OptimisticOfflineCache<MovimientoStock>,
         SynchronizableOfflineCache,
-        EmptyResponseOfflineCache {
+        EmptyResponseOfflineCache,
+        ClearableOfflineCache {
   CachedMovementsDao(super.db, {PayloadCodec? codec})
     : _codec = codec ?? PayloadCodec();
   final PayloadCodec _codec;
@@ -17,10 +18,25 @@ class CachedMovementsDao extends DatabaseAccessor<AppDatabase>
 
   @override
   Future<void> replace(List<MovimientoStock> values) async {
-    await delete(cachedMovements).go();
-    for (final MovimientoStock value in values) {
-      await into(cachedMovements).insert(await _companion(value));
-    }
+    await attachedDatabase.transaction(() async {
+      final List<CachedMovement> pending =
+          await (select(cachedMovements)..where(
+                ($CachedMovementsTable row) => row.syncState.equals('pending'),
+              ))
+              .get();
+      await (delete(cachedMovements)..where(
+            ($CachedMovementsTable row) => row.syncState.equals('synced'),
+          ))
+          .go();
+      for (final MovimientoStock value in values) {
+        await into(cachedMovements).insert(await _companion(value));
+      }
+      for (final CachedMovement row in pending) {
+        await into(
+          cachedMovements,
+        ).insert(_rowCompanion(row), mode: InsertMode.insertOrReplace);
+      }
+    });
   }
 
   @override
@@ -31,6 +47,9 @@ class CachedMovementsDao extends DatabaseAccessor<AppDatabase>
       ),
     ),
   );
+
+  @override
+  Future<void> clear() => delete(cachedMovements).go().then((int _) {});
 
   @override
   Future<void> upsertOptimistic(
@@ -92,4 +111,15 @@ class CachedMovementsDao extends DatabaseAccessor<AppDatabase>
     syncState: Value(syncState),
     idempotencyKey: Value(idempotencyKey),
   );
+
+  CachedMovementsCompanion _rowCompanion(CachedMovement row) =>
+      CachedMovementsCompanion(
+        localKey: Value(row.localKey),
+        serverId: Value(row.serverId),
+        payloadJson: Value(row.payloadJson),
+        serverUpdatedAt: Value(row.serverUpdatedAt),
+        localUpdatedAt: Value(row.localUpdatedAt),
+        syncState: Value(row.syncState),
+        idempotencyKey: Value(row.idempotencyKey),
+      );
 }

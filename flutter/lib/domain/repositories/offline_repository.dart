@@ -52,6 +52,11 @@ abstract interface class OfflineCache<T> {
   Future<List<T>> read();
 }
 
+/// Cache data is session-scoped because the schema has no user_id column.
+abstract interface class ClearableOfflineCache {
+  Future<void> clear();
+}
+
 abstract interface class OptimisticOfflineCache<T> implements OfflineCache<T> {
   Future<void> upsertOptimistic(T value, {String? idempotencyKey});
 }

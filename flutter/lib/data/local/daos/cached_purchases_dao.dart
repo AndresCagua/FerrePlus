@@ -9,7 +9,8 @@ class CachedPurchasesDao extends DatabaseAccessor<AppDatabase>
     implements
         OptimisticOfflineCache<Compra>,
         SynchronizableOfflineCache,
-        EmptyResponseOfflineCache {
+        EmptyResponseOfflineCache,
+        ClearableOfflineCache {
   CachedPurchasesDao(super.db, {PayloadCodec? codec})
     : _codec = codec ?? PayloadCodec();
   final PayloadCodec _codec;
@@ -17,10 +18,25 @@ class CachedPurchasesDao extends DatabaseAccessor<AppDatabase>
 
   @override
   Future<void> replace(List<Compra> values) async {
-    await delete(cachedPurchases).go();
-    for (final Compra value in values) {
-      await into(cachedPurchases).insert(await _companion(value));
-    }
+    await attachedDatabase.transaction(() async {
+      final List<CachedPurchase> pending =
+          await (select(cachedPurchases)..where(
+                ($CachedPurchasesTable row) => row.syncState.equals('pending'),
+              ))
+              .get();
+      await (delete(cachedPurchases)..where(
+            ($CachedPurchasesTable row) => row.syncState.equals('synced'),
+          ))
+          .go();
+      for (final Compra value in values) {
+        await into(cachedPurchases).insert(await _companion(value));
+      }
+      for (final CachedPurchase row in pending) {
+        await into(
+          cachedPurchases,
+        ).insert(_rowCompanion(row), mode: InsertMode.insertOrReplace);
+      }
+    });
   }
 
   @override
@@ -30,6 +46,9 @@ class CachedPurchasesDao extends DatabaseAccessor<AppDatabase>
           Compra.fromJson(await _codec.decryptOrDecode(row.payloadJson)),
     ),
   );
+
+  @override
+  Future<void> clear() => delete(cachedPurchases).go().then((int _) {});
 
   @override
   Future<void> upsertOptimistic(Compra value, {String? idempotencyKey}) async =>
@@ -89,4 +108,15 @@ class CachedPurchasesDao extends DatabaseAccessor<AppDatabase>
     syncState: Value(syncState),
     idempotencyKey: Value(idempotencyKey),
   );
+
+  CachedPurchasesCompanion _rowCompanion(CachedPurchase row) =>
+      CachedPurchasesCompanion(
+        localKey: Value(row.localKey),
+        serverId: Value(row.serverId),
+        payloadJson: Value(row.payloadJson),
+        serverUpdatedAt: Value(row.serverUpdatedAt),
+        localUpdatedAt: Value(row.localUpdatedAt),
+        syncState: Value(row.syncState),
+        idempotencyKey: Value(row.idempotencyKey),
+      );
 }

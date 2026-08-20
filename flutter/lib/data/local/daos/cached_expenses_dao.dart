@@ -9,7 +9,8 @@ class CachedExpensesDao extends DatabaseAccessor<AppDatabase>
     implements
         OptimisticOfflineCache<Gasto>,
         SynchronizableOfflineCache,
-        EmptyResponseOfflineCache {
+        EmptyResponseOfflineCache,
+        ClearableOfflineCache {
   CachedExpensesDao(super.db, {PayloadCodec? codec})
     : _codec = codec ?? PayloadCodec();
   final PayloadCodec _codec;
@@ -17,10 +18,25 @@ class CachedExpensesDao extends DatabaseAccessor<AppDatabase>
 
   @override
   Future<void> replace(List<Gasto> values) async {
-    await delete(cachedExpenses).go();
-    for (final Gasto value in values) {
-      await into(cachedExpenses).insert(await _companion(value));
-    }
+    await attachedDatabase.transaction(() async {
+      final List<CachedExpense> pending =
+          await (select(cachedExpenses)..where(
+                ($CachedExpensesTable row) => row.syncState.equals('pending'),
+              ))
+              .get();
+      await (delete(cachedExpenses)..where(
+            ($CachedExpensesTable row) => row.syncState.equals('synced'),
+          ))
+          .go();
+      for (final Gasto value in values) {
+        await into(cachedExpenses).insert(await _companion(value));
+      }
+      for (final CachedExpense row in pending) {
+        await into(
+          cachedExpenses,
+        ).insert(_rowCompanion(row), mode: InsertMode.insertOrReplace);
+      }
+    });
   }
 
   @override
@@ -30,6 +46,9 @@ class CachedExpensesDao extends DatabaseAccessor<AppDatabase>
           Gasto.fromJson(await _codec.decryptOrDecode(row.payloadJson)),
     ),
   );
+
+  @override
+  Future<void> clear() => delete(cachedExpenses).go().then((int _) {});
 
   @override
   Future<void> upsertOptimistic(Gasto value, {String? idempotencyKey}) async =>
@@ -89,4 +108,15 @@ class CachedExpensesDao extends DatabaseAccessor<AppDatabase>
     syncState: Value(syncState),
     idempotencyKey: Value(idempotencyKey),
   );
+
+  CachedExpensesCompanion _rowCompanion(CachedExpense row) =>
+      CachedExpensesCompanion(
+        localKey: Value(row.localKey),
+        serverId: Value(row.serverId),
+        payloadJson: Value(row.payloadJson),
+        serverUpdatedAt: Value(row.serverUpdatedAt),
+        localUpdatedAt: Value(row.localUpdatedAt),
+        syncState: Value(row.syncState),
+        idempotencyKey: Value(row.idempotencyKey),
+      );
 }
