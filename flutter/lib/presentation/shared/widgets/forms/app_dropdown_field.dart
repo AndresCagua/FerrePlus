@@ -18,6 +18,8 @@ class AppDropdownField<T> extends StatelessWidget {
   final String label;
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?>? onChanged;
+
+  /// Flutter 3.38 makes [initialValue] the non-deprecated API for this field.
   final T? initialValue;
   final bool? enabled;
   final FormFieldValidator<T>? validator;

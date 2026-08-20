@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:math';
+
+import 'package:flutter/foundation.dart';
 
 import 'package:dio/dio.dart';
 
@@ -28,22 +31,27 @@ class SyncEngine implements OfflineQueue {
     required SyncNotificationService notifications,
     int maxAttempts = 5,
     DateTime Function()? clock,
+    Random? random,
   }) : _queue = queue,
        _sender = sender.send,
        _notifications = notifications,
        _maxAttempts = maxAttempts,
-       _clock = clock ?? DateTime.now;
+       _clock = clock ?? DateTime.now,
+       _random = random ?? Random();
   final OfflineQueue _queue;
   final PendingOperationSender _sender;
   final SyncNotificationService _notifications;
   final int _maxAttempts;
   final DateTime Function() _clock;
+  final Random _random;
+  final ValueNotifier<bool> syncing = ValueNotifier<bool>(false);
   bool _running = false;
   bool _paused = false;
 
   Future<OfflineSyncResult> syncNow() async {
     if (_running || _paused) return const OfflineSyncResult();
     _running = true;
+    syncing.value = true;
     int completed = 0;
     int failed = 0;
     bool authRequired = false;
@@ -93,6 +101,7 @@ class SyncEngine implements OfflineQueue {
       );
     } finally {
       _running = false;
+      syncing.value = false;
     }
   }
 
@@ -104,7 +113,9 @@ class SyncEngine implements OfflineQueue {
   void onUnauthorized() => _paused = true;
   Future<void> _retry(PendingOperation operation, String error) async {
     final int attempt = operation.attemptCount + 1;
-    final int seconds = (30 * (1 << (attempt - 1))).clamp(30, 1800);
+    final int baseSeconds = min(30 * (1 << (attempt - 1)), 1800);
+    final int jitterSeconds = _random.nextInt(baseSeconds + 1);
+    final int seconds = min(baseSeconds + jitterSeconds, 1800);
     final dynamic queue = _queue;
     if (queue is RetryableOfflineQueue) {
       await queue.markRetry(
@@ -140,5 +151,5 @@ class SyncEngine implements OfflineQueue {
   Future<int> countAll(int userId) => _queue.countAll(userId);
   @override
   Future<int> totalPayloadSize(int userId) => _queue.totalPayloadSize(userId);
-  Future<void> dispose() async {}
+  Future<void> dispose() async => syncing.dispose();
 }

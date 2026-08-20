@@ -2,8 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/local/app_database.dart';
 import '../../data/local/daos/pending_operations_dao.dart';
+import '../../data/local/daos/cached_sales_dao.dart';
+import '../../data/local/daos/cached_purchases_dao.dart';
+import '../../data/local/daos/cached_expenses_dao.dart';
+import '../../data/local/daos/cached_movements_dao.dart';
 import '../../data/offline/payload_codec.dart';
-import '../../data/offline/memory_offline_cache.dart';
 import '../../domain/models/commercial_models.dart';
 import '../../data/services/connectivity_monitor.dart';
 import '../../data/services/sync_engine.dart';
@@ -27,16 +30,16 @@ final offlineQueueProvider = Provider<OfflineQueue>(
   (ref) => ref.watch(pendingOperationsDaoProvider) as OfflineQueue,
 );
 final salesCacheProvider = Provider<OfflineCache<Venta>>(
-  (ref) => MemoryOfflineCache<Venta>(),
+  (ref) => CachedSalesDao(ref.watch(appDatabaseProvider)),
 );
 final purchasesCacheProvider = Provider<OfflineCache<Compra>>(
-  (ref) => MemoryOfflineCache<Compra>(),
+  (ref) => CachedPurchasesDao(ref.watch(appDatabaseProvider)),
 );
 final expensesCacheProvider = Provider<OfflineCache<Gasto>>(
-  (ref) => MemoryOfflineCache<Gasto>(),
+  (ref) => CachedExpensesDao(ref.watch(appDatabaseProvider)),
 );
 final movementsCacheProvider = Provider<OfflineCache<MovimientoStock>>(
-  (ref) => MemoryOfflineCache<MovimientoStock>(),
+  (ref) => CachedMovementsDao(ref.watch(appDatabaseProvider)),
 );
 
 final connectivityMonitorProvider = Provider<ConnectivityMonitor>((ref) {

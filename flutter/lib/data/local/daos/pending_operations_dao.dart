@@ -8,31 +8,46 @@ import '../app_database.dart';
 
 class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
     implements OfflineQueue, RetryableOfflineQueue {
+  /// ADR-31 limits the durable queue to 500 operations and 20 MiB of payload.
+  static const int maxOperations = 500;
+  static const int maxPayloadBytes = 20 * 1024 * 1024;
+
   PendingOperationsDao(super.attachedDatabase);
   $PendingOperationsTable get pendingOperations =>
       attachedDatabase.pendingOperations;
 
   @override
-  Future<int> enqueue(domain.PendingOperation operation) async =>
-      into(pendingOperations).insert(
-        PendingOperationsCompanion.insert(
-          operationType: operation.operationType.value,
-          endpoint: operation.endpoint,
-          httpMethod: operation.httpMethod,
-          userId: operation.userId,
-          idempotencyKey: operation.idempotencyKey,
-          payloadJson: jsonEncode(operation.payload),
-          createdAt: operation.createdAt,
-          status: Value(operation.status.value),
-          attemptCount: Value(operation.attemptCount),
-          nextRetryAt: Value(operation.nextRetryAt),
-          lastError: Value(operation.lastError),
-          responseJson: Value(
-            operation.response == null ? null : jsonEncode(operation.response),
-          ),
-          localRecordKey: Value(operation.localRecordKey),
+  Future<int> enqueue(domain.PendingOperation operation) async {
+    final int operationCount = await countAll(operation.userId);
+    final int payloadSize = await totalPayloadSize(operation.userId);
+    final String payloadJson = jsonEncode(operation.payload);
+    final bool exceedsLimit =
+        operationCount >= maxOperations ||
+        payloadSize + payloadJson.length > maxPayloadBytes;
+    return into(pendingOperations).insert(
+      PendingOperationsCompanion.insert(
+        operationType: operation.operationType.value,
+        endpoint: operation.endpoint,
+        httpMethod: operation.httpMethod,
+        userId: operation.userId,
+        idempotencyKey: operation.idempotencyKey,
+        payloadJson: payloadJson,
+        createdAt: operation.createdAt,
+        status: Value(exceedsLimit ? 'failed' : operation.status.value),
+        attemptCount: Value(operation.attemptCount),
+        nextRetryAt: Value(operation.nextRetryAt),
+        lastError: Value(
+          exceedsLimit
+              ? 'La cola offline alcanzo su limite; revisa la operacion.'
+              : operation.lastError,
         ),
-      );
+        responseJson: Value(
+          operation.response == null ? null : jsonEncode(operation.response),
+        ),
+        localRecordKey: Value(operation.localRecordKey),
+      ),
+    );
+  }
 
   @override
   Future<List<domain.PendingOperation>> nextBatch({int limit = 10}) async {

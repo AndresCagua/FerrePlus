@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_component_theme.dart';
 import '../../theme/app_spacing.dart';
+import 'offline_banner.dart';
 
 class PageScaffold extends StatelessWidget {
   const PageScaffold({
@@ -35,9 +36,19 @@ class PageScaffold extends StatelessWidget {
                   left: AppSpacing.space16,
                   right: AppSpacing.space16,
                 ),
-                child: child,
+                child: Column(
+                  children: <Widget>[
+                    const OfflineBanner(),
+                    Expanded(child: child),
+                  ],
+                ),
               )
-            : child,
+            : Column(
+                children: <Widget>[
+                  const OfflineBanner(),
+                  Expanded(child: child),
+                ],
+              ),
       ),
     );
   }
