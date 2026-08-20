@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dio/dio.dart';
 
 import 'package:ferreplus/core/errors/failure.dart';
 import 'package:ferreplus/data/offline/adapters/sale_offline_adapter.dart'
@@ -12,6 +13,43 @@ import 'package:ferreplus/domain/repositories/offline_repository.dart';
 import 'package:ferreplus/domain/repositories/commercial_repositories.dart';
 
 void main() {
+  test('sender respeta endpoint persistido para updates y creates', () async {
+    final Dio dio = Dio();
+    final List<String> paths = <String>[];
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+          paths.add(options.path);
+          handler.resolve(
+            Response<Object?>(
+              requestOptions: options,
+              data: <String, Object?>{'ok': true},
+            ),
+          );
+        },
+      ),
+    );
+    final DioPendingOperationSender sender = DioPendingOperationSender(
+      dio: dio,
+    );
+    await sender.send(
+      PendingOperationEnvelope(
+        _operation(
+          id: 1,
+          userId: 7,
+          endpoint: '/api/compras/42',
+          method: 'PUT',
+        ),
+      ),
+    );
+    await sender.send(
+      PendingOperationEnvelope(
+        _operation(id: 2, userId: 7, endpoint: '/api/compras'),
+      ),
+    );
+    expect(paths, <String>['/api/compras/42', '/api/compras']);
+  });
+
   test('anulacion sin cache usa usuario activo y se sincroniza', () async {
     final FakeQueue queue = FakeQueue(<PendingOperation>[]);
     final OfflineVentaRepository repository = OfflineVentaRepository(
@@ -122,6 +160,28 @@ void main() {
       expect(cache.idempotencyKey, isNull);
     },
   );
+
+  test('no refresca cache si la sesion cambia durante el envio', () async {
+    final FakeQueue queue = FakeQueue(<PendingOperation>[
+      _operation(id: 1, userId: 10),
+    ]);
+    final FakeCache cache = FakeCache();
+    late SyncEngine engine;
+    engine = _engine(
+      queue: queue,
+      activeUserId: 10,
+      cache: cache,
+      sender: (_) async {
+        engine.setActiveUserId(20);
+        return <String, Object?>{'id': 42};
+      },
+    );
+
+    await engine.syncNow();
+
+    expect(cache.synchronizedKeys, isEmpty);
+    expect(queue.operation(1).status, PendingOperationStatus.completed);
+  });
 }
 
 SyncEngine _engine({
@@ -144,12 +204,14 @@ SyncEngine _engine({
 PendingOperation _operation({
   required int id,
   required int userId,
+  String endpoint = '/api/ventas',
+  String method = 'POST',
   PendingOperationStatus status = PendingOperationStatus.pending,
 }) => PendingOperation(
   id: id,
   operationType: OfflineOperationType.sale,
-  endpoint: '/api/ventas',
-  httpMethod: 'POST',
+  endpoint: endpoint,
+  httpMethod: method,
   userId: userId,
   idempotencyKey: 'key-$id',
   payload: <String, Object?>{'id': id},
@@ -174,6 +236,14 @@ class FakeQueue
   Future<void> enqueue(PendingOperation operation) async {
     final int id = operation.id ?? (_operations.length + 1);
     _operations[id] = operation.copyWith(id: id);
+  }
+
+  @override
+  Future<void> cancelByLocalRecordKey(String localRecordKey) async {
+    _operations.removeWhere(
+      (_, PendingOperation operation) =>
+          operation.localRecordKey == localRecordKey,
+    );
   }
 
   @override
@@ -260,6 +330,7 @@ class FakeQueue
 class FakeCache
     implements SynchronizableOfflineCache, EmptyResponseOfflineCache {
   final List<String> synchronizedWithoutServerIdKeys = <String>[];
+  final List<String> synchronizedKeys = <String>[];
   String syncState = 'pending';
   String? idempotencyKey = 'local-key';
 
@@ -270,6 +341,7 @@ class FakeCache
     required DateTime serverUpdatedAt,
     required Map<String, Object?> response,
   }) async {
+    synchronizedKeys.add(localRecordKey);
     syncState = 'synced';
     idempotencyKey = null;
   }

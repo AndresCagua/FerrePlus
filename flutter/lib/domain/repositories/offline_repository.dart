@@ -2,6 +2,7 @@ import '../models/offline_models.dart';
 
 abstract interface class OfflineQueue {
   Future<void> enqueue(PendingOperation operation);
+  Future<void> cancelByLocalRecordKey(String localRecordKey);
   Stream<int> watchPendingCount(int userId);
   Future<List<PendingOperation>> nextBatch({required int limit});
   Future<void> markSyncing(int id);

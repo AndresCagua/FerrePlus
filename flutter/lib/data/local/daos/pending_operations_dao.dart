@@ -60,6 +60,21 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
   }
 
   @override
+  Future<void> cancelByLocalRecordKey(String localRecordKey) async {
+    await (delete(pendingOperations)..where(
+          ($PendingOperationsTable row) =>
+              row.localRecordKey.equals(localRecordKey) &
+              row.operationType.isIn(<String>[
+                domain.OfflineOperationType.sale.value,
+                domain.OfflineOperationType.expense.value,
+                domain.OfflineOperationType.purchase.value,
+                domain.OfflineOperationType.movement.value,
+              ]),
+        ))
+        .go();
+  }
+
+  @override
   Future<List<domain.PendingOperation>> nextBatch({int limit = 10}) async {
     return nextBatchForUser(null, limit: limit);
   }

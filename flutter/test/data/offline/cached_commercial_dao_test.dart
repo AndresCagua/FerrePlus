@@ -83,6 +83,66 @@ void main() {
     await sales.clear();
     expect(await sales.read(), isEmpty);
   });
+
+  test(
+    'markSynchronized reemplaza la clave provisional en las cuatro caches',
+    () async {
+      final CachedSalesDao sales = CachedSalesDao(database, codec: codec);
+      final CachedPurchasesDao purchases = CachedPurchasesDao(
+        database,
+        codec: codec,
+      );
+      final CachedExpensesDao expenses = CachedExpensesDao(
+        database,
+        codec: codec,
+      );
+      final CachedMovementsDao movements = CachedMovementsDao(
+        database,
+        codec: codec,
+      );
+      await sales.upsertOptimistic(_sale(-1));
+      await purchases.upsertOptimistic(_purchase(-2));
+      await expenses.upsertOptimistic(_expense(-3));
+      await movements.upsertOptimistic(_movement(-4));
+      await sales.markSynchronized(
+        localRecordKey: '-1',
+        serverId: 11,
+        serverUpdatedAt: DateTime(2026),
+        response: _sale(11).toJson(),
+      );
+      await purchases.markSynchronized(
+        localRecordKey: '-2',
+        serverId: 12,
+        serverUpdatedAt: DateTime(2026),
+        response: _purchase(12).toJson(),
+      );
+      await expenses.markSynchronized(
+        localRecordKey: '-3',
+        serverId: 13,
+        serverUpdatedAt: DateTime(2026),
+        response: _expense(13).toJson(),
+      );
+      await movements.markSynchronized(
+        localRecordKey: '-4',
+        serverId: 14,
+        serverUpdatedAt: DateTime(2026),
+        response: _movement(14).toJson(),
+      );
+      await sales.upsertOptimistic(_sale(11));
+      await purchases.upsertOptimistic(_purchase(12));
+      await expenses.upsertOptimistic(_expense(13));
+      await movements.upsertOptimistic(_movement(14));
+      expect((await sales.read()).map((Venta value) => value.id), <int>[11]);
+      expect((await purchases.read()).map((Compra value) => value.id), <int>[
+        12,
+      ]);
+      expect((await expenses.read()).map((Gasto value) => value.id), <int>[13]);
+      expect(
+        (await movements.read()).map((MovimientoStock value) => value.id),
+        <int>[14],
+      );
+    },
+  );
 }
 
 class _MemorySecureStorage extends FlutterSecureStorage {

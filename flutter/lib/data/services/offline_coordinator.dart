@@ -45,7 +45,7 @@ class OfflineCoordinator with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) unawaited(syncNow());
   }
 
-  void onUnauthorized() => _engine.onUnauthorized();
+  Future<void> onUnauthorized() => _engine.onUnauthorized();
   Future<void> setCurrentUserId(int? userId) async {
     _currentUserId = userId;
     _engine.setActiveUserId(userId);
@@ -66,5 +66,6 @@ class OfflineCoordinator with WidgetsBindingObserver {
   Future<void> dispose() async {
     WidgetsBinding.instance.removeObserver(this);
     await _subscription.cancel();
+    await _engine.dispose();
   }
 }

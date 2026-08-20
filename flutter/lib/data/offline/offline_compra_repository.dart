@@ -86,6 +86,7 @@ class OfflineCompraRepository implements CompraRepository {
       final Compra? current = matches.isEmpty ? null : matches.first;
       if (current != null && current.id < 0) {
         // Un alta local anulada no debe enviar su identificador provisional al API.
+        await _queue.cancelByLocalRecordKey(current.id.toString());
         await _cacheOptimistically(current.copyWith(estado: 'ANULADA'));
         return;
       }

@@ -18,7 +18,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(
     tokenReader: () => storage.cachedToken,
     onUnauthorized: () async {
-      ref.read(offlineCoordinatorProvider).onUnauthorized();
+      await ref.read(offlineCoordinatorProvider).onUnauthorized();
       await ref.read(authNotifierProvider.notifier).logout();
     },
   );

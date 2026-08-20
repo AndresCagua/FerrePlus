@@ -73,6 +73,7 @@ class OfflineVentaRepository implements VentaRepository {
       final Venta? current = matches.isEmpty ? null : matches.first;
       if (current != null && current.id < 0) {
         // Un alta local anulada se resuelve localmente; nunca se envia el id provisional.
+        await _queue.cancelByLocalRecordKey(current.id.toString());
         await _cacheOptimistically(current.copyWith(estado: 'ANULADA'));
         return;
       }

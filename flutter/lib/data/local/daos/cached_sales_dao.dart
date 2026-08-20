@@ -67,8 +67,26 @@ class CachedSalesDao extends DatabaseAccessor<AppDatabase>
     required DateTime serverUpdatedAt,
     required Map<String, Object?> response,
   }) async {
+    final int? provisionalId = int.tryParse(localRecordKey);
+    if (provisionalId != null && provisionalId < 0) {
+      await attachedDatabase.transaction(() async {
+        await (delete(cachedSales)..where(
+              ($CachedSalesTable row) =>
+                  row.localKey.equals(serverId.toString()),
+            ))
+            .go();
+        await (update(cachedSales)..where(
+              ($CachedSalesTable row) => row.localKey.equals(localRecordKey),
+            ))
+            .write(CachedSalesCompanion(localKey: Value(serverId.toString())));
+      });
+    }
     await (update(cachedSales)..where(
-          ($CachedSalesTable row) => row.localKey.equals(localRecordKey),
+          ($CachedSalesTable row) => row.localKey.equals(
+            provisionalId != null && provisionalId < 0
+                ? serverId.toString()
+                : localRecordKey,
+          ),
         ))
         .write(
           CachedSalesCompanion(

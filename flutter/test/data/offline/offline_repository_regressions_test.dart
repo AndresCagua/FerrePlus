@@ -70,6 +70,34 @@ void main() {
     },
   );
 
+  test('anular alta local elimina su POST pendiente', () async {
+    final _QueueFake queue = _QueueFake();
+    final _CacheFake<Venta> cache = _CacheFake<Venta>()
+      ..values.add(_sale(-123));
+    queue.operations.add(
+      PendingOperation(
+        operationType: OfflineOperationType.sale,
+        endpoint: '/api/ventas',
+        httpMethod: 'POST',
+        userId: 7,
+        idempotencyKey: 'sale-create',
+        payload: <String, Object?>{},
+        createdAt: DateTime(2026),
+        localRecordKey: '-123',
+      ),
+    );
+
+    await OfflineVentaRepository(
+      remote: _FailingVentaRepository(),
+      queue: queue,
+      cache: cache,
+      currentUserId: () => 7,
+    ).anular(-123);
+
+    expect(queue.operations, isEmpty);
+    expect(cache.values.single.estado, 'ANULADA');
+  });
+
   test(
     'anular compra offline pendiente tampoco envia el id provisional',
     () async {
@@ -96,6 +124,14 @@ class _QueueFake implements OfflineQueue {
   @override
   Future<void> enqueue(PendingOperation operation) async =>
       operations.add(operation);
+  @override
+  Future<void> cancelByLocalRecordKey(String localRecordKey) async {
+    operations.removeWhere(
+      (PendingOperation operation) =>
+          operation.localRecordKey == localRecordKey,
+    );
+  }
+
   @override
   Stream<int> watchPendingCount(int userId) => const Stream<int>.empty();
   @override

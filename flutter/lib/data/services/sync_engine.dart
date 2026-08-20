@@ -73,17 +73,19 @@ class DioPendingOperationSender {
     return <String, Object?>{'operation_type': type};
   }
 
-  static String _endpointFor(PendingOperation operation) =>
-      switch (operation.operationType) {
-        OfflineOperationType.sale => '/api/ventas',
-        OfflineOperationType.expense => '/api/gastos',
-        OfflineOperationType.purchase => '/api/compras',
-        OfflineOperationType.movement => '/api/movimientos-stock',
-        OfflineOperationType.saleVoid =>
-          '/api/ventas/${operation.payload['id']}/anular',
-        OfflineOperationType.purchaseVoid =>
-          '/api/compras/${operation.payload['id']}/anular',
-      };
+  static String _endpointFor(PendingOperation operation) {
+    if (operation.endpoint.trim().isNotEmpty) return operation.endpoint;
+    return switch (operation.operationType) {
+      OfflineOperationType.sale => '/api/ventas',
+      OfflineOperationType.expense => '/api/gastos',
+      OfflineOperationType.purchase => '/api/compras',
+      OfflineOperationType.movement => '/api/movimientos-stock',
+      OfflineOperationType.saleVoid =>
+        '/api/ventas/${operation.payload['id']}/anular',
+      OfflineOperationType.purchaseVoid =>
+        '/api/compras/${operation.payload['id']}/anular',
+    };
+  }
 }
 
 class SyncEngine implements OfflineQueue {
@@ -142,7 +144,9 @@ class SyncEngine implements OfflineQueue {
               PendingOperationEnvelope(operation),
             );
             await _queue.markCompleted(operation.id!, response);
-            await _refreshCache(operation, response);
+            if (operation.userId == _activeUserId) {
+              await _refreshCache(operation, response);
+            }
             completed++;
           } on DioException catch (error) {
             if (error.response?.statusCode == 401) {
@@ -324,6 +328,9 @@ class SyncEngine implements OfflineQueue {
 
   @override
   Future<void> enqueue(PendingOperation operation) => _queue.enqueue(operation);
+  @override
+  Future<void> cancelByLocalRecordKey(String localRecordKey) =>
+      _queue.cancelByLocalRecordKey(localRecordKey);
   @override
   Stream<int> watchPendingCount(int userId) => _queue.watchPendingCount(userId);
   @override

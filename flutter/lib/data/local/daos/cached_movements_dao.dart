@@ -73,8 +73,29 @@ class CachedMovementsDao extends DatabaseAccessor<AppDatabase>
     required DateTime serverUpdatedAt,
     required Map<String, Object?> response,
   }) async {
+    final int? provisionalId = int.tryParse(localRecordKey);
+    if (provisionalId != null && provisionalId < 0) {
+      await attachedDatabase.transaction(() async {
+        await (delete(cachedMovements)..where(
+              ($CachedMovementsTable row) =>
+                  row.localKey.equals(serverId.toString()),
+            ))
+            .go();
+        await (update(cachedMovements)..where(
+              ($CachedMovementsTable row) =>
+                  row.localKey.equals(localRecordKey),
+            ))
+            .write(
+              CachedMovementsCompanion(localKey: Value(serverId.toString())),
+            );
+      });
+    }
     await (update(cachedMovements)..where(
-          ($CachedMovementsTable row) => row.localKey.equals(localRecordKey),
+          ($CachedMovementsTable row) => row.localKey.equals(
+            provisionalId != null && provisionalId < 0
+                ? serverId.toString()
+                : localRecordKey,
+          ),
         ))
         .write(
           CachedMovementsCompanion(

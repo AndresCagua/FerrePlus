@@ -70,8 +70,28 @@ class CachedExpensesDao extends DatabaseAccessor<AppDatabase>
     required DateTime serverUpdatedAt,
     required Map<String, Object?> response,
   }) async {
+    final int? provisionalId = int.tryParse(localRecordKey);
+    if (provisionalId != null && provisionalId < 0) {
+      await attachedDatabase.transaction(() async {
+        await (delete(cachedExpenses)..where(
+              ($CachedExpensesTable row) =>
+                  row.localKey.equals(serverId.toString()),
+            ))
+            .go();
+        await (update(cachedExpenses)..where(
+              ($CachedExpensesTable row) => row.localKey.equals(localRecordKey),
+            ))
+            .write(
+              CachedExpensesCompanion(localKey: Value(serverId.toString())),
+            );
+      });
+    }
     await (update(cachedExpenses)..where(
-          ($CachedExpensesTable row) => row.localKey.equals(localRecordKey),
+          ($CachedExpensesTable row) => row.localKey.equals(
+            provisionalId != null && provisionalId < 0
+                ? serverId.toString()
+                : localRecordKey,
+          ),
         ))
         .write(
           CachedExpensesCompanion(
