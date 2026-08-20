@@ -12,6 +12,19 @@ import 'package:ferreplus/domain/models/commercial_models.dart';
 import 'package:ferreplus/domain/models/offline_models.dart' as domain;
 
 void main() {
+  test('logout elimina solo la sesion y conserva la clave offline', () async {
+    final FakeSecureStorage secureStorage = FakeSecureStorage();
+    await secureStorage.write(key: 'ferreplus_offline_key', value: 'offline');
+    await secureStorage.write(key: 'token', value: 'session');
+
+    final TokenStorage tokenStorage = TokenStorage(secureStorage);
+    await tokenStorage.clear();
+
+    expect(await secureStorage.read(key: 'ferreplus_offline_key'), 'offline');
+    expect(await secureStorage.read(key: 'token'), isNull);
+    expect(tokenStorage.cachedToken, isNull);
+  });
+
   test('logout conserva la cola offline y la cache comercial', () async {
     final AppDatabase database = AppDatabase.memory();
     addTearDown(database.close);
@@ -53,8 +66,10 @@ void main() {
 
     expect(storage.clearCalls, 1);
     expect(await pendingOperations.countAll(7), 1);
-    expect((await pendingOperations.nextBatch()).single.idempotencyKey,
-        'logout-preservation-operation');
+    expect(
+      (await pendingOperations.nextBatch()).single.idempotencyKey,
+      'logout-preservation-operation',
+    );
     expect((await salesCache.read()).single.id, 42);
     expect((await salesCache.read()).single.total, 125.50);
   });
@@ -101,5 +116,18 @@ class FakeSecureStorage extends FlutterSecureStorage {
     } else {
       _values[key] = value;
     }
+  }
+
+  @override
+  Future<void> delete({
+    required String key,
+    IOSOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    MacOsOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    _values.remove(key);
   }
 }

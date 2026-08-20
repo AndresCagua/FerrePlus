@@ -6,7 +6,11 @@ import '../../offline/payload_codec.dart';
 import '../app_database.dart';
 
 class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
-    implements OfflineQueue, RetryableOfflineQueue, AuthRequiredOfflineQueue {
+    implements
+        OfflineQueue,
+        RetryableOfflineQueue,
+        AuthRequiredOfflineQueue,
+        PendingCountOfflineQueue {
   /// ADR-31 limits the durable queue to 500 operations and 20 MiB of payload.
   static const int maxOperations = 500;
   static const int maxPayloadBytes = 20 * 1024 * 1024;
@@ -148,6 +152,18 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
               ))
               .get())
           .length;
+
+  @override
+  Future<int> countPending() async =>
+      (select(pendingOperations)..where(
+            ($PendingOperationsTable row) => row.status.isIn(<String>[
+              'pending',
+              'syncing',
+              'auth_required',
+            ]),
+          ))
+          .get()
+          .then((List<PendingOperation> rows) => rows.length);
 
   @override
   Future<int> totalPayloadSize(int userId) async {

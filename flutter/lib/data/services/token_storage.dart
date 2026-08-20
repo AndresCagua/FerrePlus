@@ -44,6 +44,15 @@ class TokenStorage {
 
   Future<void> clear() async {
     cachedToken = null;
-    await _storage.deleteAll();
+    for (final String key in <String>[
+      AppConstants.tokenKey,
+      AppConstants.emailKey,
+      AppConstants.nombreKey,
+      AppConstants.rolKey,
+      AppConstants.usuarioIdKey,
+      AppConstants.permisosKey,
+    ]) {
+      await _storage.delete(key: key);
+    }
   }
 }

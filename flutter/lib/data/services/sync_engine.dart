@@ -23,12 +23,22 @@ class DioPendingOperationSender {
   DioPendingOperationSender({
     Dio? dio,
     PendingOperationSender? send,
-    Dio Function()? dioReader,
+    Dio? Function()? dioReader,
   }) : send =
            send ??
            ((PendingOperationEnvelope operation) =>
-               _dispatch(dio ?? dioReader!(), operation));
+               _dispatch(dio ?? _readDio(dioReader), operation));
   final PendingOperationSender send;
+
+  static Dio _readDio(Dio? Function()? dioReader) {
+    final Dio? client = dioReader?.call();
+    if (client == null) {
+      throw NetworkFailure(
+        sanitizeError('Cliente API no disponible para sincronizar.'),
+      );
+    }
+    return client;
+  }
 
   static Future<Map<String, Object?>> _dispatch(
     Dio dio,
@@ -81,18 +91,22 @@ class SyncEngine implements OfflineQueue {
     required OfflineQueue queue,
     required DioPendingOperationSender sender,
     required SyncNotificationService notifications,
+    Map<OfflineOperationType, SynchronizableOfflineCache>? caches,
     int maxAttempts = 5,
     DateTime Function()? clock,
     Random? random,
   }) : _queue = queue,
        _sender = sender.send,
        _notifications = notifications,
+       _caches =
+           caches ?? const <OfflineOperationType, SynchronizableOfflineCache>{},
        _maxAttempts = maxAttempts,
        _clock = clock ?? DateTime.now,
        _random = random ?? Random();
   final OfflineQueue _queue;
   final PendingOperationSender _sender;
   final SyncNotificationService _notifications;
+  final Map<OfflineOperationType, SynchronizableOfflineCache> _caches;
   final int _maxAttempts;
   final DateTime Function() _clock;
   final Random _random;
@@ -119,6 +133,7 @@ class SyncEngine implements OfflineQueue {
               PendingOperationEnvelope(operation),
             );
             await _queue.markCompleted(operation.id!, response);
+            await _refreshCache(operation, response);
             completed++;
           } on DioException catch (error) {
             if (error.response?.statusCode == 401) {
@@ -138,6 +153,8 @@ class SyncEngine implements OfflineQueue {
               await _notifications.showFailure();
             } else {
               await _retry(operation, sanitizeError(error));
+              // FIFO estricto: esperar al siguiente sync antes de continuar.
+              break;
             }
           } on Failure catch (error) {
             await _queue.markFailed(operation.id!, sanitizeError(error));
@@ -209,6 +226,61 @@ class SyncEngine implements OfflineQueue {
     }
   }
 
+  Future<void> _refreshCache(
+    PendingOperation operation,
+    Map<String, Object?> response,
+  ) async {
+    final String? localKey = operation.localRecordKey;
+    final int? serverId = _serverId(response);
+    if (localKey == null || serverId == null) return;
+    final OfflineOperationType cacheType = switch (operation.operationType) {
+      OfflineOperationType.saleVoid => OfflineOperationType.sale,
+      OfflineOperationType.purchaseVoid => OfflineOperationType.purchase,
+      final OfflineOperationType type => type,
+    };
+    final SynchronizableOfflineCache? cache = _caches[cacheType];
+    if (cache == null) return;
+    await cache.markSynchronized(
+      localRecordKey: localKey,
+      serverId: serverId,
+      serverUpdatedAt: _serverUpdatedAt(response),
+      response: response,
+    );
+  }
+
+  static int? _serverId(Map<String, Object?> response) {
+    final Object? direct = response['id'];
+    if (direct is int) return direct;
+    if (direct is num) return direct.toInt();
+    if (direct is String) return int.tryParse(direct);
+    final Object? data = response['data'];
+    if (data is Map<Object?, Object?>) {
+      return _serverId(Map<String, Object?>.from(data));
+    }
+    return null;
+  }
+
+  static DateTime _serverUpdatedAt(Map<String, Object?> response) {
+    const List<String> keys = <String>[
+      'updatedAt',
+      'updated_at',
+      'fechaActualizacion',
+      'fechaCreacion',
+      'fechaFactura',
+      'fechaGasto',
+      'fecha',
+    ];
+    for (final String key in keys) {
+      final Object? value = response[key];
+      if (value is DateTime) return value;
+      if (value is String) {
+        final DateTime? parsed = DateTime.tryParse(value);
+        if (parsed != null) return parsed;
+      }
+    }
+    return DateTime.now();
+  }
+
   @override
   Future<void> enqueue(PendingOperation operation) => _queue.enqueue(operation);
   @override
@@ -233,6 +305,9 @@ class SyncEngine implements OfflineQueue {
   Future<int> countAll(int userId) => _queue.countAll(userId);
   @override
   Future<int> totalPayloadSize(int userId) => _queue.totalPayloadSize(userId);
+  Future<int> countPending() async => _queue is PendingCountOfflineQueue
+      ? (_queue as PendingCountOfflineQueue).countPending()
+      : 0;
   Future<void> dispose() async {
     syncing.dispose();
     authRequired.dispose();

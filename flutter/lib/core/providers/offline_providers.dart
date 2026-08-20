@@ -8,6 +8,7 @@ import '../../data/local/daos/cached_expenses_dao.dart';
 import '../../data/local/daos/cached_movements_dao.dart';
 import '../../data/offline/payload_codec.dart';
 import '../../domain/models/commercial_models.dart';
+import '../../domain/models/offline_models.dart';
 import '../../data/services/connectivity_monitor.dart';
 import '../../data/services/sync_engine.dart';
 import '../../data/services/sync_notification_service.dart';
@@ -77,6 +78,16 @@ final syncEngineProvider = Provider<SyncEngine>(
     queue: ref.watch(offlineQueueProvider),
     sender: ref.watch(offlineSenderProvider),
     notifications: ref.watch(syncNotificationServiceProvider),
+    caches: <OfflineOperationType, SynchronizableOfflineCache>{
+      OfflineOperationType.sale:
+          ref.watch(salesCacheProvider) as SynchronizableOfflineCache,
+      OfflineOperationType.purchase:
+          ref.watch(purchasesCacheProvider) as SynchronizableOfflineCache,
+      OfflineOperationType.expense:
+          ref.watch(expensesCacheProvider) as SynchronizableOfflineCache,
+      OfflineOperationType.movement:
+          ref.watch(movementsCacheProvider) as SynchronizableOfflineCache,
+    },
   ),
 );
 
@@ -93,5 +104,5 @@ final offlineCoordinatorProvider = Provider<OfflineCoordinator>((ref) {
 final offlineSyncEnabledProvider = Provider<bool>((ref) => true);
 
 final offlineSenderProvider = Provider<DioPendingOperationSender>(
-  (ref) => DioPendingOperationSender(dioReader: () => ApiClient.current!.dio),
+  (ref) => DioPendingOperationSender(dioReader: () => ApiClient.current?.dio),
 );

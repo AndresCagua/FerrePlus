@@ -28,6 +28,10 @@ abstract interface class RetryableOfflineQueue {
   });
 }
 
+abstract interface class PendingCountOfflineQueue {
+  Future<int> countPending();
+}
+
 abstract interface class OfflineCache<T> {
   Future<void> replace(List<T> values);
   Future<List<T>> read();
@@ -35,6 +39,17 @@ abstract interface class OfflineCache<T> {
 
 abstract interface class OptimisticOfflineCache<T> implements OfflineCache<T> {
   Future<void> upsertOptimistic(T value, {String? idempotencyKey});
+}
+
+/// Optional synchronization hook for updating a cached record after the API
+/// assigns its canonical identifier and timestamp.
+abstract interface class SynchronizableOfflineCache {
+  Future<void> markSynchronized({
+    required String localRecordKey,
+    required int serverId,
+    required DateTime serverUpdatedAt,
+    required Map<String, Object?> response,
+  });
 }
 
 abstract interface class ConnectivityMonitor {
