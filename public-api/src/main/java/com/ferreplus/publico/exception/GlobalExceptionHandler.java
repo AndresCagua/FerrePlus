@@ -37,8 +37,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PublicApiException.class)
     ResponseEntity<ProblemDetail> domain(PublicApiException exception, HttpServletRequest request) {
-        return ResponseEntity.status(exception.status()).body(problem(exception.status(),
-                exception.status().getReasonPhrase(), exception.getMessage(), request));
+        ProblemDetail detail = problem(exception.status(), exception.status().getReasonPhrase(), exception.getMessage(), request);
+        if (exception instanceof com.ferreplus.publico.storage.CvValidationException cv)
+            detail.setProperty("code", cv.code().name());
+        return ResponseEntity.status(exception.status()).body(detail);
     }
 
     @ExceptionHandler(Exception.class)

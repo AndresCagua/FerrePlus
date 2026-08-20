@@ -29,7 +29,8 @@ public class SecurityConfig {
                     org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
                 .permissionsPolicy(policy -> policy.policy("geolocation=(), microphone=(), camera=()")))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/health", "/api/public/**", "/api/internal/ping").permitAll()
+                // Placeholder de PR4; S2S JWT asimetrico se activa en PR8.
+                .requestMatchers("/actuator/health", "/api/public/**", "/api/internal/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().denyAll());
         return http.build();
@@ -41,7 +42,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.stream(origins.split(","))
             .map(String::trim).filter(value -> !value.isBlank()).toList());
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "Idempotency-Key", "X-Correlation-ID"));
         configuration.setAllowCredentials(false);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
