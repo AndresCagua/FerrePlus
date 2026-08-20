@@ -20,8 +20,60 @@ class PendingOperationEnvelope {
 }
 
 class DioPendingOperationSender {
-  DioPendingOperationSender({required this.send});
+  DioPendingOperationSender({
+    Dio? dio,
+    PendingOperationSender? send,
+    Dio Function()? dioReader,
+  }) : send =
+           send ??
+           ((PendingOperationEnvelope operation) =>
+               _dispatch(dio ?? dioReader!(), operation));
   final PendingOperationSender send;
+
+  static Future<Map<String, Object?>> _dispatch(
+    Dio dio,
+    PendingOperationEnvelope envelope,
+  ) async {
+    final PendingOperation operation = envelope.operation;
+    final String type = operation.operationType.value;
+    final String endpoint = _endpointFor(operation);
+    final bool isPut = operation.httpMethod.toUpperCase() == 'PUT';
+    final Response<Object?> response = isPut
+        ? await dio.put<Object?>(
+            endpoint,
+            data: operation.payload,
+            options: Options(
+              headers: <String, Object?>{
+                'X-Idempotency-Key': operation.idempotencyKey,
+              },
+            ),
+          )
+        : await dio.post<Object?>(
+            endpoint,
+            data: operation.payload,
+            options: Options(
+              headers: <String, Object?>{
+                'X-Idempotency-Key': operation.idempotencyKey,
+              },
+            ),
+          );
+    if (response.data is Map<Object?, Object?>) {
+      return Map<String, Object?>.from(response.data! as Map<Object?, Object?>);
+    }
+    return <String, Object?>{'operation_type': type};
+  }
+
+  static String _endpointFor(PendingOperation operation) =>
+      switch (operation.operationType) {
+        OfflineOperationType.sale => '/api/ventas',
+        OfflineOperationType.expense => '/api/gastos',
+        OfflineOperationType.purchase => '/api/compras',
+        OfflineOperationType.movement => '/api/movimientos-stock',
+        OfflineOperationType.saleVoid =>
+          '/api/ventas/${operation.payload['id']}/anular',
+        OfflineOperationType.purchaseVoid =>
+          '/api/compras/${operation.payload['id']}/anular',
+      };
 }
 
 class SyncEngine implements OfflineQueue {
@@ -45,6 +97,7 @@ class SyncEngine implements OfflineQueue {
   final DateTime Function() _clock;
   final Random _random;
   final ValueNotifier<bool> syncing = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> authRequired = ValueNotifier<bool>(false);
   bool _running = false;
   bool _paused = false;
 
@@ -69,7 +122,7 @@ class SyncEngine implements OfflineQueue {
             completed++;
           } on DioException catch (error) {
             if (error.response?.statusCode == 401) {
-              await _queue.markAuthRequired(operation.id!);
+              await _markAllAuthRequired(operation.userId);
               _paused = true;
               authRequired = true;
               await _notifications.showAuthRequired();
@@ -107,10 +160,39 @@ class SyncEngine implements OfflineQueue {
 
   Future<void> resumeAfterLogin() async {
     _paused = false;
+    authRequired.value = false;
     await syncNow();
   }
 
-  void onUnauthorized() => _paused = true;
+  Future<void> onUnauthorized() async {
+    _paused = true;
+    authRequired.value = true;
+    final List<PendingOperation> operations = await _queue.nextBatch(
+      limit: 500,
+    );
+    final Set<int> userIds = operations
+        .map((PendingOperation item) => item.userId)
+        .toSet();
+    for (final int userId in userIds) {
+      await _markAllAuthRequired(userId);
+    }
+  }
+
+  Future<void> _markAllAuthRequired(int userId) async {
+    if (_queue case final AuthRequiredOfflineQueue queue) {
+      await queue.markAllAuthRequired(userId);
+    } else {
+      final List<PendingOperation> operations = await _queue.nextBatch(
+        limit: 500,
+      );
+      for (final PendingOperation item in operations.where(
+        (PendingOperation item) => item.userId == userId,
+      )) {
+        if (item.id != null) await _queue.markAuthRequired(item.id!);
+      }
+    }
+  }
+
   Future<void> _retry(PendingOperation operation, String error) async {
     final int attempt = operation.attemptCount + 1;
     final int baseSeconds = min(30 * (1 << (attempt - 1)), 1800);
@@ -151,5 +233,8 @@ class SyncEngine implements OfflineQueue {
   Future<int> countAll(int userId) => _queue.countAll(userId);
   @override
   Future<int> totalPayloadSize(int userId) => _queue.totalPayloadSize(userId);
-  Future<void> dispose() async => syncing.dispose();
+  Future<void> dispose() async {
+    syncing.dispose();
+    authRequired.dispose();
+  }
 }

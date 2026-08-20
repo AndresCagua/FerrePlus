@@ -12,6 +12,7 @@ class OfflineCoordinator {
     required SyncNotificationService notifications,
   }) : _engine = engine,
        _notifications = notifications {
+    unawaited(_notifications.initialize());
     _subscription = monitor.stabilizedOnline.listen((bool online) {
       if (online) unawaited(syncNow());
     });

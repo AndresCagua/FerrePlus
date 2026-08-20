@@ -1,18 +1,19 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 
 import '../../../domain/models/offline_models.dart' as domain;
 import '../../../domain/repositories/offline_repository.dart';
+import '../../offline/payload_codec.dart';
 import '../app_database.dart';
 
 class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
-    implements OfflineQueue, RetryableOfflineQueue {
+    implements OfflineQueue, RetryableOfflineQueue, AuthRequiredOfflineQueue {
   /// ADR-31 limits the durable queue to 500 operations and 20 MiB of payload.
   static const int maxOperations = 500;
   static const int maxPayloadBytes = 20 * 1024 * 1024;
 
-  PendingOperationsDao(super.attachedDatabase);
+  PendingOperationsDao(super.attachedDatabase, {PayloadCodec? codec})
+    : _codec = codec ?? PayloadCodec();
+  final PayloadCodec _codec;
   $PendingOperationsTable get pendingOperations =>
       attachedDatabase.pendingOperations;
 
@@ -20,7 +21,7 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
   Future<int> enqueue(domain.PendingOperation operation) async {
     final int operationCount = await countAll(operation.userId);
     final int payloadSize = await totalPayloadSize(operation.userId);
-    final String payloadJson = jsonEncode(operation.payload);
+    final String payloadJson = await _codec.encryptPayload(operation.payload);
     final bool exceedsLimit =
         operationCount >= maxOperations ||
         payloadSize + payloadJson.length > maxPayloadBytes;
@@ -42,7 +43,9 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
               : operation.lastError,
         ),
         responseJson: Value(
-          operation.response == null ? null : jsonEncode(operation.response),
+          operation.response == null
+              ? null
+              : await _codec.encryptPayload(operation.response!),
         ),
         localRecordKey: Value(operation.localRecordKey),
       ),
@@ -64,7 +67,7 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
         ($PendingOperationsTable row) => OrderingTerm.asc(row.id),
       ])
       ..limit(limit);
-    return (await query.get()).map(_toDomain).toList(growable: false);
+    return Future.wait((await query.get()).map(_toDomain));
   }
 
   @override
@@ -72,19 +75,33 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
       _update(id, const PendingOperationsCompanion(status: Value('syncing')));
 
   @override
-  Future<void> markCompleted(int id, Map<String, Object?> response) => _update(
-    id,
-    PendingOperationsCompanion(
-      status: const Value('completed'),
-      responseJson: Value(jsonEncode(response)),
-    ),
-  );
+  Future<void> markCompleted(int id, Map<String, Object?> response) async {
+    await _update(
+      id,
+      PendingOperationsCompanion(
+        status: const Value('completed'),
+        responseJson: Value(await _codec.encryptPayload(response)),
+      ),
+    );
+  }
 
   @override
   Future<void> markAuthRequired(int id) => _update(
     id,
     const PendingOperationsCompanion(status: Value('auth_required')),
   );
+
+  @override
+  Future<void> markAllAuthRequired(int userId) =>
+      (update(pendingOperations)..where(
+            ($PendingOperationsTable row) =>
+                row.userId.equals(userId) &
+                row.status.isIn(<String>['pending', 'syncing']),
+          ))
+          .write(
+            const PendingOperationsCompanion(status: Value('auth_required')),
+          )
+          .then((int _) {});
 
   @override
   Future<void> markFailed(int id, String error) => _update(
@@ -163,7 +180,7 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
     )..where(($PendingOperationsTable row) => row.id.equals(id))).write(values);
   }
 
-  domain.PendingOperation _toDomain(PendingOperation row) =>
+  Future<domain.PendingOperation> _toDomain(PendingOperation row) async =>
       domain.PendingOperation(
         id: row.id,
         operationType: domain.OfflineOperationTypeCodec.parse(
@@ -173,9 +190,7 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
         httpMethod: row.httpMethod,
         userId: row.userId,
         idempotencyKey: row.idempotencyKey,
-        payload: Map<String, Object?>.from(
-          jsonDecode(row.payloadJson) as Map<Object?, Object?>,
-        ),
+        payload: await _codec.decryptOrDecode(row.payloadJson),
         createdAt: row.createdAt,
         status: domain.PendingOperationStatusCodec.parse(row.status),
         attemptCount: row.attemptCount,
@@ -183,9 +198,7 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
         lastError: row.lastError,
         response: row.responseJson == null
             ? null
-            : Map<String, Object?>.from(
-                jsonDecode(row.responseJson!) as Map<Object?, Object?>,
-              ),
+            : await _codec.decryptOrDecode(row.responseJson!),
         localRecordKey: row.localRecordKey,
       );
 }

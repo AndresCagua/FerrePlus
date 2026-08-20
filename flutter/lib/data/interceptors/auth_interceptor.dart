@@ -20,7 +20,9 @@ class AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401 && !_handlingUnauthorized) {
       _handlingUnauthorized = true;
-      onUnauthorized().whenComplete(() => _handlingUnauthorized = false);
+      onUnauthorized()
+          .catchError((_) {})
+          .whenComplete(() => _handlingUnauthorized = false);
     }
     handler.next(err);
   }

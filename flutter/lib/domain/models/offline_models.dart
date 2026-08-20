@@ -82,6 +82,7 @@ class PendingOperation {
 
   PendingOperation copyWith({
     int? id,
+    String? localRecordKey,
     PendingOperationStatus? status,
     int? attemptCount,
     DateTime? nextRetryAt,
@@ -101,7 +102,7 @@ class PendingOperation {
     nextRetryAt: nextRetryAt ?? this.nextRetryAt,
     lastError: lastError ?? this.lastError,
     response: response ?? this.response,
-    localRecordKey: localRecordKey,
+    localRecordKey: localRecordKey ?? this.localRecordKey,
   );
 }
 

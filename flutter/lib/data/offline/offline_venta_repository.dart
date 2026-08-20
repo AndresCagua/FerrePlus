@@ -47,8 +47,13 @@ class OfflineVentaRepository implements VentaRepository {
       final Venta result = await _remote.create(request);
       return result;
     } on NetworkFailure {
-      await _queue.enqueue(adapter.toOperation(request));
-      return _local(request);
+      final Venta local = _local(request);
+      final operation = adapter
+          .toOperation(request)
+          .copyWith(localRecordKey: local.id.toString());
+      await _queue.enqueue(operation);
+      await _cacheOptimistically(local, operation.idempotencyKey);
+      return local;
     }
   }
 
@@ -57,7 +62,26 @@ class OfflineVentaRepository implements VentaRepository {
     try {
       await _remote.anular(id);
     } on NetworkFailure {
-      await _queue.enqueue(adapter.voidOperation(id, 0));
+      final List<Venta> cached = await _cache.read();
+      final Iterable<Venta> matches = cached.where(
+        (Venta value) => value.id == id,
+      );
+      final Venta? current = matches.isEmpty ? null : matches.first;
+      final operation = adapter.voidOperation(id, current?.usuarioId ?? 0);
+      await _queue.enqueue(operation);
+      if (current != null) {
+        await _cacheOptimistically(
+          current.copyWith(estado: 'ANULADA'),
+          operation.idempotencyKey,
+        );
+      }
+    }
+  }
+
+  Future<void> _cacheOptimistically(Venta value, String key) async {
+    final OfflineCache<Venta> cache = _cache;
+    if (cache case final OptimisticOfflineCache<Venta> optimistic) {
+      await optimistic.upsertOptimistic(value, idempotencyKey: key);
     }
   }
 

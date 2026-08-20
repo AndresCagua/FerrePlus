@@ -41,6 +41,16 @@ class PayloadCodec {
     );
   }
 
+  Future<Map<String, Object?>> decryptOrDecode(String value) async {
+    try {
+      return await decryptPayload(value);
+    } catch (_) {
+      return Map<String, Object?>.from(
+        jsonDecode(value) as Map<Object?, Object?>,
+      );
+    }
+  }
+
   Future<SecretKey> _key() async {
     final String? stored = await _storage.read(key: _keyName);
     if (stored != null) return SecretKey(base64Url.decode(stored));

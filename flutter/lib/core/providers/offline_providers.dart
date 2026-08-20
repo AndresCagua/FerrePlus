@@ -12,6 +12,7 @@ import '../../data/services/connectivity_monitor.dart';
 import '../../data/services/sync_engine.dart';
 import '../../data/services/sync_notification_service.dart';
 import '../../data/services/offline_coordinator.dart';
+import '../../data/services/api_client.dart';
 import '../../domain/repositories/offline_repository.dart';
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
@@ -21,7 +22,10 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 });
 
 final pendingOperationsDaoProvider = Provider<PendingOperationsDao>(
-  (ref) => PendingOperationsDao(ref.watch(appDatabaseProvider)),
+  (ref) => PendingOperationsDao(
+    ref.watch(appDatabaseProvider),
+    codec: ref.watch(payloadCodecProvider),
+  ),
 );
 
 final payloadCodecProvider = Provider<PayloadCodec>((ref) => PayloadCodec());
@@ -30,16 +34,28 @@ final offlineQueueProvider = Provider<OfflineQueue>(
   (ref) => ref.watch(pendingOperationsDaoProvider) as OfflineQueue,
 );
 final salesCacheProvider = Provider<OfflineCache<Venta>>(
-  (ref) => CachedSalesDao(ref.watch(appDatabaseProvider)),
+  (ref) => CachedSalesDao(
+    ref.watch(appDatabaseProvider),
+    codec: ref.watch(payloadCodecProvider),
+  ),
 );
 final purchasesCacheProvider = Provider<OfflineCache<Compra>>(
-  (ref) => CachedPurchasesDao(ref.watch(appDatabaseProvider)),
+  (ref) => CachedPurchasesDao(
+    ref.watch(appDatabaseProvider),
+    codec: ref.watch(payloadCodecProvider),
+  ),
 );
 final expensesCacheProvider = Provider<OfflineCache<Gasto>>(
-  (ref) => CachedExpensesDao(ref.watch(appDatabaseProvider)),
+  (ref) => CachedExpensesDao(
+    ref.watch(appDatabaseProvider),
+    codec: ref.watch(payloadCodecProvider),
+  ),
 );
 final movementsCacheProvider = Provider<OfflineCache<MovimientoStock>>(
-  (ref) => CachedMovementsDao(ref.watch(appDatabaseProvider)),
+  (ref) => CachedMovementsDao(
+    ref.watch(appDatabaseProvider),
+    codec: ref.watch(payloadCodecProvider),
+  ),
 );
 
 final connectivityMonitorProvider = Provider<ConnectivityMonitor>((ref) {
@@ -77,8 +93,5 @@ final offlineCoordinatorProvider = Provider<OfflineCoordinator>((ref) {
 final offlineSyncEnabledProvider = Provider<bool>((ref) => true);
 
 final offlineSenderProvider = Provider<DioPendingOperationSender>(
-  (ref) => DioPendingOperationSender(
-    // The coordinator/provider integration can override this sender with the authenticated API client.
-    send: (PendingOperationEnvelope operation) async => <String, Object?>{},
-  ),
+  (ref) => DioPendingOperationSender(dioReader: () => ApiClient.current!.dio),
 );

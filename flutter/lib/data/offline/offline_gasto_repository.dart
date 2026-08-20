@@ -33,8 +33,7 @@ class OfflineGastoRepository implements GastoRepository {
     try {
       return await _remote.create(r);
     } on NetworkFailure {
-      await _queue.enqueue(adapter.toOperation(r));
-      return Gasto(
+      final Gasto local = Gasto(
         id: -DateTime.now().microsecondsSinceEpoch,
         descripcion: r.descripcion,
         monto: r.monto,
@@ -45,11 +44,50 @@ class OfflineGastoRepository implements GastoRepository {
         observaciones: r.observaciones,
         usuarioId: r.usuarioId,
       );
+      final operation = adapter
+          .toOperation(r)
+          .copyWith(localRecordKey: local.id.toString());
+      await _queue.enqueue(operation);
+      if (_cache case final OptimisticOfflineCache<Gasto> optimistic) {
+        await optimistic.upsertOptimistic(
+          local,
+          idempotencyKey: operation.idempotencyKey,
+        );
+      }
+      return local;
     }
   }
 
   @override
-  Future<Gasto> update(int id, GastoRequest r) => _remote.update(id, r);
+  Future<Gasto> update(int id, GastoRequest r) async {
+    try {
+      return await _remote.update(id, r);
+    } on NetworkFailure {
+      final Gasto local = Gasto(
+        id: id,
+        descripcion: r.descripcion,
+        monto: r.monto,
+        categoria: r.categoria,
+        metodoPago: r.metodoPago,
+        numeroComprobante: r.numeroComprobante,
+        fechaGasto: r.fechaGasto,
+        observaciones: r.observaciones,
+        usuarioId: r.usuarioId,
+      );
+      final operation = adapter
+          .toOperation(r)
+          .copyWith(localRecordKey: id.toString());
+      await _queue.enqueue(operation);
+      if (_cache case final OptimisticOfflineCache<Gasto> optimistic) {
+        await optimistic.upsertOptimistic(
+          local,
+          idempotencyKey: operation.idempotencyKey,
+        );
+      }
+      return local;
+    }
+  }
+
   @override
   Future<void> delete(int id) => _remote.delete(id);
 }

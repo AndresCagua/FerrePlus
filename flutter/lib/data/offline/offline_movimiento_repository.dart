@@ -41,8 +41,7 @@ class OfflineMovimientoRepository implements MovimientoRepository {
     try {
       return await _remote.create(r);
     } on NetworkFailure {
-      await _queue.enqueue(adapter.toOperation(r));
-      return MovimientoStock(
+      final MovimientoStock local = MovimientoStock(
         id: -DateTime.now().microsecondsSinceEpoch,
         productoId: r.productoId,
         cantidad: r.cantidad,
@@ -52,6 +51,18 @@ class OfflineMovimientoRepository implements MovimientoRepository {
         precioUnitario: r.precioUnitario,
         usuarioId: r.usuarioId,
       );
+      final operation = adapter
+          .toOperation(r)
+          .copyWith(localRecordKey: local.id.toString());
+      await _queue.enqueue(operation);
+      if (_cache
+          case final OptimisticOfflineCache<MovimientoStock> optimistic) {
+        await optimistic.upsertOptimistic(
+          local,
+          idempotencyKey: operation.idempotencyKey,
+        );
+      }
+      return local;
     }
   }
 }

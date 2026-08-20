@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ferreplus/data/local/app_database.dart';
 import 'package:ferreplus/data/local/daos/cached_sales_dao.dart';
 import 'package:ferreplus/data/local/daos/pending_operations_dao.dart';
+import 'package:ferreplus/data/offline/payload_codec.dart';
 import 'package:ferreplus/data/repositories/auth_repository_impl.dart';
 import 'package:ferreplus/data/services/token_storage.dart';
 import 'package:ferreplus/domain/models/commercial_models.dart';
@@ -15,10 +16,12 @@ void main() {
     final AppDatabase database = AppDatabase.memory();
     addTearDown(database.close);
 
+    final PayloadCodec codec = PayloadCodec(storage: FakeSecureStorage());
     final PendingOperationsDao pendingOperations = PendingOperationsDao(
       database,
+      codec: codec,
     );
-    final CachedSalesDao salesCache = CachedSalesDao(database);
+    final CachedSalesDao salesCache = CachedSalesDao(database, codec: codec);
     await pendingOperations.enqueue(
       domain.PendingOperation(
         operationType: domain.OfflineOperationType.sale,
@@ -65,5 +68,38 @@ class FakeTokenStorage extends TokenStorage {
   @override
   Future<void> clear() async {
     clearCalls++;
+  }
+}
+
+class FakeSecureStorage extends FlutterSecureStorage {
+  final Map<String, String> _values = <String, String>{};
+
+  @override
+  Future<String?> read({
+    required String key,
+    IOSOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    MacOsOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async => _values[key];
+
+  @override
+  Future<void> write({
+    required String key,
+    required String? value,
+    IOSOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    MacOsOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    if (value == null) {
+      _values.remove(key);
+    } else {
+      _values[key] = value;
+    }
   }
 }

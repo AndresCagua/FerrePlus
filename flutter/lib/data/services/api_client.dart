@@ -5,6 +5,7 @@ import '../../core/config/app_config.dart';
 import '../interceptors/auth_interceptor.dart';
 
 class ApiClient {
+  static ApiClient? current;
   ApiClient({
     required String? Function() tokenReader,
     required Future<void> Function() onUnauthorized,
@@ -13,6 +14,7 @@ class ApiClient {
     dio.interceptors.add(
       AuthInterceptor(tokenReader: tokenReader, onUnauthorized: onUnauthorized),
     );
+    current = this;
   }
 
   late final Dio dio;

@@ -13,6 +13,12 @@ abstract interface class OfflineQueue {
   Future<int> totalPayloadSize(int userId);
 }
 
+/// Optional operations used by the synchronizer without changing commercial
+/// repository contracts.
+abstract interface class AuthRequiredOfflineQueue {
+  Future<void> markAllAuthRequired(int userId);
+}
+
 abstract interface class RetryableOfflineQueue {
   Future<void> markRetry(
     int id, {
@@ -25,6 +31,10 @@ abstract interface class RetryableOfflineQueue {
 abstract interface class OfflineCache<T> {
   Future<void> replace(List<T> values);
   Future<List<T>> read();
+}
+
+abstract interface class OptimisticOfflineCache<T> implements OfflineCache<T> {
+  Future<void> upsertOptimistic(T value, {String? idempotencyKey});
 }
 
 abstract interface class ConnectivityMonitor {

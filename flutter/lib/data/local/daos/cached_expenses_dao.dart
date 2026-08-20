@@ -1,39 +1,52 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 
 import '../../../domain/models/commercial_models.dart';
 import '../../../domain/repositories/offline_repository.dart';
 import '../app_database.dart';
+import '../../offline/payload_codec.dart';
 
 class CachedExpensesDao extends DatabaseAccessor<AppDatabase>
-    implements OfflineCache<Gasto> {
-  CachedExpensesDao(super.db);
+    implements OptimisticOfflineCache<Gasto> {
+  CachedExpensesDao(super.db, {PayloadCodec? codec})
+    : _codec = codec ?? PayloadCodec();
+  final PayloadCodec _codec;
   $CachedExpensesTable get cachedExpenses => attachedDatabase.cachedExpenses;
 
   @override
   Future<void> replace(List<Gasto> values) async {
-    await batch((Batch batch) {
-      batch.deleteAll(cachedExpenses);
-      batch.insertAll(
-        cachedExpenses,
-        values.map(_companion).toList(growable: false),
-      );
-    });
+    await delete(cachedExpenses).go();
+    for (final Gasto value in values) {
+      await into(cachedExpenses).insert(await _companion(value));
+    }
   }
 
   @override
-  Future<List<Gasto>> read() async => (await select(cachedExpenses).get())
-      .map((CachedExpense row) => Gasto.fromJson(_decode(row.payloadJson)))
-      .toList(growable: false);
+  Future<List<Gasto>> read() async => Future.wait(
+    (await select(cachedExpenses).get()).map(
+      (CachedExpense row) async =>
+          Gasto.fromJson(await _codec.decryptOrDecode(row.payloadJson)),
+    ),
+  );
 
-  CachedExpensesCompanion _companion(Gasto value) =>
-      CachedExpensesCompanion.insert(
-        localKey: value.id.toString(),
-        payloadJson: jsonEncode(value.toJson()),
-        localUpdatedAt: DateTime.now(),
+  @override
+  Future<void> upsertOptimistic(Gasto value, {String? idempotencyKey}) async =>
+      into(cachedExpenses).insert(
+        await _companion(
+          value,
+          syncState: 'pending',
+          idempotencyKey: idempotencyKey,
+        ),
+        mode: InsertMode.insertOrReplace,
       );
-
-  Map<String, Object?> _decode(String value) =>
-      Map<String, Object?>.from(jsonDecode(value) as Map<Object?, Object?>);
+  Future<CachedExpensesCompanion> _companion(
+    Gasto value, {
+    String syncState = 'synced',
+    String? idempotencyKey,
+  }) async => CachedExpensesCompanion.insert(
+    localKey: value.id.toString(),
+    payloadJson: await _codec.encryptPayload(value.toJson()),
+    localUpdatedAt: DateTime.now(),
+    syncState: Value(syncState),
+    idempotencyKey: Value(idempotencyKey),
+  );
 }

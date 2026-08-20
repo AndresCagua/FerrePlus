@@ -46,8 +46,13 @@ class OfflineCompraRepository implements CompraRepository {
     try {
       return await _remote.create(request);
     } on NetworkFailure {
-      await _queue.enqueue(adapter.toOperation(request));
-      return _local(request);
+      final Compra local = _local(request);
+      final operation = adapter
+          .toOperation(request)
+          .copyWith(localRecordKey: local.id.toString());
+      await _queue.enqueue(operation);
+      await _cacheOptimistically(local, operation.idempotencyKey);
+      return local;
     }
   }
 
@@ -56,8 +61,13 @@ class OfflineCompraRepository implements CompraRepository {
     try {
       return await _remote.update(id, request);
     } on NetworkFailure {
-      await _queue.enqueue(adapter.toOperation(request));
-      return _local(request, id: id);
+      final Compra local = _local(request, id: id);
+      final operation = adapter
+          .toOperation(request)
+          .copyWith(localRecordKey: local.id.toString());
+      await _queue.enqueue(operation);
+      await _cacheOptimistically(local, operation.idempotencyKey);
+      return local;
     }
   }
 
@@ -66,7 +76,25 @@ class OfflineCompraRepository implements CompraRepository {
     try {
       await _remote.anular(id);
     } on NetworkFailure {
-      await _queue.enqueue(adapter.voidOperation(id, 0));
+      final List<Compra> cached = await _cache.read();
+      final Iterable<Compra> matches = cached.where(
+        (Compra value) => value.id == id,
+      );
+      final Compra? current = matches.isEmpty ? null : matches.first;
+      final operation = adapter.voidOperation(id, current?.usuarioId ?? 0);
+      await _queue.enqueue(operation);
+      if (current != null) {
+        await _cacheOptimistically(
+          current.copyWith(estado: 'ANULADA'),
+          operation.idempotencyKey,
+        );
+      }
+    }
+  }
+
+  Future<void> _cacheOptimistically(Compra value, String key) async {
+    if (_cache case final OptimisticOfflineCache<Compra> optimistic) {
+      await optimistic.upsertOptimistic(value, idempotencyKey: key);
     }
   }
 
