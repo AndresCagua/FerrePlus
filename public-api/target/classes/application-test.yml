@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+management:
+  health:
+    mongo:
+      enabled: false
+    redis:
+      enabled: false
