@@ -1,0 +1,13 @@
+<section class="container-fluid" aria-labelledby="publicaciones-title">
+  <div class="d-flex justify-content-between align-items-center mb-3"><h2 id="publicaciones-title">Publicaciones</h2><button class="btn btn-primary" routerLink="nuevo" *appHasPermission="'TALENTO_PUBLICACIONES_CREAR'">Nueva publicacion</button></div>
+  <app-indisponibilidad-talento *ngIf="error.includes('temporalmente')" (retry)="load()"></app-indisponibilidad-talento>
+  <div *ngIf="error && !error.includes('temporalmente')" class="alert alert-danger" role="alert">{{ error }} <button class="btn btn-link" (click)="load()">Reintentar</button></div>
+  <mat-spinner *ngIf="loading" diameter="40" aria-label="Cargando publicaciones"></mat-spinner>
+  <div *ngIf="loaded && !loading && !error && !publicaciones.length" class="alert alert-info">No hay publicaciones registradas.</div>
+  <table *ngIf="loaded && !loading && publicaciones.length" mat-table [dataSource]="publicaciones" class="w-100">
+    <ng-container matColumnDef="titulo"><th mat-header-cell *matHeaderCellDef>Titulo</th><td mat-cell *matCellDef="let item">{{ item.titulo }}</td></ng-container>
+    <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let item">{{ item.estado }}</td></ng-container>
+    <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let item"><button class="btn btn-sm btn-link" [routerLink]="[item.id, 'editar']" *appHasPermission="'TALENTO_PUBLICACIONES_EDITAR'">Editar</button><button class="btn btn-sm btn-link" (click)="state(item.id, item.estado === 'DRAFT' ? 'PUBLISHED' : 'DRAFT')" *appHasPermission="'TALENTO_PUBLICACIONES_EDITAR'">{{ item.estado === 'DRAFT' ? 'Publicar' : 'Despublicar' }}</button><button class="btn btn-sm btn-link text-danger" (click)="delete(item.id)" *appHasPermission="'TALENTO_PUBLICACIONES_ELIMINAR'">Eliminar</button></td></ng-container>
+    <tr mat-header-row *matHeaderRowDef="['titulo','estado','acciones']"></tr><tr mat-row *matRowDef="let row; columns: ['titulo','estado','acciones'];"></tr>
+  </table>
+</section>

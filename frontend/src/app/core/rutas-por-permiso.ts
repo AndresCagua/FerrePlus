@@ -1,7 +1,7 @@
 /**
  * Fuente única de verdad del mapa ruta → permiso (R7).
  *
- * Lista las 14 rutas top-level de la aplicación con el permiso `MODULO_VER`
+ * Lista las rutas top-level de la aplicación con el permiso `MODULO_VER`
  * que cada una requiere. Este mapa lo consumen:
  *  - `SidebarComponent` (items del menú filtrados por permiso),
  *  - `AuthService.getHomeRoute()` (navegación post-login),
@@ -35,6 +35,7 @@ export const RUTAS_POR_PERMISO: RutaPorPermiso[] = [
   { label: 'Roles', icon: 'admin_panel_settings', route: '/roles', permissions: ['ROLES_VER'] },
   { label: 'Reportes', icon: 'bar_chart', route: '/reportes', permissions: ['REPORTES_VER'] },
   { label: 'Logs', icon: 'receipt_long', route: '/logs', permissions: ['LOGS_VER'] }
+  ,{ label: 'Talento', icon: 'work', route: '/talento', permissions: ['TALENTO_PUBLICACIONES_VER', 'TALENTO_CONVOCATORIAS_VER', 'TALENTO_POSTULACIONES_VER', 'CONTABILIDAD_CONTACTOS_VER', 'TALENTO_DESTINATARIOS_VER'] }
 ];
 
 /** Retorna los permisos requeridos para una ruta top-level (o [] si no está mapeada). */
