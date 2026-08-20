@@ -12,9 +12,9 @@
     </parent>
 
     <groupId>com.ferreplus</groupId>
-    <artifactId>ferreplus-backend</artifactId>
+    <artifactId>ferreplus-admin-api</artifactId>
     <version>1.0.0</version>
-    <name>FerrePlus Backend</name>
+    <name>FerrePlus Admin API</name>
     <description>Sistema de gestión de inventario para ferretería / bodega de repuestos</description>
 
     <properties>

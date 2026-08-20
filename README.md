@@ -28,7 +28,7 @@ Sistema de gestión de inventario para ferreterías y bodegas de repuestos. Back
 psql -U postgres -c "CREATE DATABASE ferreplus;"
 
 # Ejecutar script de inicialización
-psql -U postgres -d ferreplus -f backend/src/main/resources/schema.sql
+psql -U postgres -d ferreplus -f admin-api/src/main/resources/schema.sql
 ```
 
 ### 2. Backend (Docker)
@@ -173,7 +173,7 @@ docker compose logs --tail=20
 
 ### Cuando solo cambias config (application.yml)
 
-Si solo modificas `backend/src/main/resources/application.yml` (no código Java):
+Si solo modificas `admin-api/src/main/resources/application.yml` (no código Java):
 
 ```bash
 docker compose down
@@ -205,14 +205,14 @@ docker run -d --name ferreplus-pgtest \
   pgvector/pgvector:pg16
 ```
 
-> Usa el puerto `5433` para no chocar con tu PostgreSQL local de desarrollo (`5432`). La configuración está en `backend/src/test/resources/application-test.properties`.
+> Usa el puerto `5433` para no chocar con tu PostgreSQL local de desarrollo (`5432`). La configuración está en `admin-api/src/test/resources/application-test.properties`.
 
 **2. Correr la suite:**
 
 ```bash
 # Desde la raíz del proyecto (Maven corre dentro de un contenedor, no necesitás instalarlo)
 docker run --rm --network=host \
-  -v "$(pwd)/backend:/app" -w /app \
+  -v "$(pwd)/admin-api:/app" -w /app \
   maven:3.9-eclipse-temurin-21 mvn test
 ```
 
@@ -234,16 +234,16 @@ CI=true npm test -- --watch=false
 
 ## Seguridad
 
-- `backend/src/main/resources/application.yml` contiene credenciales locales y **está excluido de git** (`.gitignore`).
+- `admin-api/src/main/resources/application.yml` contiene credenciales locales y **está excluido de git** (`.gitignore`).
 - Usá `application.example.yml` como plantilla para tu configuración local.
 - Las credenciales de producción se inyectan vía variables de entorno en `docker-compose.yml`.
-- `docker-compose.yml` y `backend/Dockerfile` también están excluidos de git.
+- `docker-compose.yml` y `admin-api/Dockerfile` también están excluidos de git.
 
 ## Estructura del Proyecto
 
 ```
 ferreplus/
-├── backend/                    # Spring Boot REST API
+├── admin-api/                  # Spring Boot REST API administrativa
 │   ├── Dockerfile              # Multi-stage (solo local, excluido de git)
 │   ├── pom.xml
 │   └── src/main/java/com/ferreplus/

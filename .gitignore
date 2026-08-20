@@ -2,12 +2,12 @@
 DOCUMENTACION_INTERNA.md
 
 # === Maven ===
-backend/target/
-backend/bin/
-backend/*.jar
+admin-api/target/
+admin-api/bin/
+admin-api/*.jar
 
 # === Config (contiene secrets locales) ===
-backend/src/main/resources/application.yml
+admin-api/src/main/resources/application.yml
 .env
 
 # === Node / Angular ===
@@ -32,5 +32,5 @@ Thumbs.db
 bitacoras/
 
 # === Docker ===
-backend/Dockerfile
+admin-api/Dockerfile
 docker-compose.yml
