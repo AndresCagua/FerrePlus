@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: ferreplus-public-api
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://ferreplus:change-me-local@localhost:27017/ferreplus_public?authSource=admin}
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+server:
+  port: ${SERVER_PORT:8080}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://public.localhost,http://admin.localhost}
+logging:
+  pattern:
+    level: '%5p [corr:%X{correlationId:-}]'
+  level:
+    com.ferreplus.publico: INFO
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/ferreplus_public_test
+    redis:
+      url: redis://localhost:6379

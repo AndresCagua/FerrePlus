@@ -5,6 +5,9 @@ DOCUMENTACION_INTERNA.md
 admin-api/target/
 admin-api/bin/
 admin-api/*.jar
+public-api/target/
+public-api/bin/
+public-api/*.jar
 
 # === Config (contiene secrets locales) ===
 admin-api/src/main/resources/application.yml
