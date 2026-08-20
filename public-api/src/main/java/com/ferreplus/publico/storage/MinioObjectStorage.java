@@ -49,6 +49,7 @@ public class MinioObjectStorage implements ObjectStorage {
     }
 
     public String cvBucket() { return properties.cvBucket(); }
+    public String mediaBucket() { return properties.mediaBucket(); }
 
     public static class StorageException extends RuntimeException {
         public StorageException(String message, Throwable cause) { super(message, cause); }

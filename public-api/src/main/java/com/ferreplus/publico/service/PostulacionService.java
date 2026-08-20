@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class PostulacionService {
     private final MinioObjectStorage storage;
     private final ObjectCleanupService cleanup;
     private final PostulacionStateMachine stateMachine;
+    private final ApplicationEventPublisher events;
 
     public Postulacion create(String convocatoriaId, PostulacionRequestDTO request, MultipartFile cv,
                               String idempotencyKey) {
@@ -51,7 +53,10 @@ public class PostulacionService {
             item.setEstado(EstadoPostulacion.RECEIVED); item.setIdempotencyKey(idempotencyKey);
             item.setHistorial(new ArrayList<>(java.util.List.of(new Postulacion.HistorialEstado("system", now, null, "RECEIVED"))));
             item.setCreatedAt(now); item.setUpdatedAt(now);
-            return repository.save(item);
+            Postulacion saved = repository.save(item);
+            events.publishEvent(new com.ferreplus.publico.event.PostulacionReceivedEvent(
+                    saved.getId(), saved.getEmail(), correlationId()));
+            return saved;
         } catch (Exception exception) {
             cleanup.cleanup(storage.cvBucket(), key);
             if (exception instanceof PublicApiException apiException) throw apiException;
@@ -67,4 +72,5 @@ public class PostulacionService {
         item.getHistorial().add(new Postulacion.HistorialEstado(actor, now, item.getEstado().name(), target.name()));
         item.setEstado(target); item.setUpdatedAt(now); return repository.save(item);
     }
+    private String correlationId() { String value = org.slf4j.MDC.get("correlationId"); return value == null ? "unknown" : value; }
 }

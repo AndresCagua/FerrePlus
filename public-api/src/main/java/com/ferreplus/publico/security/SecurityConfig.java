@@ -43,7 +43,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.stream(origins.split(","))
             .map(String::trim).filter(value -> !value.isBlank()).toList());
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Content-Type", "Idempotency-Key", "X-Correlation-ID"));
+         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "Idempotency-Key", "X-Correlation-ID", "X-Fingerprint"));
         configuration.setAllowCredentials(false);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);

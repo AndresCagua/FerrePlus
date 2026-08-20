@@ -2,6 +2,10 @@ package com.ferreplus.publico.controller;
 
 import com.ferreplus.publico.dto.publico.PostulacionRequestDTO;
 import com.ferreplus.publico.dto.publico.PostulacionPublicaDTO;
+import com.ferreplus.publico.dto.publico.ContactoRequestDTO;
+import com.ferreplus.publico.dto.publico.ContactoPublicoDTO;
+import com.ferreplus.publico.service.PublicacionService;
+import com.ferreplus.publico.service.ContactoService;
 import com.ferreplus.publico.service.ConvocatoriaService;
 import com.ferreplus.publico.service.PostulacionService;
 import jakarta.validation.Valid;
@@ -19,10 +23,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class PublicController {
     private final ConvocatoriaService convocatoriaService;
     private final PostulacionService postulacionService;
+    private final PublicacionService publicacionService;
+    private final ContactoService contactoService;
 
     @GetMapping("/ping") public Map<String, String> ping() { return Map.of("service", "public-api", "status", "ok"); }
-    @GetMapping("/publicaciones") public List<Object> publicaciones() { return List.of(); }
-    @GetMapping("/publicaciones/{slug}") public Object publicacion(@PathVariable String slug) { throw new com.ferreplus.publico.exception.PublicApiException(HttpStatus.NOT_FOUND, "Publicacion no encontrada"); }
+    @GetMapping("/publicaciones") public Object publicaciones() { return publicacionService.publicas(); }
+    @GetMapping("/publicaciones/{slug}") public Object publicacion(@PathVariable String slug) { return publicacionService.publica(slug); }
     @GetMapping("/convocatorias") public List<?> convocatorias() { return convocatoriaService.publicas(); }
     @GetMapping("/convocatorias/{id}") public Object convocatoria(@PathVariable String id) { return convocatoriaService.publica(id); }
 
@@ -34,5 +40,15 @@ public class PublicController {
             @RequestHeader("Idempotency-Key") String idempotencyKey) {
         var result = postulacionService.create(id, request, cv, idempotencyKey);
         return new PostulacionPublicaDTO(result.getId(), result.getConvocatoriaId(), result.getEstado(), result.getCreatedAt());
+    }
+
+    @PostMapping("/contactos")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ContactoPublicoDTO contacto(@Valid @RequestBody ContactoRequestDTO request,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            jakarta.servlet.http.HttpServletRequest httpRequest,
+            @RequestHeader(value = "X-Fingerprint", required = false) String fingerprint) {
+        var saved = contactoService.create(request, idempotencyKey, httpRequest.getRemoteAddr(), fingerprint);
+        return new ContactoPublicoDTO(saved.getId(), saved.getEstado().name(), saved.getCreatedAt());
     }
 }
