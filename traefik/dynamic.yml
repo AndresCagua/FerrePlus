@@ -1,0 +1,18 @@
+http:
+  middlewares:
+    compress:
+      compress: {}
+    cors-public:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        accessControlAllowHeaders:
+          - Content-Type
+          - Idempotency-Key
+          - X-Correlation-ID
+        accessControlAllowOriginList:
+          - http://public.localhost
+        accessControlMaxAge: 600
+        addVaryHeader: true
