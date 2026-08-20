@@ -138,6 +138,10 @@ class SyncEngine implements OfflineQueue {
         );
         if (batch.isEmpty) break;
         for (final PendingOperation operation in batch) {
+          // La sesion puede cambiar mientras se carga el batch. No marques ni
+          // envies operaciones de una sesion que ya no esta activa: siguen en
+          // la cola persistida para el siguiente login del usuario correcto.
+          if (operation.userId != _activeUserId) break;
           try {
             await _queue.markSyncing(operation.id!);
             final Map<String, Object?> response = await _sender(

@@ -88,7 +88,13 @@ class PendingOperationsDao extends DatabaseAccessor<AppDatabase>
     final query = select(pendingOperations)
       ..where(
         ($PendingOperationsTable row) =>
-            row.status.equals(domain.PendingOperationStatus.pending.value) &
+            // `syncing` se recupera como pendiente tras un crash entre
+            // markSyncing y la respuesta. El mutex del SyncEngine evita
+            // envios concurrentes durante una ejecucion normal.
+            row.status.isIn(<String>[
+              domain.PendingOperationStatus.pending.value,
+              domain.PendingOperationStatus.syncing.value,
+            ]) &
             (row.nextRetryAt.isNull() |
                 row.nextRetryAt.isSmallerOrEqualValue(now)) &
             (userId == null

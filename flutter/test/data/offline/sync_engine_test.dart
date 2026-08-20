@@ -1,9 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 
 import 'package:ferreplus/core/errors/failure.dart';
 import 'package:ferreplus/data/offline/adapters/sale_offline_adapter.dart'
     as sale_adapter;
+import 'package:ferreplus/data/local/app_database.dart' as local_db;
+import 'package:ferreplus/data/local/daos/pending_operations_dao.dart';
 import 'package:ferreplus/data/offline/offline_venta_repository.dart';
 import 'package:ferreplus/data/services/sync_engine.dart';
 import 'package:ferreplus/data/services/sync_notification_service.dart';
@@ -13,6 +16,8 @@ import 'package:ferreplus/domain/repositories/offline_repository.dart';
 import 'package:ferreplus/domain/repositories/commercial_repositories.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('sender respeta endpoint persistido para updates y creates', () async {
     final Dio dio = Dio();
     final List<String> paths = <String>[];
@@ -182,10 +187,84 @@ void main() {
     expect(cache.synchronizedKeys, isEmpty);
     expect(queue.operation(1).status, PendingOperationStatus.completed);
   });
+
+  test(
+    'no envia el batch cargado si la sesion cambia antes del envio',
+    () async {
+      final FakeQueue queue = FakeQueue(<PendingOperation>[
+        _operation(id: 1, userId: 10),
+      ]);
+      late SyncEngine engine;
+      queue.beforeNextBatchForUser = () async => engine.setActiveUserId(20);
+      final List<int> sentIds = <int>[];
+      engine = _engine(
+        queue: queue,
+        activeUserId: 10,
+        sender: (PendingOperationEnvelope envelope) async {
+          sentIds.add(envelope.operation.id!);
+          return <String, Object?>{};
+        },
+      );
+
+      await engine.syncNow();
+
+      expect(sentIds, isEmpty);
+      expect(queue.operation(1).status, PendingOperationStatus.pending);
+    },
+  );
+
+  test(
+    'recupera una operacion syncing y la procesa despues de un crash',
+    () async {
+      const MethodChannel storageChannel = MethodChannel(
+        'plugins.it_nomads.com/flutter_secure_storage',
+      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(storageChannel, (_) async => null);
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(storageChannel, null),
+      );
+      final local_db.AppDatabase database = local_db.AppDatabase.memory();
+      addTearDown(database.close);
+      final PendingOperationsDao queue = PendingOperationsDao(database);
+      final int operationId = await database
+          .into(database.pendingOperations)
+          .insert(
+            local_db.PendingOperationsCompanion.insert(
+              operationType: OfflineOperationType.sale.value,
+              endpoint: '/api/ventas',
+              httpMethod: 'POST',
+              userId: 10,
+              idempotencyKey: 'key-1',
+              payloadJson: '{"id":1}',
+              createdAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await queue.markSyncing(operationId);
+
+      final List<int> sentIds = <int>[];
+      final SyncEngine engine = _engine(
+        queue: queue,
+        activeUserId: 10,
+        sender: (PendingOperationEnvelope envelope) async {
+          sentIds.add(envelope.operation.id!);
+          return <String, Object?>{};
+        },
+      );
+
+      final List<PendingOperation> recovered = await queue.nextBatchForUser(10);
+      expect(recovered.single.status, PendingOperationStatus.syncing);
+      await engine.syncNow();
+
+      expect(sentIds, <int>[operationId]);
+      expect((await queue.nextBatchForUser(10)), isEmpty);
+    },
+  );
 }
 
 SyncEngine _engine({
-  required FakeQueue queue,
+  required OfflineQueue queue,
   required PendingOperationSender sender,
   int? activeUserId,
   FakeCache? cache,
@@ -229,6 +308,7 @@ class FakeQueue
 
   final Map<int, PendingOperation> _operations;
   final List<int> resetUserIds = <int>[];
+  Future<void> Function()? beforeNextBatchForUser;
 
   PendingOperation operation(int id) => _operations[id]!;
 
@@ -257,7 +337,10 @@ class FakeQueue
   Future<List<PendingOperation>> nextBatchForUser(
     int userId, {
     int limit = 10,
-  }) async => _pending(limit: limit, userId: userId);
+  }) async {
+    await beforeNextBatchForUser?.call();
+    return _pending(limit: limit, userId: userId);
+  }
 
   List<PendingOperation> _pending({required int limit, int? userId}) =>
       _operations.values
