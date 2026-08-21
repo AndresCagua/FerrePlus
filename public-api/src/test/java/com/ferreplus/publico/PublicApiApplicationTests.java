@@ -31,8 +31,8 @@ class PublicApiApplicationTests {
     }
 
     @Test
-    void internalPingIsAvailableForContainerReadiness() throws Exception {
+    void internalPingRequiresS2sAuthentication() throws Exception {
         mockMvc.perform(get("/api/internal/ping"))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
     }
 }

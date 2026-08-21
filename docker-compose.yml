@@ -81,14 +81,15 @@ services:
   redis:
     image: redis:7-alpine
     container_name: ferreplus-redis
-    # TODO(PR8): habilitar autenticacion Redis junto con la configuracion de public-api.
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}
     volumes:
       - redis_data:/data
     networks:
       - public_data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -137,7 +138,15 @@ services:
       DB_USERNAME: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set; copy .env.example and replace the placeholder}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?APP_JWT_SECRET must be set; use an ignored local env file}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://admin.localhost}
+      S2S_ISSUER: ${S2S_ISSUER:-ferreplus-admin-api}
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-ferreplus-public-api}
+      S2S_KEY_ID: ${S2S_KEY_ID:-bootstrap}
+      S2S_PRIVATE_KEY_FILE: /run/secrets/s2s_private_key
+      PUBLIC_API_URL: http://public-api:8080
+    secrets:
+      - s2s_private_key
     depends_on:
       postgres:
         condition: service_healthy
@@ -174,13 +183,19 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SERVER_PORT: 8080
       MONGO_URI: mongodb://${MONGO_ROOT_USERNAME:-ferreplus}:${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD must be set; copy .env.example and replace the placeholder}@mongodb:27017/${MONGO_DATABASE:-ferreplus_public}?authSource=admin
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ferreplus}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set; copy .env.example and replace the placeholder}
       MINIO_CV_BUCKET: ${MINIO_CV_BUCKET:-cv-bucket}
       MINIO_MEDIA_BUCKET: ${MINIO_MEDIA_BUCKET:-media-bucket}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://public.localhost,http://admin.localhost}
+      S2S_ISSUER: ${S2S_ISSUER:-ferreplus-admin-api}
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-ferreplus-public-api}
+      S2S_INITIAL_PUBLIC_KEY_FILE: /run/secrets/s2s_public_key
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}
+    secrets:
+      - s2s_public_key
     depends_on:
       mongodb:
         condition: service_healthy
@@ -289,3 +304,7 @@ volumes:
 secrets:
   cloudflared_token:
     file: ${CLOUDFLARED_TOKEN_FILE:-./secrets/cloudflared.token}
+  s2s_private_key:
+    file: ${S2S_PRIVATE_KEY_FILE:-./secrets/s2s-private-key.pem}
+  s2s_public_key:
+    file: ${S2S_INITIAL_PUBLIC_KEY_FILE:-./secrets/s2s-public-key.pem}

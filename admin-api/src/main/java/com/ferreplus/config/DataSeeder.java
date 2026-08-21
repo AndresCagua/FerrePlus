@@ -16,6 +16,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,6 +67,11 @@ public class DataSeeder implements CommandLineRunner {
         MODULOS.put("REPORTES", new int[]{13, 1, 0, 0, 0, 0});
         MODULOS.put("LOGS", new int[]{14, 1, 0, 0, 1, 0});
         MODULOS.put("CHAT", new int[]{15, 0, 0, 0, 0, 1});
+        MODULOS.put("TALENTO_PUBLICACIONES", new int[]{16, 1, 1, 1, 1, 0});
+        MODULOS.put("TALENTO_CONVOCATORIAS", new int[]{17, 1, 1, 1, 1, 0});
+        MODULOS.put("TALENTO_POSTULACIONES", new int[]{18, 1, 0, 1, 0, 0});
+        MODULOS.put("TALENTO_DESTINATARIOS", new int[]{19, 1, 1, 1, 1, 0});
+        MODULOS.put("CONTABILIDAD_CONTACTOS", new int[]{20, 1, 0, 1, 0, 0});
 
         NOMBRES_MODULO.put("DASHBOARD", "Dashboard");
         NOMBRES_MODULO.put("PRODUCTOS", "Productos");
@@ -82,6 +88,11 @@ public class DataSeeder implements CommandLineRunner {
         NOMBRES_MODULO.put("REPORTES", "Reportes");
         NOMBRES_MODULO.put("LOGS", "Logs");
         NOMBRES_MODULO.put("CHAT", "Asistente");
+        NOMBRES_MODULO.put("TALENTO_PUBLICACIONES", "Publicaciones de talento");
+        NOMBRES_MODULO.put("TALENTO_CONVOCATORIAS", "Convocatorias de talento");
+        NOMBRES_MODULO.put("TALENTO_POSTULACIONES", "Postulaciones de talento");
+        NOMBRES_MODULO.put("TALENTO_DESTINATARIOS", "Destinatarios de talento");
+        NOMBRES_MODULO.put("CONTABILIDAD_CONTACTOS", "Contactos contables");
     }
 
     private static final String[] ACCIONES = {"VER", "CREAR", "EDITAR", "ELIMINAR", "INDEX_REBUILD"};
@@ -112,8 +123,13 @@ public class DataSeeder implements CommandLineRunner {
                 "GASTOS_VER", "GASTOS_CREAR", "GASTOS_EDITAR", "GASTOS_ELIMINAR",
                 "USUARIOS_VER", "USUARIOS_CREAR", "USUARIOS_EDITAR", "USUARIOS_ELIMINAR",
                 "ROLES_VER", "ROLES_CREAR", "ROLES_EDITAR", "ROLES_ELIMINAR",
-                "REPORTES_VER",
-                "LOGS_VER", "LOGS_ELIMINAR"
+                 "REPORTES_VER",
+                 "LOGS_VER", "LOGS_ELIMINAR",
+                 "TALENTO_PUBLICACIONES_VER", "TALENTO_PUBLICACIONES_CREAR", "TALENTO_PUBLICACIONES_EDITAR", "TALENTO_PUBLICACIONES_ELIMINAR",
+                 "TALENTO_CONVOCATORIAS_VER", "TALENTO_CONVOCATORIAS_CREAR", "TALENTO_CONVOCATORIAS_EDITAR", "TALENTO_CONVOCATORIAS_ELIMINAR",
+                 "TALENTO_POSTULACIONES_VER", "TALENTO_POSTULACIONES_EDITAR",
+                 "TALENTO_DESTINATARIOS_VER", "TALENTO_DESTINATARIOS_CREAR", "TALENTO_DESTINATARIOS_EDITAR", "TALENTO_DESTINATARIOS_ELIMINAR",
+                 "CONTABILIDAD_CONTACTOS_VER", "CONTABILIDAD_CONTACTOS_EDITAR"
         ));
         MATRIZ_ROLES.put("VENDEDOR", Set.of(
                 "DASHBOARD_VER",
@@ -137,7 +153,8 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private static final String ADMIN_EMAIL = "admin@ferreplus.com";
-    private static final String ADMIN_PASSWORD = "admin123";
+    @Value("${app.seed.admin-password:}")
+    private String adminPassword;
 
     @Override
     @Transactional
@@ -227,7 +244,7 @@ public class DataSeeder implements CommandLineRunner {
                     usuarioRepository.save(Usuario.builder()
                             .nombre("Administrador")
                             .email(ADMIN_EMAIL)
-                            .password(passwordEncoder.encode(ADMIN_PASSWORD))
+                             .password(passwordEncoder.encode(adminPassword == null || adminPassword.isBlank() ? "change-me-before-use" : adminPassword))
                             .telefono("0999999999")
                             .rol(admin)
                             .activo(true)

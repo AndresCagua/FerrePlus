@@ -4,17 +4,22 @@ import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
+@EnableConfigurationProperties(S2sJwtProperties.class)
 public class SecurityConfig {
+    private final S2sJwtFilter s2sJwtFilter;
+    public SecurityConfig(S2sJwtFilter s2sJwtFilter) { this.s2sJwtFilter = s2sJwtFilter; }
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
@@ -29,10 +34,11 @@ public class SecurityConfig {
                     org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
                 .permissionsPolicy(policy -> policy.policy("geolocation=(), microphone=(), camera=()")))
             .authorizeHttpRequests(auth -> auth
-                // Placeholder de PR4; S2S JWT asimetrico se activa en PR8.
-                .requestMatchers("/actuator/health", "/api/public/**", "/api/internal/**").permitAll()
+                .requestMatchers("/actuator/health", "/api/public/**").permitAll()
+                .requestMatchers("/api/internal/**").authenticated()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .anyRequest().denyAll());
+            .anyRequest().denyAll())
+            .addFilterBefore(s2sJwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

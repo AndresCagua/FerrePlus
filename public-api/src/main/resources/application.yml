@@ -43,6 +43,12 @@ app:
     media-bucket: ${MINIO_MEDIA_BUCKET:media-bucket}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://public.localhost,http://admin.localhost}
+  s2s:
+    issuer: ${S2S_ISSUER:ferreplus-admin-api}
+    audience: ${S2S_AUDIENCE:ferreplus-public-api}
+    bootstrap-public-key: ${S2S_BOOTSTRAP_PUBLIC_KEY:}
+    bootstrap-public-key-file: ${S2S_INITIAL_PUBLIC_KEY_FILE:}
+    clock-skew: ${S2S_CLOCK_SKEW:30s}
   mail:
     from: ${SMTP_FROM:no-reply@ferreplus.local}
 logging:

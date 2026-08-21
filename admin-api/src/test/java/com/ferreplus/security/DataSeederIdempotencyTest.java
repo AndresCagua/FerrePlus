@@ -57,14 +57,14 @@ class DataSeederIdempotencyTest {
 
     @Test
     void seed_siembraElEstadoCompletoEsperado() {
-        assertEquals(15, moduloRepository.count(), "Deben sembrarse 15 módulos");
-        assertEquals(45, permisoRepository.count(), "Deben sembrarse 45 permisos");
+        assertEquals(20, moduloRepository.count(), "Deben sembrarse 20 módulos");
+        assertEquals(61, permisoRepository.count(), "Deben sembrarse 61 permisos");
 
         var roles = rolRepository.findAllWithPermisos();
         assertEquals(3, roles.size(), "Deben existir exactamente 3 roles base");
 
-        assertEquals(72, roles.stream().mapToLong(r -> r.getPermisos().size()).sum(),
-                "ADMIN(45) + VENDEDOR(9) + BODEGUERO(18) = 72 pares rol_permisos");
+        assertEquals(88, roles.stream().mapToLong(r -> r.getPermisos().size()).sum(),
+                "La matriz base debe contener 88 pares rol_permisos");
 
         assertTrue(rolRepository.findByNombre("CAJERO").isEmpty(),
                 "El rol CAJERO fue eliminado del modelo (R7 REMOVED)");

@@ -25,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import com.ferreplus.publico.dto.interno.PublicKeyRequest;
+import com.ferreplus.publico.security.KeyService;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,8 +39,13 @@ public class InternalController {
     private final ContactoService contactoService;
     private final DestinatarioService destinatarioService;
     private final MailEventListener mailEventListener;
+    private final KeyService keyService;
 
     @GetMapping("/ping") public Map<String, String> ping() { return Map.of("service", "public-api", "boundary", "internal", "status", "ok"); }
+    @PostMapping("/keys") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void publishKey(@Valid @RequestBody PublicKeyRequest request) {
+        keyService.publish(request.kid(), request.publicKey(), request.expiration());
+    }
     @GetMapping("/convocatorias") public List<Convocatoria> allConvocatorias() { return convocatoriaService.todas(); }
     @PostMapping("/convocatorias") @ResponseStatus(HttpStatus.CREATED)
     public Convocatoria createConvocatoria(@Valid @RequestBody ConvocatoriaAdminDTO request) { return convocatoriaService.crear(request); }

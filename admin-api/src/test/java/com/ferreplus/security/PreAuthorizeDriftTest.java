@@ -46,7 +46,13 @@ class PreAuthorizeDriftTest {
     private static final Pattern AUTHORITY_PATTERN = Pattern.compile("hasAuthority\\('([A-Z_]+)'\\)");
     private static final Pattern ANY_AUTHORITY_PATTERN = Pattern.compile("hasAnyAuthority\\(([^)]*)\\)");
 
-    private static final Set<String> ALLOWLIST = Set.of("VENTAS_EDITAR", "ROLES_CREAR", "ROLES_ELIMINAR");
+    private static final Set<String> ALLOWLIST = Set.of(
+            "VENTAS_EDITAR", "ROLES_CREAR", "ROLES_ELIMINAR",
+            "TALENTO_PUBLICACIONES_VER", "TALENTO_PUBLICACIONES_CREAR", "TALENTO_PUBLICACIONES_EDITAR", "TALENTO_PUBLICACIONES_ELIMINAR",
+            "TALENTO_CONVOCATORIAS_VER", "TALENTO_CONVOCATORIAS_CREAR", "TALENTO_CONVOCATORIAS_EDITAR", "TALENTO_CONVOCATORIAS_ELIMINAR",
+            "TALENTO_POSTULACIONES_VER", "TALENTO_POSTULACIONES_EDITAR",
+            "TALENTO_DESTINATARIOS_VER", "TALENTO_DESTINATARIOS_CREAR", "TALENTO_DESTINATARIOS_EDITAR", "TALENTO_DESTINATARIOS_ELIMINAR",
+            "CONTABILIDAD_CONTACTOS_VER", "CONTABILIDAD_CONTACTOS_EDITAR");
 
     @Autowired
     private PermisoRepository permisoRepository;
@@ -56,9 +62,9 @@ class PreAuthorizeDriftTest {
 
     @Test
     void catalogo_seed_es_completo() {
-        // 15 módulos, 45 permisos, 72 pares rol_permisos (R1, R6, CHAT)
-        assertEquals(45, permisoRepository.count(),
-                "El catálogo debe tener exactamente 45 permisos");
+        // 20 módulos, 61 permisos, 88 pares rol_permisos (R1, R6, CHAT)
+        assertEquals(61, permisoRepository.count(),
+                "El catálogo debe tener exactamente 61 permisos");
 
         Set<String> codigos = permisoRepository.findAll().stream()
                 .map(Permiso::getCodigo)
@@ -67,7 +73,7 @@ class PreAuthorizeDriftTest {
         List<Rol> roles = rolRepository.findAllWithPermisos();
         assertEquals(3, roles.size(), "Deben existir los 3 roles base");
         long pares = roles.stream().mapToLong(r -> r.getPermisos().size()).sum();
-        assertEquals(72, pares, "ADMIN(45) + VENDEDOR(9) + BODEGUERO(18) = 72 pares");
+        assertEquals(88, pares, "La matriz base debe contener 88 pares");
 
         for (Rol rol : roles) {
             for (Permiso permiso : rol.getPermisos()) {
