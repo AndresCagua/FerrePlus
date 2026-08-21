@@ -30,33 +30,11 @@ services:
           memory: 256M
     restart: unless-stopped
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: ferreplus-postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-ferreplus}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set; copy .env.example and replace the placeholder}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - admin_data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: "1.00"
-          memory: 512M
-    restart: unless-stopped
-
   mongodb:
     image: mongo:8
     container_name: ferreplus-mongodb
+    ports:
+      - "127.0.0.1:${MONGO_HOST_PORT:-27017}:27017"
     environment:
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-ferreplus_public}
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-ferreplus}
@@ -81,6 +59,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: ferreplus-redis
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}
@@ -104,6 +84,9 @@ services:
     image: minio/minio:RELEASE.2024-06-13T22-53-53Z
     container_name: ferreplus-minio
     command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "127.0.0.1:${MINIO_API_HOST_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9001}:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ferreplus}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set; copy .env.example and replace the placeholder}
@@ -132,7 +115,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SERVER_PORT: 8080
-      DB_HOST: postgres
+      DB_HOST: host.docker.internal
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB:-ferreplus}
       DB_USERNAME: ${POSTGRES_USER:-postgres}
@@ -147,9 +130,8 @@ services:
       PUBLIC_API_URL: http://public-api:8080
     secrets:
       - s2s_private_key
-    depends_on:
-      postgres:
-        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - admin_net
       - admin_data
@@ -296,7 +278,6 @@ networks:
     internal: true
 
 volumes:
-  postgres_data:
   mongodb_data:
   redis_data:
   minio_data:

@@ -3,9 +3,21 @@
 ## Boundary
 
 `admin-api` es el unico servicio que conoce PostgreSQL y firma las llamadas a
-`public-api`. `public-api` es el unico propietario de MongoDB, Redis y MinIO.
-Los cuatro servicios de datos no publican puertos al host; Traefik es el unico
-entrypoint HTTP.
+`public-api`. PostgreSQL es una dependencia externa/local existente del host
+Linux, accesible desde el contenedor como `host.docker.internal:5432`; Compose
+NO crea, inicializa, elimina ni administra esa instancia. `public-api` es el
+unico propietario de MongoDB, Redis y MinIO, que si son servicios nuevos de
+Compose. Traefik es el unico entrypoint HTTP de las aplicaciones.
+
+La configuracion de `admin-api` conserva `DB_NAME=ferreplus`,
+`DB_USERNAME=postgres` y toma `DB_PASSWORD` desde la variable local ignorada
+(`POSTGRES_PASSWORD` en `.env`). El servicio usa
+`extra_hosts: ["host.docker.internal:host-gateway"]`; no usa el hostname
+Compose `postgres` ni depende de un servicio PostgreSQL del archivo.
+
+El contenedor/volumen historico `ferreplus-postgres` / `ferreplus_postgres_data`
+se preserva fuera del ciclo de vida declarado por este Compose. No se ejecuta
+`compose down -v` ni se realizan operaciones SQL destructivas.
 
 ## S2S JWT
 
@@ -61,6 +73,7 @@ en Rate limiting, no deshabilitar la proteccion.
 
 ```bash
 docker compose --env-file .env.example config
+docker compose --env-file .env config
 mvn -f public-api/pom.xml test
 mvn -f admin-api/pom.xml test
 cd frontend && npm test && npm run build
@@ -70,3 +83,15 @@ git diff -- ':!openspec/**' ':!flutter/**' ':!portal/**' | rg -n -i 'private.key
 
 El entorno requiere crear localmente `secrets/s2s-private-key.pem`,
 `secrets/s2s-public-key.pem` y un `.env` ignorado con passwords reales.
+
+El smoke de PostgreSQL debe confirmar que `admin-api` alcanza el PostgreSQL del
+host en `host.docker.internal:5432` con las credenciales del `.env`, mientras
+`public-api` solo usa MongoDB, Redis y MinIO de Compose. Los hosts
+`api-admin.localhost` y `api.localhost` deben responder desde sus respectivas
+APIs a traves de Traefik, no desde un router 404.
+
+Si PostgreSQL escucha en el host pero su `pg_hba.conf` solo permite loopback,
+el kernel rechazara la conexion proveniente de la red bridge Docker aunque el
+puerto este abierto. En ese caso el operador del host debe habilitar de forma
+controlada la red Docker para la base `ferreplus` y el usuario `postgres`; este
+change NO edita `pg_hba.conf`, no cambia credenciales y no ejecuta SQL.

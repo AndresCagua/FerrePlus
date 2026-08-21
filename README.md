@@ -31,18 +31,37 @@ psql -U postgres -c "CREATE DATABASE ferreplus;"
 psql -U postgres -d ferreplus -f admin-api/src/main/resources/schema.sql
 ```
 
-### 2. Backend (Docker)
+### 2. Entorno local (Docker)
 
 ```bash
 # Desde la raíz del proyecto
 docker compose up -d --build
 ```
 
-Esto compila el backend (multi-stage: Maven → JRE) y levanta el contenedor en `http://localhost:8081`.
+Esto compila las APIs y levanta el entorno local con Traefik como entrypoint. Los puertos de
+MongoDB, Redis y MinIO quedan publicados exclusivamente en `127.0.0.1`.
 
-> **Swagger UI:** [`http://localhost:8081/swagger-ui/index.html`](http://localhost:8081/swagger-ui/index.html) — documentación interactiva de la API REST.
+#### Rutas locales
+
+| Servicio | URL |
+| -------- | --- |
+| Portal publico | `http://public.localhost:8088` |
+| API publica | `http://api.localhost:8088/api` |
+| Admin UI | `http://admin.localhost:8088` |
+| API admin | `http://api-admin.localhost:8088/api` |
+| MinIO API | `http://127.0.0.1:9000` |
+| MinIO console | `http://127.0.0.1:9001` |
+
+#### Conexiones locales para DataGrip/pruebas
+
+MongoDB usa `127.0.0.1:27017`, Redis `127.0.0.1:6379` y MinIO API
+`127.0.0.1:9000`. Las credenciales se toman del `.env` local ignorado; no se
+documentan aqui. Para produccion, elimina los bloques `ports:` de MongoDB,
+Redis y MinIO: las conexiones internas continuan usando sus nombres Compose.
+
+> **Swagger UI:** [`http://api-admin.localhost:8088/swagger-ui/index.html`](http://api-admin.localhost:8088/swagger-ui/index.html) — documentación interactiva de la API REST.
 >
-> **Scalar UI:** [`http://localhost:8081/scalar`](http://localhost:8081/scalar) — alternativa moderna a Swagger para probar los endpoints.
+> **Scalar UI:** [`http://api-admin.localhost:8088/scalar`](http://api-admin.localhost:8088/scalar) — alternativa moderna a Swagger para probar los endpoints.
 
 ### 3. Frontend
 
@@ -107,7 +126,7 @@ mantener todos los tests existentes y los nuevos tests de widgets/integración.
 ### 4. Acceso inicial
 
 - **Email:** `admin@ferreplus.com`
-- **Password:** `admin123`
+- **Password:** definida solo en la configuracion local ignorada por Git.
 
 ## Chat Inteligente (IA)
 
