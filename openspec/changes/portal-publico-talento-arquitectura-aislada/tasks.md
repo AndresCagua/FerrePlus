@@ -1,7 +1,7 @@
 # Tasks: Portal Publico y Gestion de Talento con Arquitectura Aislada
 
 > **Change**: `portal-publico-talento-arquitectura-aislada`
-> **Total tasks**: 88
+> **Total tasks**: 89
 > **PRs encadenados**: 8
 > **Specialists**: `springboot` (admin-api / public-api), `angular` (frontend), `astro` (portal-publico), `infra` (Docker / Traefik / docs)
 > **Commit rule**: cada tarea o sub-tarea es una unidad de trabajo **commiteable y revisable**. El usuario aprueba cada commit antes de crearlo; el mensaje sigue el formato acordado: `YYYYMMDD tipo(scope): bullets en español`.
@@ -17,10 +17,10 @@
 | PR3 | Skeleton `public-api`, modelos, DTOs, ProblemDetail | 14 | 620 | R1, R2, R10, R14 |
 | PR4 | MinIO, postulaciones, convocatorias, validacion CV | 11 | 770 | R4, R5, R6 |
 | PR5 | Contactos, publicaciones, correo asincrono | 11 | 770 | R3, R7, R8, R9 |
-| PR6 | Portal Astro SSG, SEO, formularios publicos | 10 | 620 | R15 |
+| PR6 | Portal Astro SSG, SEO, formularios publicos y temas | 11 | 640 | R15 |
 | PR7 | Modulo Angular de talento, RBAC, resiliencia | 13 | 770 | R13, R16, R17 |
 | PR8 | S2S JWT, observabilidad, tests integrales, docs | 13 | 770 | R11, R12, R14, R18 |
-| **Total** | | **88** | **5.470** | |
+| **Total** | | **89** | **5.490** | |
 
 ---
 
@@ -758,6 +758,13 @@
 - [ ] Formularios envian a `/api/public/**` con honeypot e idempotencia.
 - [ ] Imagenes usan formatos optimizados y lazy loading.
 - [ ] No se exponen secretos del backend en el cliente.
+
+### T6.11: Correccion posterior — temas claro/oscuro del portal
+- **Descripcion**: Incorporar selector accesible visible en Header, tokens CSS para modo claro y oscuro, persistencia en `localStorage`, preferencia del sistema y prevencion de flash mediante script inline temprano.
+- **Archivos afectados**: `portal/src/layouts/BaseLayout.astro`, `portal/src/components/Header.astro`, `portal/src/styles/global.css`.
+- **Requisitos**: R15, R18.
+- **Verificacion**: `npm run check`, `npm run build`, inspeccion de HTML generado y prueba manual de ambos temas, foco y preferencia guardada.
+- **Estado**: completed.
 
 ---
 

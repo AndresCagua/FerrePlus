@@ -324,7 +324,7 @@ Todas las solicitudes publicas, internas y administrativas relacionadas DEBEN pr
 
 ### R15: Portal Astro publico
 
-El portal DEBE ser Astro con SSG/prerender por defecto cuando sea viable, layouts y componentes reutilizables, minimo JavaScript e islands solo para interactividad necesaria. DEBE ofrecer publicaciones, convocatorias, Trabaja con Nosotros y Contactanos. DEBE generar `title`, `description`, `canonical`, Open Graph, sitemap, robots y structured data; borradores NO DEBEN ser indexables. Las imagenes DEBEN optimizarse a WebP/AVIF cuando aplique, usar lazy loading y cache HTTP adecuado. No DEBE exponer credenciales del backend en el cliente.
+El portal DEBE ser Astro con SSG/prerender por defecto cuando sea viable, layouts y componentes reutilizables, minimo JavaScript e islands solo para interactividad necesaria. DEBE ofrecer publicaciones, convocatorias, Trabaja con Nosotros y Contactanos. DEBE generar `title`, `description`, `canonical`, Open Graph, sitemap, robots y structured data; borradores NO DEBEN ser indexables. Las imagenes DEBEN optimizarse a WebP/AVIF cuando aplique, usar lazy loading y cache HTTP adecuado. No DEBE exponer credenciales del backend en el cliente. DEBE ofrecer modo claro y modo oscuro funcionales mediante un selector accesible visible en el Header.
 
 #### Scenario: Pagina publicada cumple SEO y rendimiento
 
@@ -340,6 +340,22 @@ El portal DEBE ser Astro con SSG/prerender por defecto cuando sea viable, layout
 - WHEN se genera el portal, sitemap y robots
 - THEN el borrador no se prerenderiza como pagina publica ni aparece en sitemap
 - AND no tiene metadata indexable
+
+#### Scenario: El visitante cambia y conserva el tema elegido
+
+- GIVEN el visitante ve cualquier pagina del portal
+- WHEN activa el selector de tema en el Header
+- THEN el contenido cambia inmediatamente entre modo claro y modo oscuro sin recargar
+- AND el control expone su estado mediante `aria-pressed` y una etiqueta clara
+- AND la eleccion se conserva en `localStorage` al navegar o volver a visitar el portal
+
+#### Scenario: El portal respeta la preferencia del sistema sin flash
+
+- GIVEN no existe una eleccion guardada en `localStorage`
+- WHEN el portal se pinta por primera vez
+- THEN usa `prefers-color-scheme` para seleccionar claro u oscuro
+- AND aplica el tema antes de pintar el contenido para evitar un flash del tema incorrecto
+- AND el contenido permanece legible y navegable aun sin JavaScript
 
 ### R16: Modulo Angular de talento
 
@@ -430,11 +446,11 @@ El cambio DEBE incluir tests unitarios e integracion para contratos y reglas cri
 | R12 | JWT S2S e endpoints internos | Seguridad | 3 |
 | R13 | Resiliencia y degradacion | Resiliencia | 1 |
 | R14 | Observabilidad y correlation IDs | Operabilidad | 2 |
-| R15 | Portal Astro publico | Frontend publico | 2 |
+| R15 | Portal Astro publico | Frontend publico | 4 |
 | R16 | Modulo Angular de talento | Frontend administrativo | 2 |
 | R17 | RBAC para modulos nuevos | Seguridad/UI | 2 |
 | R18 | Testing y documentacion | Calidad | 2 |
-| **Total** |  |  | **45** |
+| **Total** |  |  | **47** |
 
 ## Cobertura
 

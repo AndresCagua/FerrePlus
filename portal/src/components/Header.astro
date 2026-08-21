@@ -1,1 +1,21 @@
-<header class="site-header"><div class="container nav"><a class="brand" href="/" aria-label="Ferreplus inicio">ferre<span>plus</span></a><nav aria-label="Navegacion principal"><a href="/">Inicio</a><a href="/publicaciones/">Publicaciones</a><a href="/convocatorias/">Convocatorias</a><a href="/trabajaconnosotros/">Trabaja con nosotros</a><a href="/contactanos/">Contactanos</a></nav></div></header>
+<header class="site-header"><div class="container nav"><a class="brand" href="/" aria-label="Ferreplus inicio">ferre<span>plus</span></a><div class="nav-actions"><nav aria-label="Navegacion principal"><a href="/">Inicio</a><a href="/publicaciones/">Publicaciones</a><a href="/convocatorias/">Convocatorias</a><a href="/trabajaconnosotros/">Trabaja con nosotros</a><a href="/contactanos/">Contactanos</a></nav><button class="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false" data-theme-toggle><span aria-hidden="true" data-theme-icon>◐</span><span data-theme-label>Modo oscuro</span></button></div></div></header>
+<script is:inline>
+  const themeToggle = document.querySelector('[data-theme-toggle]');
+  const themeIcon = document.querySelector('[data-theme-icon]');
+  const themeLabel = document.querySelector('[data-theme-label]');
+  const updateThemeControl = (theme) => {
+    const isDark = theme === 'dark';
+    themeToggle?.setAttribute('aria-pressed', String(isDark));
+    themeToggle?.setAttribute('aria-label', isDark ? 'Activar modo claro' : 'Activar modo oscuro');
+    if (themeLabel) themeLabel.textContent = isDark ? 'Modo claro' : 'Modo oscuro';
+    if (themeIcon) themeIcon.textContent = isDark ? '☼' : '◐';
+  };
+  updateThemeControl(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+  themeToggle?.addEventListener('click', () => {
+    const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = nextTheme;
+    document.documentElement.style.colorScheme = nextTheme;
+    try { localStorage.setItem('ferreplus-theme', nextTheme); } catch {}
+    updateThemeControl(nextTheme);
+  });
+</script>

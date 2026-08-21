@@ -266,6 +266,30 @@ jar comun.
 **Consecuencias:** Se evita fuga de campos internos y acoplamiento de build, a
 cambio de duplicacion controlada y necesidad de contract tests.
 
+### ADR-13: Temas claro y oscuro controlados en el portal
+
+**Status:** Accepted
+
+**Contexto:** El portal publico debe ofrecer la misma adaptabilidad visual que el
+admin sin reemplazar su identidad ni hacer depender la legibilidad de JavaScript.
+
+**Decision:** `BaseLayout` ejecuta un script inline temprano que aplica `data-theme`
+con la eleccion valida de `localStorage` (`ferreplus-theme`) o, en su ausencia, la
+preferencia `prefers-color-scheme`. `Header` muestra un boton toggle visible, con
+etiqueta accionable y `aria-pressed`, que cambia el atributo y persiste la eleccion
+sin recargar. `global.css` concentra tokens semanticos para superficie, texto,
+muted, borde, foco, estados y controles; el tema oscuro y el fallback del sistema
+se resuelven con variables CSS. Las transiciones se anulan para
+`prefers-reduced-motion: reduce`.
+
+**Alternativas consideradas:** Solo detectar el sistema (no permite control
+explicito); selector separado de tres estados (agrega carga cognitiva); cambiar
+clases desde JavaScript despues del render (produce flash).
+
+**Consecuencias:** El portal conserva el diseño existente y añade una superficie
+de tokens mantenible. La preferencia guardada prevalece sobre cambios posteriores
+del sistema hasta que el visitante la cambie desde el selector.
+
 ## Architecture Components and Topology
 
 ```text
@@ -707,6 +731,13 @@ usa `loading=lazy` excepto hero. Respuestas publicas agregan `Cache-Control`
 (`publicaciones` 60s, detalles 60s, formularios `no-store`); Astro no cachea
 POST. Formularios son islands con `client:visible`, progressive enhancement y
 `fetch` solo a `/api/public/**`; no conocen JWT, SMTP ni MinIO.
+
+El sistema visual usa tokens CSS semanticos para los temas `light` y `dark`.
+El script inline de `BaseLayout` aplica la preferencia antes de que el navegador
+muestre el contenido; si no existe una preferencia guardada, consulta el sistema.
+El selector del `Header` cambia el tema inmediatamente, persiste en
+`localStorage` y mantiene estado accesible. Sin JavaScript, el fallback CSS de
+`prefers-color-scheme` conserva contraste y legibilidad.
 
 ## Docker Compose
 
