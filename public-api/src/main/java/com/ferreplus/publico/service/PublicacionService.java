@@ -78,7 +78,7 @@ public class PublicacionService {
         return item;
     }
 
-    private Publicacion find(String id) { return repository.findById(id).orElseThrow(() ->
+    public Publicacion find(String id) { return repository.findById(id).orElseThrow(() ->
             new PublicApiException(HttpStatus.NOT_FOUND, "Publicacion no encontrada")); }
     private boolean vigente(Publicacion item) {
         Instant now = Instant.now();

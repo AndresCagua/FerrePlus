@@ -21,8 +21,22 @@ public class NotificacionService {
         item.setEstado(EstadoNotificacion.PENDING); item.setIntentos(0); item.setCorrelationId(correlationId);
         Instant now = Instant.now(); item.setCreatedAt(now); item.setUpdatedAt(now); return repository.save(item);
     }
+    public Notificacion pendingToRecipient(TipoDestinatario tipo, String referenciaId, String recipient, String correlationId) {
+        Notificacion item = new Notificacion(); item.setTipo(tipo); item.setReferenciaId(referenciaId);
+        item.setDestinatarios(recipient == null || recipient.isBlank() ? List.of() : List.of(recipient));
+        item.setEstado(EstadoNotificacion.PENDING); item.setIntentos(0); item.setCorrelationId(correlationId);
+        Instant now = Instant.now(); item.setCreatedAt(now); item.setUpdatedAt(now); return repository.save(item);
+    }
     public Notificacion save(Notificacion item) { item.setUpdatedAt(Instant.now()); return repository.save(item); }
     public Notificacion find(String id) { return repository.findById(id).orElseThrow(() ->
             new com.ferreplus.publico.exception.PublicApiException(org.springframework.http.HttpStatus.NOT_FOUND, "Notificacion no encontrada")); }
     public List<Notificacion> failedOrPending() { return repository.findByEstado(EstadoNotificacion.FAILED); }
+    public List<Notificacion> dueForRetry(Instant now) {
+        var states = List.of(EstadoNotificacion.PENDING, EstadoNotificacion.FAILED);
+        var due = new java.util.ArrayList<>(repository.findTop20ByEstadoInAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(states, now));
+        repository.findTop20ByEstadoInAndNextAttemptAtIsNullOrderByCreatedAtAsc(states).stream()
+                .filter(item -> !due.stream().anyMatch(existing -> existing.getId().equals(item.getId())))
+                .limit(Math.max(0, 20 - due.size())).forEach(due::add);
+        return due;
+    }
 }

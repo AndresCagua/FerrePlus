@@ -21,6 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service
 @EnableConfigurationProperties(S2sJwtProperties.class)
@@ -47,8 +50,12 @@ public class PublicApiClient {
             return request.body(body).retrieve().body(responseType);
         } catch (HttpClientErrorException.Conflict exception) {
             throw new PublicApiConflictException("Conflicto en public-api", exception);
+        } catch (HttpClientErrorException.BadRequest exception) {
+            throw new PublicApiValidationException("Solicitud invalida en public-api", exception);
         } catch (HttpClientErrorException exception) {
-            throw new PublicApiValidationException("Solicitud rechazada por public-api", exception);
+            throw new PublicApiHttpException(exception.getStatusCode(), "Respuesta rechazada por public-api", exception);
+        } catch (HttpServerErrorException exception) {
+            throw new PublicApiUnavailableException("public-api no disponible", exception);
         } catch (RestClientException exception) {
             throw new PublicApiUnavailableException("public-api no disponible", exception);
         }
@@ -59,8 +66,16 @@ public class PublicApiClient {
             Instant now = Instant.now();
             return Jwts.builder().issuer(properties.issuer()).audience().add(properties.audience()).and().subject(properties.subject())
                     .id(UUID.randomUUID().toString()).issuedAt(Date.from(now)).expiration(Date.from(now.plus(properties.tokenLifetime())))
-                    .claim("scope", "public-api.internal").header().add("kid", properties.keyId()).and().signWith(key).compact();
+                    .claim("scope", "public-api.internal")
+                    .claim("actor", actor())
+                    .header().add("kid", properties.keyId()).and().signWith(key).compact();
         } catch (Exception exception) { throw new PublicApiUnavailableException("No se pudo firmar la solicitud interna", exception); }
+    }
+
+    private String actor() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication == null || authentication.getName() == null || authentication.getName().isBlank()
+                ? "admin-api" : authentication.getName();
     }
 
     /** Invalida la clave cacheada despues de una rotacion de secretos inline. */
@@ -109,4 +124,9 @@ public class PublicApiClient {
     public static class PublicApiUnavailableException extends RuntimeException { public PublicApiUnavailableException(String message, Throwable cause) { super(message, cause); } }
     public static class PublicApiValidationException extends RuntimeException { public PublicApiValidationException(String message, Throwable cause) { super(message, cause); } }
     public static class PublicApiConflictException extends RuntimeException { public PublicApiConflictException(String message, Throwable cause) { super(message, cause); } }
+    public static class PublicApiHttpException extends RuntimeException {
+        private final org.springframework.http.HttpStatusCode status;
+        public PublicApiHttpException(org.springframework.http.HttpStatusCode status, String message, Throwable cause) { super(message, cause); this.status = status; }
+        public org.springframework.http.HttpStatusCode status() { return status; }
+    }
 }

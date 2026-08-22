@@ -12,19 +12,24 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import com.ferreplus.publico.ratelimit.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class ContactoServiceTest {
     @Mock ContactoRepository repository;
     @Mock ApplicationEventPublisher events;
+    @Mock CaptchaVerificationService captcha;
+    @Mock ClientIpResolver clientIpResolver;
+    @Mock HttpServletRequest httpRequest;
     @InjectMocks ContactoService service;
 
     @Test
     void honeypotDoesNotPersistContact() {
-        var request = new ContactoRequestDTO("Bot", "bot@example.com", null, "Spam", "x", "filled");
+        var request = new ContactoRequestDTO("Bot", "bot@example.com", null, "Spam", "x", "filled", "token");
         when(repository.findByIdempotencyKey("contact-key-1")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.create(request, "contact-key-1", "127.0.0.1", null))
+        assertThatThrownBy(() -> service.create(request, "contact-key-1", httpRequest, null))
                 .isInstanceOf(PublicApiException.class);
         verify(repository, never()).save(any());
         verifyNoInteractions(events);

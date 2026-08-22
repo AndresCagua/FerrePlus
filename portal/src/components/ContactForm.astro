@@ -1,1 +1,15 @@
-<form data-contact-form novalidate><label>Nombre<input name="nombre" required maxlength="150" autocomplete="name" /></label><label>Email<input type="email" name="email" required maxlength="254" autocomplete="email" /></label><label>Telefono <span class="date">Opcional</span><input name="telefono" maxlength="30" autocomplete="tel" /></label><label>Asunto<input name="asunto" required maxlength="150" /></label><label>Mensaje<textarea name="mensaje" required maxlength="5000"></textarea></label><label class="honeypot" aria-hidden="true">No completar<input name="honeypot" tabindex="-1" autocomplete="off" /></label><div data-status class="status" hidden role="status" aria-live="polite"></div><button class="button" type="submit">Enviar mensaje</button></form><script>import { setupContactForm } from './islands/ContactForm'; document.querySelectorAll('form[data-contact-form]').forEach((form) => setupContactForm(form as HTMLFormElement));</script>
+---
+import Turnstile from './Turnstile.astro';
+---
+<form data-contact-form novalidate>
+  <label>Nombre<input name="nombre" required maxlength="150" autocomplete="name" /></label>
+  <label>Email<input type="email" name="email" required maxlength="254" autocomplete="email" /></label>
+  <label>Telefono <span class="date">Opcional</span><input name="telefono" maxlength="30" autocomplete="tel" /></label>
+  <label>Asunto<input name="asunto" required maxlength="150" /></label>
+  <label>Mensaje<textarea name="mensaje" required maxlength="5000"></textarea></label>
+  <label class="honeypot" aria-hidden="true">No completar<input name="honeypot" tabindex="-1" autocomplete="off" /></label>
+  <Turnstile />
+  <div data-status class="status" hidden role="status" aria-live="polite"></div>
+  <button class="button" type="submit">Enviar mensaje</button>
+</form>
+<script>import { setupContactForm } from './islands/ContactForm'; document.querySelectorAll('form[data-contact-form]').forEach((form) => setupContactForm(form as HTMLFormElement));</script>

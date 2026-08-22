@@ -15,25 +15,35 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import jakarta.servlet.http.HttpServletRequest;
+import com.ferreplus.publico.ratelimit.ClientIpResolver;
 
 @Service
 @RequiredArgsConstructor
 public class ContactoService {
     private final ContactoRepository repository;
     private final ApplicationEventPublisher events;
+    private final CaptchaVerificationService captcha;
+    private final ClientIpResolver clientIpResolver;
 
-    public Contacto create(ContactoRequestDTO request, String key, String ip, String fingerprint) {
+    public Contacto create(ContactoRequestDTO request, String key, HttpServletRequest httpRequest, String fingerprint) {
         validateKey(key);
         var previous = repository.findByIdempotencyKey(key);
         if (previous.isPresent()) return previous.get();
         if (request.honeypot() != null && !request.honeypot().isBlank())
             throw new PublicApiException(HttpStatus.BAD_REQUEST, "No fue posible procesar el contacto");
+        captcha.verify(request.captchaToken());
         Instant now = Instant.now();
         Contacto item = new Contacto(); item.setNombre(request.nombre()); item.setEmail(request.email().trim().toLowerCase());
         item.setTelefono(request.telefono()); item.setAsunto(request.asunto()); item.setMensaje(request.mensaje());
-        item.setEstado(Contacto.EstadoContacto.UNREAD); item.setIp(hash(ip)); item.setFingerprint(hash(fingerprint));
+        item.setEstado(Contacto.EstadoContacto.UNREAD); item.setIp(hash(clientIpResolver.resolve(httpRequest))); item.setFingerprint(hash(fingerprint));
         item.setIdempotencyKey(key); item.setCreatedAt(now); item.setUpdatedAt(now);
-        Contacto saved = repository.save(item);
+        final Contacto saved;
+        try {
+            saved = repository.save(item);
+        } catch (org.springframework.dao.DuplicateKeyException duplicate) {
+            return repository.findByIdempotencyKey(key).orElseThrow(() -> duplicate);
+        }
         events.publishEvent(new ContactoReceivedEvent(saved.getId(), saved.getEmail(), currentCorrelationId()));
         return saved;
     }

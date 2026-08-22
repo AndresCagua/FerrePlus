@@ -12,5 +12,16 @@ export function esDependenciaNoDisponible(error: unknown): boolean {
 export function mensajeTalento(error: unknown): string {
   return esDependenciaNoDisponible(error)
     ? INDISPONIBILIDAD_TALENTO
-    : 'No se pudo completar la operacion. Intenta nuevamente.';
+    : mensajeErrorApi(error) ?? 'No se pudo completar la operacion. Intenta nuevamente.';
+}
+
+function mensajeErrorApi(error: unknown): string | null {
+  if (!(error instanceof HttpErrorResponse)) return null;
+  const detail = error.error?.detail;
+  const fieldErrors = error.error?.errors;
+  if (fieldErrors && typeof fieldErrors === 'object') {
+    const messages = Object.values(fieldErrors).filter((message): message is string => typeof message === 'string');
+    if (messages.length) return messages.join(' ');
+  }
+  return typeof detail === 'string' ? detail : null;
 }

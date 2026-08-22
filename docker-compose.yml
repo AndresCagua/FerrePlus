@@ -122,7 +122,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set; copy .env.example and replace the placeholder}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       APP_JWT_SECRET: ${APP_JWT_SECRET:?APP_JWT_SECRET must be set; use an ignored local env file}
-      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://admin.localhost}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://admin.localhost,http://admin.localhost:8088},http://localhost:4200
       S2S_ISSUER: ${S2S_ISSUER:-ferreplus-admin-api}
       S2S_AUDIENCE: ${S2S_AUDIENCE:-ferreplus-public-api}
       S2S_KEY_ID: ${S2S_KEY_ID:-bootstrap}
@@ -144,7 +144,8 @@ services:
       - traefik.http.routers.admin-api.middlewares=security-headers@file,compress@file
       - traefik.http.services.admin-api.loadbalancer.server.port=8080
     healthcheck:
-      test: ["CMD-SHELL", "curl --silent --show-error --output /dev/null http://localhost:8080/api/auth/login"]
+      # El endpoint se invoca con su metodo valido; 405 ya no se considera saludable.
+      test: ["CMD-SHELL", "status=$$(curl --silent --output /dev/null --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' --data '{}' http://localhost:8080/api/auth/login); test \"$$status\" = 400 || test \"$$status\" = 401"]
       interval: 15s
       timeout: 5s
       retries: 10
@@ -162,6 +163,7 @@ services:
       dockerfile: Dockerfile
     container_name: ferreplus-public-api
     environment:
+      # Produccion es el valor seguro; dev/test deben seleccionarse de forma explicita.
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SERVER_PORT: 8080
       MONGO_URI: mongodb://${MONGO_ROOT_USERNAME:-ferreplus}:${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD must be set; copy .env.example and replace the placeholder}@mongodb:27017/${MONGO_DATABASE:-ferreplus_public}?authSource=admin
@@ -171,11 +173,22 @@ services:
       MINIO_CV_BUCKET: ${MINIO_CV_BUCKET:-cv-bucket}
       MINIO_MEDIA_BUCKET: ${MINIO_MEDIA_BUCKET:-media-bucket}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://public.localhost,http://admin.localhost}
+      CAPTCHA_ENABLED: ${CAPTCHA_ENABLED:-true}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      PUBLIC_TURNSTILE_SITE_KEY: ${PUBLIC_TURNSTILE_SITE_KEY:-}
+      TURNSTILE_VERIFY_URL: ${TURNSTILE_VERIFY_URL:-https://challenges.cloudflare.com/turnstile/v0/siteverify}
+      CAPTCHA_TIMEOUT: ${CAPTCHA_TIMEOUT:-3s}
       S2S_ISSUER: ${S2S_ISSUER:-ferreplus-admin-api}
       S2S_AUDIENCE: ${S2S_AUDIENCE:-ferreplus-public-api}
       S2S_INITIAL_PUBLIC_KEY_FILE: /run/secrets/s2s_public_key
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}
+      RATE_LIMIT_FINGERPRINT_HMAC_SECRET: ${RATE_LIMIT_FINGERPRINT_HMAC_SECRET:?RATE_LIMIT_FINGERPRINT_HMAC_SECRET must be set; use an ignored local env file}
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@ferreplus.local}
     secrets:
       - s2s_public_key
     depends_on:
@@ -197,7 +210,7 @@ services:
       - traefik.http.routers.public-api.middlewares=security-headers@file,compress@file,cors-public@file
       - traefik.http.services.public-api.loadbalancer.server.port=8080
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8081/actuator/health"]
       interval: 15s
       timeout: 5s
       retries: 10
@@ -213,9 +226,12 @@ services:
     build:
       context: ./portal
       dockerfile: Dockerfile
+      args:
+        PUBLIC_TURNSTILE_SITE_KEY: ${PUBLIC_TURNSTILE_SITE_KEY:-}
+        PUBLIC_CAPTCHA_ENABLED: ${CAPTCHA_ENABLED:-true}
     container_name: ferreplus-public-web
     expose:
-      - "80"
+      - "8080"
     depends_on:
       public-api:
         condition: service_healthy
@@ -228,9 +244,44 @@ services:
       - traefik.http.routers.public-web.entrypoints=web
       - traefik.http.routers.public-web.service=public-web
       - traefik.http.routers.public-web.middlewares=security-headers@file,compress@file
-      - traefik.http.services.public-web.loadbalancer.server.port=80
+      - traefik.http.services.public-web.loadbalancer.server.port=8080
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+    restart: unless-stopped
+
+  admin-web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ferreplus-admin-web
+    ports:
+      - "127.0.0.1:${ADMIN_WEB_HOST_PORT:-4200}:8080"
+    expose:
+      - "8080"
+    depends_on:
+      admin-api:
+        condition: service_healthy
+    networks:
+      - admin_net
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${COMPOSE_PROJECT_NAME:-ferreplus}_admin_net
+      - traefik.http.routers.admin-web.rule=Host(`admin.localhost`)
+      - traefik.http.routers.admin-web.entrypoints=web
+      - traefik.http.routers.admin-web.service=admin-web
+      - traefik.http.routers.admin-web.middlewares=security-headers@file,compress@file
+      - traefik.http.services.admin-web.loadbalancer.server.port=8080
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -269,7 +320,8 @@ networks:
     driver: bridge
   public_data:
     driver: bridge
-    internal: true
+    # Debe admitir los binds loopback de desarrollo para DataGrip/MinIO Console.
+    # No es accesible desde Internet: todos los puertos publicados usan 127.0.0.1.
   admin_data:
     driver: bridge
     internal: true

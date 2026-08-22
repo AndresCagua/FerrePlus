@@ -24,14 +24,20 @@ export class TalentoService {
   obtenerPublicacion(id: string): Observable<Publicacion> { return this.request(this.http.get<Publicacion>(`${this.baseUrl}/publicaciones/${id}`)); }
   crearPublicacion(payload: PublicacionPayload): Observable<Publicacion> { return this.request(this.http.post<Publicacion>(`${this.baseUrl}/publicaciones`, payload)); }
   actualizarPublicacion(id: string, payload: PublicacionPayload): Observable<Publicacion> { return this.request(this.http.put<Publicacion>(`${this.baseUrl}/publicaciones/${id}`, payload)); }
-  cambiarEstadoPublicacion(id: string, estado: 'DRAFT' | 'PUBLISHED'): Observable<Publicacion> { return this.request(this.http.patch<Publicacion>(`${this.baseUrl}/publicaciones/${id}/estado`, { estado })); }
+  cambiarEstadoPublicacion(id: string, estado: 'DRAFT' | 'PUBLISHED'): Observable<Publicacion> {
+    const action = estado === 'PUBLISHED' ? 'publicar' : 'despublicar';
+    return this.request(this.http.post<Publicacion>(`${this.baseUrl}/publicaciones/${id}/${action}`, {}));
+  }
   eliminarPublicacion(id: string): Observable<void> { return this.request(this.http.delete<void>(`${this.baseUrl}/publicaciones/${id}`)); }
 
   listarConvocatorias(): Observable<Convocatoria[]> { return this.request(this.http.get<Convocatoria[]>(`${this.baseUrl}/convocatorias`)); }
   obtenerConvocatoria(id: string): Observable<Convocatoria> { return this.request(this.http.get<Convocatoria>(`${this.baseUrl}/convocatorias/${id}`)); }
   crearConvocatoria(payload: ConvocatoriaPayload): Observable<Convocatoria> { return this.request(this.http.post<Convocatoria>(`${this.baseUrl}/convocatorias`, payload)); }
   actualizarConvocatoria(id: string, payload: ConvocatoriaPayload): Observable<Convocatoria> { return this.request(this.http.put<Convocatoria>(`${this.baseUrl}/convocatorias/${id}`, payload)); }
-  cambiarEstadoConvocatoria(id: string, estado: 'DRAFT' | 'PUBLISHED' | 'CLOSED'): Observable<Convocatoria> { return this.request(this.http.patch<Convocatoria>(`${this.baseUrl}/convocatorias/${id}/estado`, { estado })); }
+  cambiarEstadoConvocatoria(id: string, estado: 'DRAFT' | 'PUBLISHED' | 'CLOSED'): Observable<Convocatoria> {
+    const action = estado === 'PUBLISHED' ? 'publicar' : estado === 'CLOSED' ? 'cerrar' : 'despublicar';
+    return this.request(this.http.post<Convocatoria>(`${this.baseUrl}/convocatorias/${id}/${action}`, {}));
+  }
 
   listarPostulaciones(convocatoriaId: string, estado?: PostulacionEstado): Observable<Postulacion[]> {
     let params = new HttpParams().set('convocatoriaId', convocatoriaId);

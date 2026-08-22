@@ -897,3 +897,37 @@ No hay decisiones bloqueantes: S2S, estados, limites, RBAC y politica CV fueron
 confirmados por el usuario. Queda como seguimiento operativo no bloqueante medir
 volumen real para decidir si el executor asincrono debe evolucionar a RabbitMQ y
 si Astro debe pasar parcialmente a SSR.
+
+### ADR-14: Cloudflare Turnstile server-side
+
+**Status:** Accepted. `public-api` verifica el token con `RestClient` y timeout
+corto antes de tocar MongoDB/MinIO o publicar eventos. La clave secreta vive
+solo en backend; Astro recibe unicamente la site key publica. En prod la
+configuracion es fail-closed; dev/test pueden deshabilitar explicitamente el
+provider para pruebas locales. Los errores conservan ProblemDetail y no se
+convierten en 500 generico.
+
+### Runtime operativo de la ronda de correcciones
+
+En Compose, `public-api` usa `mongodb://ferreplus:<env-password>@mongodb:27017/ferreplus_public?authSource=admin`; DataGrip usa el bind `127.0.0.1` con el mismo `authSource=admin`. El volumen no se reinicializa ni se borra. `TURNSTILE_SECRET_KEY` se inyecta solo en `public-api` y `PUBLIC_TURNSTILE_SITE_KEY` solo como build-arg de `public-web`; Redis no recibe variables CAPTCHA.
+
+El rate limit conserva las ventanas y `Retry-After`, combina la IP derivada del
+header de proxy configurado con un fingerprint normalizado y HMAC complementario
+sin permitir que este sustituya a la IP. `KeyResolver` mantiene un TTL acotado e
+invalida material cambiado o expirado. El actor de auditoria proviene del claim
+firmado S2S y del `SecurityContext`; `X-Actor` no es una fuente confiable.
+
+### Ronda 2: correcciones confirmadas
+
+El anti-corruption layer conserva `/api/admin/talento/*` y traduce a
+`/api/internal/*`, propagando 401/403 y 503 sin ocultar el estado. Se corrige el
+bootstrap S2S por `kid` usando la clave publica montada, se agregan DTOs/mapeos
+tipados para publicaciones, convocatorias, postulaciones y CV, y se recuperan
+notificaciones PENDING/FAILED con `nextAttemptAt` nulo en lotes acotados. El
+rate limit ignora fingerprints arbitrarios y usa la IP observada por proxy
+confiable, manteniendo ventanas y `Retry-After` exactos.
+
+El secreto HMAC del complemento de fingerprint/email es obligatorio y su
+ausencia impide iniciar `public-api`. Turnstile usa claves oficiales de prueba
+solo en el `.env` ignorado; el banner `For testing only` es esperado. Produccion
+exige claves reales y fail-closed.

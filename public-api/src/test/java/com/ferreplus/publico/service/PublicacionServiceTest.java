@@ -2,6 +2,7 @@ package com.ferreplus.publico.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.ferreplus.publico.dto.interno.PublicacionAdminDTO;
 import com.ferreplus.publico.model.EstadoPublicacion;
@@ -34,5 +35,25 @@ class PublicacionServiceTest {
         when(repository.save(draft)).thenReturn(draft);
         assertThat(service.publicar("1").getEstado()).isEqualTo(EstadoPublicacion.PUBLISHED);
         assertThat(draft.getFechaPublicacion()).isNotNull();
+    }
+
+    @Test
+    void findReturnsInternalPublicationById() {
+        Publicacion publication = new Publicacion();
+        publication.setId("publication-1");
+        when(repository.findById("publication-1")).thenReturn(java.util.Optional.of(publication));
+
+        assertThat(service.find("publication-1")).isSameAs(publication);
+    }
+
+    @Test
+    void findMissingPublicationReturnsNotFoundDomainError() {
+        when(repository.findById("missing")).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> service.find("missing"))
+                .isInstanceOf(com.ferreplus.publico.exception.PublicApiException.class)
+                .hasMessage("Publicacion no encontrada")
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.NOT_FOUND);
     }
 }

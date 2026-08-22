@@ -18,7 +18,7 @@ public class Contacto {
     @Indexed private EstadoContacto estado;
     private String ip;
     private String fingerprint;
-    private String idempotencyKey;
+    @Indexed(unique = true) private String idempotencyKey;
     private Instant createdAt;
     private Instant updatedAt;
 

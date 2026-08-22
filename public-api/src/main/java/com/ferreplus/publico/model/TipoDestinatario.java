@@ -1,3 +1,3 @@
 package com.ferreplus.publico.model;
 
-public enum TipoDestinatario { JOB_APPLICATION, CONTACT_FORM }
+public enum TipoDestinatario { JOB_APPLICATION, CONTACT_FORM, CANDIDATE_CONFIRMATION }

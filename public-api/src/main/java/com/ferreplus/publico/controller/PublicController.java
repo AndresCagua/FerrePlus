@@ -48,7 +48,7 @@ public class PublicController {
             @RequestHeader("Idempotency-Key") String idempotencyKey,
             jakarta.servlet.http.HttpServletRequest httpRequest,
             @RequestHeader(value = "X-Fingerprint", required = false) String fingerprint) {
-        var saved = contactoService.create(request, idempotencyKey, httpRequest.getRemoteAddr(), fingerprint);
+        var saved = contactoService.create(request, idempotencyKey, httpRequest, fingerprint);
         return new ContactoPublicoDTO(saved.getId(), saved.getEstado().name(), saved.getCreatedAt());
     }
 }

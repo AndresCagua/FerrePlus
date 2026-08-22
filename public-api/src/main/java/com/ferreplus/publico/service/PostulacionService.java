@@ -29,6 +29,7 @@ public class PostulacionService {
     private final ObjectCleanupService cleanup;
     private final PostulacionStateMachine stateMachine;
     private final ApplicationEventPublisher events;
+    private final CaptchaVerificationService captcha;
 
     public Postulacion create(String convocatoriaId, PostulacionRequestDTO request, MultipartFile cv,
                               String idempotencyKey) {
@@ -41,6 +42,7 @@ public class PostulacionService {
             throw new PublicApiException(HttpStatus.CONFLICT, "La convocatoria esta cerrada");
         if (request.honeypot() != null && !request.honeypot().isBlank())
             throw new PublicApiException(HttpStatus.BAD_REQUEST, "No fue posible procesar la postulacion");
+        captcha.verify(request.captchaToken());
         var valid = validator.validate(cv);
         String key = UUID.randomUUID() + "." + valid.extension();
         try {
@@ -64,6 +66,7 @@ public class PostulacionService {
         }
     }
     public java.util.List<Postulacion> byConvocatoria(String convocatoriaId) { return repository.findByConvocatoriaId(convocatoriaId); }
+    public java.util.List<Postulacion> all() { return repository.findAll(); }
     public Postulacion find(String id) { return repository.findById(id).orElseThrow(() ->
             new PublicApiException(HttpStatus.NOT_FOUND, "Postulacion no encontrada")); }
     public Postulacion transition(String id, EstadoPostulacion target, String actor) {

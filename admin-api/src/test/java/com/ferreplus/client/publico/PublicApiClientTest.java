@@ -47,4 +47,26 @@ class PublicApiClientTest {
         assertThatThrownBy(() -> client.exchange(org.springframework.http.HttpMethod.GET, "/api/internal/down", null, Object.class, "c"))
                 .isInstanceOf(PublicApiClient.PublicApiUnavailableException.class);
     }
+
+    @Test
+    void conserva404ComoErrorHttpDeDominio() throws Exception {
+        var generator = KeyPairGenerator.getInstance("RSA"); generator.initialize(2048);
+        var key = generator.generateKeyPair();
+        var properties = new S2sJwtProperties("iss", "aud", "admin-api", "kid",
+                Base64.getEncoder().encodeToString(key.getPrivate().getEncoded()), "", Duration.ofSeconds(120),
+                "http://public-api.test");
+        RestClient.Builder builder = RestClient.builder().baseUrl("http://public-api.test");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        PublicApiClient client = new PublicApiClient(builder.build(), properties);
+        server.expect(requestTo("http://public-api.test/api/internal/publicaciones/missing"))
+                .andRespond(withStatus(org.springframework.http.HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                        .body("{\"status\":404,\"detail\":\"Publicacion no encontrada\"}"));
+
+        assertThatThrownBy(() -> client.exchange(org.springframework.http.HttpMethod.GET,
+                "/api/internal/publicaciones/missing", null, Object.class, "c"))
+                .isInstanceOf(PublicApiClient.PublicApiHttpException.class)
+                .extracting("status.value")
+                .isEqualTo(404);
+    }
 }

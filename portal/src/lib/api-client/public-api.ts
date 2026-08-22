@@ -1,14 +1,22 @@
 import type { ApplicationData, ContactData, Convocatoria, Publicacion } from './types';
 import { PublicApiError } from './types';
 
-const baseUrl = (import.meta.env.PUBLIC_API_URL ?? 'http://api.localhost').replace(/\/$/, '');
+const buildTimeBaseUrl = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 const timeoutMs = 8000;
+
+function apiBaseUrl(): string {
+  return typeof window === 'undefined' ? buildTimeBaseUrl : '';
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${baseUrl}${path}`, { ...init, signal: controller.signal });
+    const response = await fetch(`${apiBaseUrl()}${path}`, {
+      cache: 'no-store',
+      ...init,
+      signal: controller.signal,
+    });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
       throw new PublicApiError(response.status, body?.detail ?? 'No fue posible completar la solicitud.', body?.errors);

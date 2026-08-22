@@ -949,6 +949,29 @@
 - **Especialista**: springboot.
 - **Estado**: pending.
 
+---
+
+## Ronda 2: Judgment Day y CAPTCHA Turnstile
+
+- [x] R2.1 Corregir proxy `/api/admin/talento` y `/api/internal`, mapeando DTOs y errores 401/403/503.
+- [x] R2.2 Corregir bootstrap S2S por issuer, audience, `kid`, clave publica montada y redes internas.
+- [x] R2.3 Verificar/agregar listados, transiciones de convocatorias/postulaciones y descarga autenticada de CV.
+- [x] R2.4 Hacer idempotencia de contacto compatible con indice unico y recuperar notificaciones nulas en lotes acotados.
+- [x] R2.5 Mantener rate limit por IP de proxy confiable, sin confiar en fingerprint arbitrario, con Retry-After.
+- [x] R2.6 Implementar Turnstile server-side con fail-closed prod, DTOs sin persistencia del token y ProblemDetail.
+- [x] R2.7 Integrar widget Turnstile accesible en contacto y postulacion, bloqueo de submit y reset.
+- [ ] R2.8 Ejecutar suites completas, builds y smoke real de publicaciones/convocatorias (parcial: public-api, portal, compose, Mongo auth y aislamiento Actuator verificados; suite admin completa bloqueada por PostgreSQL local `localhost:5433` no disponible y falta smoke de datos funcionales).
+
+### Evidencia de verificacion de la ronda final
+
+- `docker compose --env-file .env config`: OK.
+- Builds Docker `public-api` y `admin-api`: OK; `portal npm run check && npm run build`: OK.
+- `public-api` unit/context suite: OK; `admin PublicApiClientTest`: OK.
+- Compose: servicios criticos healthy; Actuator por `api.localhost` devuelve 404 y `127.0.0.1:8081` dentro de `public-api` devuelve UP.
+- Mongo smoke autenticado con `ferreplus@127.0.0.1:27017`, database `ferreplus_public`, `authSource=admin`: `{ ok: 1 }`; no se modificaron datos.
+- Turnstile: tests de token valido/invalido/fallo/produccion fail-closed OK; no se persiste ni loguea token. El banner oficial `For testing only` es esperado para claves de prueba.
+- `git diff --check`: OK. No se ejecutaron `git add`, commits, push, `down -v` ni operaciones de datos.
+
 ### T8.2: Implementar endpoint interno de publicacion de claves
 - **Descripcion**: `POST /api/internal/keys` para recibir public key con `kid`, expiracion y ventana de overlap; cache local de 5 min.
 - **Archivos afectados**: `public-api/src/main/java/com/ferreplus/publico/controller/InternalController.java`, `KeyService.java`.
@@ -967,7 +990,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: PR1, T8.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (tests focales `PublicApiClientTest` verdes).
 
 ### T8.4: Actualizar DataSeeder/RBAC con modulos nuevos
 - **Descripcion**: Agregar modulos `TALENTO_PUBLICACIONES`, `TALENTO_CONVOCATORIAS`, `TALENTO_POSTULACIONES`, `TALENTO_DESTINATARIOS`, `CONTABILIDAD_CONTACTOS` con acciones VER/CREAR/EDITAR/ELIMINAR; rol ADMIN recibe todos automaticamente.
@@ -997,7 +1020,7 @@
 - **Tamano estimado**: 90 lineas.
 - **Dependencias**: PR3.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (IP/proxy confiable + fingerprint/email HMAC obligatorio + Retry-After; tests unitarios verdes).
 
 ### T8.7: Configurar Actuator, metricas y healthchecks
 - **Descripcion**: Endpoints `/actuator/health`, `/actuator/info`, `/actuator/metrics` solo por red interna; healthchecks de Mongo, Redis, MinIO.
@@ -1007,7 +1030,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T2.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (Actuator funcional en puerto interno 8081/bind loopback; healthcheck Docker validado).
 
 ### T8.8: Tests integrales de seguridad, rate limit y resiliencia
 > Tamano total estimado: 170 lineas.
@@ -1020,7 +1043,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T8.1, T8.3.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed para tests focales; suite admin completa queda condicionada a PostgreSQL local.
 
 #### T8.8.2: Tests de rate limit y resiliencia
 - **Descripcion**: 429 con Retry-After, contadores complementarios, fallback local, caida de public-api no bloquea admin-api.

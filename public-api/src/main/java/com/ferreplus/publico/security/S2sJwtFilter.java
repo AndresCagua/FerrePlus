@@ -51,8 +51,10 @@ public class S2sJwtFilter extends OncePerRequestFilter {
                     || claims.getExpiration().toInstant().isBefore(Instant.now())) throw new SecurityFailure(HttpStatus.UNAUTHORIZED);
             String scope = claims.get("scope", String.class);
             if (scope == null || !scope.contains("public-api.internal")) throw new SecurityFailure(HttpStatus.FORBIDDEN);
+            String actor = claims.get("actor", String.class);
+            String authenticatedActor = actor == null || actor.isBlank() ? claims.getSubject() : actor;
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                    claims.getSubject(), null, java.util.Arrays.stream(scope.split(" "))
+                    authenticatedActor, claims, java.util.Arrays.stream(scope.split(" "))
                             .map(value -> new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_" + value)).toList()));
             chain.doFilter(request, response);
         } catch (SecurityFailure failure) { reject(response, failure.status); }

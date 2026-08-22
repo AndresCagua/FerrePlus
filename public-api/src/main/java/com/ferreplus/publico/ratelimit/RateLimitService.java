@@ -15,14 +15,28 @@ public class RateLimitService {
     public RateLimitService(StringRedisTemplate redis) { this.redis = redis; }
 
     public Decision allow(String operation, String identity) {
+        return allow(operation, identity, null);
+    }
+
+    public Decision allow(String operation, String identity, String fingerprint) {
+        return allow(operation, identity, fingerprint, null);
+    }
+
+    public Decision allow(String operation, String identity, String fingerprint, String email) {
         Limit shortLimit = operation.equals("application") ? new Limit(3, 900) : new Limit(5, 900);
         Limit dailyLimit = operation.equals("application") ? new Limit(10, 86400) : new Limit(20, 86400);
         try {
-            Decision first = increment(operation + ":" + identity + ":15m", shortLimit);
-            if (!first.allowed()) return first;
-            Decision second = increment(operation + ":" + identity + ":day", dailyLimit);
-            if (!second.allowed()) return second;
-            return new Decision(true, Math.min(first.retryAfter(), second.retryAfter()), false);
+            Decision strongest = allowIdentity(operation, identity, shortLimit, dailyLimit);
+            if (!strongest.allowed()) return strongest;
+            if (fingerprint != null && !fingerprint.isBlank()) {
+                Decision fingerprintDecision = allowIdentity(operation, "fp:" + fingerprint, shortLimit, dailyLimit);
+                if (!fingerprintDecision.allowed()) return fingerprintDecision;
+            }
+            if (email != null && !email.isBlank()) {
+                Decision emailDecision = allowIdentity(operation, "email:" + email, shortLimit, dailyLimit);
+                if (!emailDecision.allowed()) return emailDecision;
+            }
+            return strongest;
         } catch (RuntimeException ignored) {
             Window current = fallback.computeIfAbsent(operation + ":" + identity, key -> new Window());
             long now = System.currentTimeMillis();
@@ -30,6 +44,14 @@ public class RateLimitService {
             current.count++;
             return new Decision(current.count <= 1, 60, true);
         }
+    }
+
+    private Decision allowIdentity(String operation, String identity, Limit shortLimit, Limit dailyLimit) {
+        Decision first = increment(operation + ":" + identity + ":15m", shortLimit);
+        if (!first.allowed()) return first;
+        Decision second = increment(operation + ":" + identity + ":day", dailyLimit);
+        if (!second.allowed()) return second;
+        return new Decision(true, Math.min(first.retryAfter(), second.retryAfter()), false);
     }
 
     private Decision increment(String key, Limit limit) {

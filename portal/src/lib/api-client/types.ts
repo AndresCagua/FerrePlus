@@ -44,6 +44,7 @@ export interface ApplicationData {
   telefono: string;
   ciudad: string;
   honeypot?: string;
+  captchaToken?: string;
 }
 
 export interface ContactData {
@@ -53,6 +54,7 @@ export interface ContactData {
   asunto: string;
   mensaje: string;
   honeypot?: string;
+  captchaToken?: string;
 }
 
 export interface ApiErrorShape {

@@ -60,6 +60,30 @@ public class GlobalExceptionHandler {
                 "El servicio de respuestas no esta disponible. Intenta nuevamente mas tarde.");
     }
 
+    @ExceptionHandler(com.ferreplus.client.publico.PublicApiClient.PublicApiConflictException.class)
+    public ResponseEntity<Map<String, Object>> handlePublicApiConflict() {
+        return buildResponse(HttpStatus.CONFLICT, "Conflicto en el servicio publico");
+    }
+
+    @ExceptionHandler(com.ferreplus.client.publico.PublicApiClient.PublicApiValidationException.class)
+    public ResponseEntity<Map<String, Object>> handlePublicApiValidation() {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Solicitud rechazada por el servicio publico");
+    }
+
+    @ExceptionHandler(com.ferreplus.client.publico.PublicApiClient.PublicApiHttpException.class)
+    public ResponseEntity<Map<String, Object>> handlePublicApiHttp(com.ferreplus.client.publico.PublicApiClient.PublicApiHttpException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.status().value());
+        if (status == null || status.is5xxServerError()) status = HttpStatus.SERVICE_UNAVAILABLE;
+        return buildResponse(status, status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN
+                ? "Autenticacion del servicio publico rechazada" : "Solicitud rechazada por el servicio publico");
+    }
+
+    @ExceptionHandler(com.ferreplus.client.publico.PublicApiClient.PublicApiUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handlePublicApiUnavailable() {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE,
+                "Servicio de postulaciones temporalmente no disponible");
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult().getFieldErrors().stream()

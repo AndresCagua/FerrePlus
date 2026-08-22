@@ -17,6 +17,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -43,16 +44,53 @@ public class MailEventListener {
     @Async("mailTaskExecutor")
     public void onPostulacion(PostulacionReceivedEvent event) {
         Notificacion notification = notifications.pending(TipoDestinatario.JOB_APPLICATION, event.postulacionId(), event.correlationId());
+        Notificacion confirmation = notifications.pendingToRecipient(TipoDestinatario.CANDIDATE_CONFIRMATION,
+                event.postulacionId(), event.email(), event.correlationId());
         var application = postulaciones.findById(event.postulacionId()).orElse(null);
+        send(notification, "Nueva postulacion", "mail/postulacion-recibida", application == null ? java.util.Map.of() : java.util.Map.of(
+                "nombres", application.getNombres(), "apellidos", application.getApellidos(), "email", application.getEmail()));
+        send(confirmation, "Confirmacion de postulacion", "mail/confirmacion-postulacion", java.util.Map.of());
+    }
+
+    public void retry(String id) {
+        Notificacion notification = notifications.find(id);
+        if (notification.getEstado() == EstadoNotificacion.SENT) {
+            return;
+        }
+        notification.setEstado(EstadoNotificacion.PENDING);
+        notification.setNextAttemptAt(null); notifications.save(notification);
+        send(notification, "Reenvio de notificacion", templateFor(notification.getTipo()), java.util.Map.of());
+    }
+
+    @Scheduled(fixedDelayString = "${app.mail.retry-interval-ms:60000}")
+    public void retryDueNotifications() {
+        notifications.dueForRetry(Instant.now()).stream()
+                .filter(notification -> notification.getIntentos() < 3)
+                .forEach(this::retryExisting);
+    }
+
+    private void retryExisting(Notificacion notification) {
+        notification.setEstado(EstadoNotificacion.PENDING);
+        notifications.save(notification);
+        if (notification.getTipo() == TipoDestinatario.CONTACT_FORM) {
+            var contact = contactos.findById(notification.getReferenciaId()).orElse(null);
+            send(notification, "Nuevo contacto", "mail/contacto-recibido", contact == null ? java.util.Map.of() : java.util.Map.of(
+                    "nombre", contact.getNombre(), "email", contact.getEmail(), "mensaje", contact.getMensaje()));
+            return;
+        }
+        if (notification.getTipo() == TipoDestinatario.CANDIDATE_CONFIRMATION) {
+            send(notification, "Confirmacion de postulacion", "mail/confirmacion-postulacion", java.util.Map.of());
+            return;
+        }
+        var application = postulaciones.findById(notification.getReferenciaId()).orElse(null);
         send(notification, "Nueva postulacion", "mail/postulacion-recibida", application == null ? java.util.Map.of() : java.util.Map.of(
                 "nombres", application.getNombres(), "apellidos", application.getApellidos(), "email", application.getEmail()));
     }
 
-    public void retry(String id) {
-        Notificacion notification = notifications.find(id); notification.setEstado(EstadoNotificacion.PENDING);
-        notification.setNextAttemptAt(null); notifications.save(notification);
-        send(notification, "Reenvio de notificacion", notification.getTipo() == TipoDestinatario.CONTACT_FORM
-                ? "mail/contacto-recibido" : "mail/postulacion-recibida", java.util.Map.of());
+    private String templateFor(TipoDestinatario type) {
+        return type == TipoDestinatario.CONTACT_FORM ? "mail/contacto-recibido"
+                : type == TipoDestinatario.CANDIDATE_CONFIRMATION ? "mail/confirmacion-postulacion"
+                : "mail/postulacion-recibida";
     }
 
     private void send(Notificacion notification, String subject, String template, java.util.Map<String, Object> variables) {

@@ -51,6 +51,7 @@ public class ConvocatoriaService {
         if (!dto.fechaApertura().isBefore(dto.fechaCierre()))
             throw new PublicApiException(HttpStatus.BAD_REQUEST, "La fecha de apertura debe ser anterior al cierre");
         item.setTitulo(dto.titulo()); item.setDescripcion(dto.descripcion());
+        item.setRequisitos(dto.requisitos()); item.setUbicacion(dto.ubicacion()); item.setModalidad(dto.modalidad());
         item.setFechaApertura(dto.fechaApertura()); item.setFechaCierre(dto.fechaCierre());
         item.setEstado(dto.estado()); item.setUpdatedAt(Instant.now());
         if (item.getCreatedAt() == null) item.setCreatedAt(Instant.now());

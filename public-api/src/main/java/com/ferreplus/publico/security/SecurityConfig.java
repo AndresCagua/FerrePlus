@@ -19,6 +19,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableConfigurationProperties(S2sJwtProperties.class)
 public class SecurityConfig {
     private final S2sJwtFilter s2sJwtFilter;
+    @Value("${app.security.hsts-enabled:false}")
+    private boolean hstsEnabled;
     public SecurityConfig(S2sJwtFilter s2sJwtFilter) { this.s2sJwtFilter = s2sJwtFilter; }
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -27,7 +29,6 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .headers(headers -> headers.contentTypeOptions(content -> {})
                 .frameOptions(frame -> frame.deny())
-                .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
                 .contentSecurityPolicy(csp -> csp.policyDirectives(
                     "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"))
                 .referrerPolicy(referrer -> referrer.policy(
@@ -39,6 +40,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .anyRequest().denyAll())
             .addFilterBefore(s2sJwtFilter, UsernamePasswordAuthenticationFilter.class);
+        if (hstsEnabled) {
+            http.headers(headers -> headers.httpStrictTransportSecurity(
+                    hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000)));
+        }
         return http.build();
     }
 
