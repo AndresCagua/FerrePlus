@@ -13,6 +13,8 @@ export interface Publicacion {
   titulo: string;
   resumen: string;
   descripcion: string;
+  portada?: MediaImage | null;
+  galeria?: MediaImage[];
   categoria?: string;
   videoUrl?: string | null;
   enlacesX?: string[];
@@ -23,3 +25,5 @@ export interface Publicacion {
 }
 
 export interface PublicacionPayload extends Omit<Publicacion, 'id'> {}
+
+export interface MediaImage { objectKey?: string; alt?: string; url?: string; }

@@ -9,10 +9,14 @@ function apiBaseUrl(): string {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const baseUrl = apiBaseUrl();
+  if (typeof window === 'undefined' && !baseUrl) {
+    throw new PublicApiError(0, 'La API publica no tiene una URL SSR configurada.');
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${apiBaseUrl()}${path}`, {
+    const response = await fetch(`${baseUrl}${path}`, {
       cache: 'no-store',
       ...init,
       signal: controller.signal,

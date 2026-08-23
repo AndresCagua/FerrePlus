@@ -1,0 +1,17 @@
+.publication-thumbnail,
+.publication-thumbnail-fallback {
+  align-items: center;
+  background: #f1f3f5;
+  border-radius: 0.25rem;
+  display: inline-flex;
+  height: 3rem;
+  justify-content: center;
+  object-fit: cover;
+  width: 4.5rem;
+}
+
+.publication-thumbnail-fallback {
+  color: #6c757d;
+  font-size: 0.75rem;
+  text-align: center;
+}

@@ -6,6 +6,12 @@
 > **Specialists**: `springboot` (admin-api / public-api), `angular` (frontend), `astro` (portal-publico), `infra` (Docker / Traefik / docs)
 > **Commit rule**: cada tarea o sub-tarea es una unidad de trabajo **commiteable y revisable**. El usuario aprueba cada commit antes de crearlo; el mensaje sigue el formato acordado: `YYYYMMDD tipo(scope): bullets en español`.
 
+## Estado de cierre para archivo
+
+La reconciliacion contra el worktree y `verify-report.md` actualiza los estados individuales: **73 completed**, **9 partial** y **8 pending** (90 lineas de estado, porque el desglose incluye sub-tareas; el encabezado historico conserva 89 tareas). `completed` indica evidencia de implementacion y, cuando existe, prueba focal; `partial` indica cobertura incompleta; `pending` conserva verificaciones no ejecutadas o artefactos ausentes. Las verificaciones parciales y pendientes NO se consideran completadas por inferencia.
+
+Pendientes que bloquean el cierre funcional de calidad: suite completa de `admin-api` condicionada a PostgreSQL local, smoke end-to-end reproducible, pruebas Astro/fixtures y trazabilidad automatizada de todos los escenarios. Las tareas parciales documentan tambien el cache API/`astro:assets`, cleanup programado de huerfanos, ADRs completos y matriz operativa.
+
 ---
 
 ## Resumen por PR
@@ -38,7 +44,7 @@
 - **Tamano estimado**: 30 lineas.
 - **Dependencias**: ninguna.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (referencias revisadas en Compose, README y worktree).
 
 ### T1.2: Ejecutar `git mv backend/ admin-api/`
 - **Descripcion**: Renombrar el directorio preservando historial Git. No modificar paquetes Java.
@@ -48,7 +54,7 @@
 - **Tamano estimado**: 100 lineas (diff del rename).
 - **Dependencias**: T1.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (la ruta `admin-api/` existe y Compose la utiliza).
 
 ### T1.3: Actualizar `admin-api/pom.xml`
 - **Descripcion**: Cambiar `artifactId` y `<name>` a `ferreplus-admin-api`; conservar `groupId` `com.ferreplus`.
@@ -58,7 +64,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T1.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (artifactId/nombre de `admin-api` verificados).
 
 ### T1.4: Actualizar Dockerfile de `admin-api`
 - **Descripcion**: Renombrar contexto de build, paths de copia, `container_name`, imagen y variables de entorno en el Dockerfile existente.
@@ -68,7 +74,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T1.2.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (Dockerfile presente y build Docker reportado OK).
 
 ### T1.5: Actualizar `docker-compose.yml` existente
 - **Descripcion**: Renombrar servicio `backend` a `admin-api`, actualizar `context`, `container_name`, variables y volumenes.
@@ -78,7 +84,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T1.2, T1.4.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (`docker compose config` reportado OK y servicio renombrado).
 
 ### T1.6: Actualizar README, CI y scripts
 - **Descripcion**: Reemplazar rutas `backend/` por `admin-api/` en README, workflows de CI, scripts de build y documentacion.
@@ -88,7 +94,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T1.2.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (README y referencias operativas actualizadas).
 
 ### T1.7: Verificar build Maven y tests H2
 - **Descripcion**: Ejecutar `mvn test` y `mvn package` desde `admin-api/`; confirmar que PostgreSQL/H2 y esquema JPA siguen operativos.
@@ -98,7 +104,7 @@
 - **Tamano estimado**: 30 lineas.
 - **Dependencias**: T1.3, T1.4, T1.5.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: partial (tests focales/build reportados; suite completa de `admin-api` bloqueada por PostgreSQL local en `localhost:5433`).
 
 ### T1.8: Documentar rollback del rename
 - **Descripcion**: Agregar nota en `docs/architecture/rename-rollback.md` con pasos para revertir PR1 sin borrar volumenes.
@@ -108,7 +114,7 @@
 - **Tamano estimado**: 30 lineas.
 - **Dependencias**: T1.2.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: pending (no se encontro `docs/architecture/rename-rollback.md`).
 
 ### Criterios de "done" para PR1
 - [ ] `admin-api/` contiene el backend completo sin paquetes Java renombrados.
@@ -133,7 +139,7 @@
 - **Tamano estimado**: 250 lineas.
 - **Dependencias**: PR1.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (5 redes, servicios, healthchecks y limites verificados).
 
 ### T2.2: Crear `.env.example`
 - **Descripcion**: Declarar variables sin secretos reales: DB, Mongo, Redis, MinIO, SMTP, S2S, CORS, limites y profiles. Comentar que secretos se montan con Compose secrets.
@@ -143,7 +149,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T2.1.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (`docker compose --env-file .env.example config` reportado OK; sin secretos reales).
 
 ### T2.3: Crear configuracion de Traefik
 - **Descripcion**: Crear `traefik/traefik.yml` (static), `traefik/dynamic.yml` (routers/services/middlewares), con `providers.docker.exposedByDefault=false`, entrypoints `web`/`websecure`, middlewares de seguridad y compresion.
@@ -153,7 +159,7 @@
 - **Tamano estimado**: 120 lineas.
 - **Dependencias**: T2.1.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (configuracion estatica/dinamica y `exposedByDefault=false` presentes).
 
 ### T2.4: Crear Dockerfiles multi-stage de apps
 - **Descripcion**: Dockerfiles para `admin-api`, `public-api`, `admin-web` (Angular) y `public-web` (Astro/nginx) con imagen base minima, usuario non-root y `.dockerignore`.
@@ -163,7 +169,7 @@
 - **Tamano estimado**: 120 lineas.
 - **Dependencias**: T2.1.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: partial (builds de APIs reportados OK; build de todas las imagenes no fue confirmado).
 
 ### T2.5: Configurar `cloudflared` opcional por profile
 - **Descripcion**: Agregar servicio `cloudflared` con `profiles: ["tunnel"]`, sin token versionado, usando secret externo.
@@ -173,7 +179,7 @@
 - **Tamano estimado**: 40 lineas.
 - **Dependencias**: T2.1.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (profile y secreto externo configurados).
 
 ### T2.6: Verificar `docker compose up -d`
 - **Descripcion**: Levantar entorno completo en local y confirmar que todos los healthchecks reportan salud antes de aceptar trafico dependiente.
@@ -183,7 +189,7 @@
 - **Tamano estimado**: 30 lineas.
 - **Dependencias**: T2.1, T2.2, T2.3, T2.4, T2.5.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (servicios criticos healthy segun evidencia de verificacion).
 
 ### T2.7: Smoke test de hosts locales
 - **Descripcion**: Verificar que `public.localhost`, `admin.localhost`, `api.localhost` y `api-admin.localhost` enrutan correctamente y ningun servicio expone puerto HTTP alternativo.
@@ -193,7 +199,7 @@
 - **Tamano estimado**: 30 lineas.
 - **Dependencias**: T2.6.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: pending (no se encontro evidencia reproducible de los cuatro hosts).
 
 ### T2.8: Pruebas negativas de conectividad entre redes
 - **Descripcion**: Confirmar que `admin-api` no resuelve MongoDB/Redis/MinIO y `public-api` no resuelve PostgreSQL; bases de datos no publican puertos.
@@ -203,7 +209,7 @@
 - **Tamano estimado**: 30 lineas.
 - **Dependencias**: T2.6.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: completed (aislamiento y Actuator interno verificados; no se modificaron datos).
 
 ### Criterios de "done" para PR2
 - [ ] `docker compose up -d` levanta todos los servicios con healthchecks healthy.
@@ -228,7 +234,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: PR2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (proyecto y estructura presentes; build reportado OK).
 
 ### T3.2: Configurar `application.yml` de `public-api`
 - **Descripcion**: Configurar MongoDB, Redis, MinIO, SMTP, CORS, server.port, logging y perfiles `dev`/`test`.
@@ -238,7 +244,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (perfiles y ownership de dependencias verificados).
 
 ### T3.3: Crear modelos MongoDB
 > Tamano total estimado: 170 lineas. Se divide en sub-tareas.
@@ -251,7 +257,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (modelos e indices funcionales presentes).
 
 #### T3.3.2: Modelos de postulacion y estado
 - **Descripcion**: Crear `Postulacion`, `CvMetadata`, `EstadoPostulacion` (enum) e historial embebido.
@@ -261,7 +267,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.3.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (modelo, estados e idempotencia presentes).
 
 #### T3.3.3: Modelos de contacto, destinatarios, notificacion y claves
 - **Descripcion**: Crear `Contacto`, `Destinatario`, `Notificacion` y `KeyDocument`.
@@ -271,7 +277,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.3.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (modelos y tipos requeridos presentes).
 
 ### T3.4: Crear repositorios Spring Data MongoDB
 - **Descripcion**: Interfaces para `Publicacion`, `Convocatoria`, `Postulacion`, `Contacto`, `Destinatario`, `Notificacion`, `KeyDocument` con metodos de consulta iniciales.
@@ -281,7 +287,7 @@
 - **Tamano estimado**: 40 lineas.
 - **Dependencias**: T3.3.1, T3.3.2, T3.3.3.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: partial (repositorios presentes; no se encontro `@DataMongoTest` dedicado).
 
 ### T3.5: Crear DTOs separados por boundary
 > Tamano total estimado: 100 lineas.
@@ -294,7 +300,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.3.1, T3.3.2, T3.3.3.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (DTOs y validaciones presentes).
 
 #### T3.5.2: DTOs internos (admin)
 - **Descripcion**: Records/clases para `PublicacionAdminDTO`, `ConvocatoriaAdminDTO`, `PostulacionAdminDTO`, `ContactoAdminDTO`, `DestinatarioDTO` con validacion.
@@ -304,7 +310,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.5.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (DTOs separados por boundary presentes).
 
 ### T3.6: Configurar manejo global de errores con ProblemDetail
 - **Descripcion**: Crear `@RestControllerAdvice` que mapee excepciones a `ProblemDetail` RFC 7807 con `type`, `title`, `status`, `detail`, `instance`, `correlationId` y `errors`.
@@ -314,7 +320,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T3.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (handler RFC 7807 y pruebas focales presentes).
 
 ### T3.7: Implementar filtro de correlation ID y MDC
 - **Descripcion**: Filtro que obtiene/genere `X-Correlation-ID`, valida formato, lo coloca en MDC y lo devuelve en respuesta.
@@ -324,7 +330,7 @@
 - **Tamano estimado**: 40 lineas.
 - **Dependencias**: T3.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (filtro y propagacion configurados).
 
 ### T3.8: Configurar CORS restrictivo y headers de seguridad
 - **Descripcion**: `SecurityConfig` con CORS allowlisted para Astro/Angular, headers CSP, HSTS (solo TLS), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`.
@@ -334,7 +340,7 @@
 - **Tamano estimado**: 40 lineas.
 - **Dependencias**: T3.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (allowlist y headers configurados).
 
 ### T3.9: Crear controllers base publicos e internos
 > Tamano total estimado: 100 lineas.
@@ -347,7 +353,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.5.1, T3.6.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: partial (controller implementado; cobertura MockMvc especifica no confirmada).
 
 #### T3.9.2: `InternalController` stubs y tests
 - **Descripcion**: Crear `InternalController` con endpoints stub bajo `/api/internal/**` y tests de ruta.
@@ -357,7 +363,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.5.2, T3.6.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (controller y `InternalControllerTest` presentes).
 
 ### T3.10: Verificar context load y propiedad de dependencias
 - **Descripcion**: Test de contexto con perfil test; validar que `public-api` no tiene configuracion de PostgreSQL y no resuelve `postgres`.
@@ -367,7 +373,7 @@
 - **Tamano estimado**: 30 lineas.
 - **Dependencias**: T3.1, T3.2, T3.6, T3.7, T3.8.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (context test, Mongo smoke autenticado y ausencia de PostgreSQL reportados).
 
 ### Criterios de "done" para PR3
 - [ ] `public-api` compila y levanta contexto Spring.
@@ -393,7 +399,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: PR3.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (configuracion y almacenamiento privado presentes).
 
 ### T4.2: Implementar `CvFileValidator`
 - **Descripcion**: Validar extension allowlist (`.pdf`, `.doc`, `.docx`), tamano <= 5 MB, MIME real por magic bytes, mismatch devuelve error tipado.
@@ -403,7 +409,7 @@
 - **Tamano estimado**: 90 lineas.
 - **Dependencias**: T3.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (allowlist, MIME real y limite de 5 MB; tests presentes).
 
 ### T4.3: Implementar `ConvocatoriaService`
 - **Descripcion**: CRUD, publicar/despublicar, cerrar manualmente, regla de periodo habilitado, listado publico solo abiertas.
@@ -413,7 +419,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T3.3.1, T3.4.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (periodo, publicacion, cierre y tests presentes).
 
 ### T4.4: Implementar dominio y servicio de postulaciones
 > Tamano total estimado: 150 lineas.
@@ -426,7 +432,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T3.3.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (tabla de transiciones y tests unitarios presentes).
 
 #### T4.4.2: `PostulacionService`
 - **Descripcion**: Recibir postulacion, validar convocatoria abierta ANTES de upload, guardar CV en MinIO, persistir postulacion con idempotencia, historial y metadata.
@@ -436,7 +442,7 @@
 - **Tamano estimado**: 100 lineas.
 - **Dependencias**: T4.1, T4.2, T4.3, T4.4.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (validacion previa a upload, persistencia, idempotencia y cleanup implementados).
 
 ### T4.5: Implementar endpoints publicos de postulaciones
 - **Descripcion**: `POST /api/public/convocatorias/{id}/postulaciones` multipart con `Idempotency-Key` y honeypot.
@@ -446,7 +452,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T4.4.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (multipart, CAPTCHA, honeypot e idempotencia implementados).
 
 ### T4.6: Implementar endpoints internos de convocatorias y postulaciones
 - **Descripcion**: CRUD interno de convocatorias, listado/filtro de postulaciones, transicion de estado PATCH.
@@ -456,7 +462,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T4.3, T4.4.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (listados, transiciones y mapeos internos presentes).
 
 ### T4.7: Implementar descarga autenticada de CV
 - **Descripcion**: `GET /api/internal/postulaciones/{id}/cv` valida S2S (placeholder hasta PR8), registra descarga y streama objeto MinIO con `Content-Disposition`.
@@ -466,7 +472,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T4.1, T4.6.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (proxy autenticado y streaming MinIO presentes).
 
 ### T4.8: Tests de FSM, validador CV e integracion
 > Tamano total estimado: 130 lineas.
@@ -479,7 +485,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T4.2, T4.4.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (tests focales presentes y reportados verdes).
 
 #### T4.8.2: Tests de integracion de postulacion
 - **Descripcion**: Testcontainers/embedded Mongo+MinIO: postulacion valida, convocatoria cerrada, idempotencia, descarga.
@@ -489,7 +495,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T4.4.2, T4.5, T4.7.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: pending (no se encontro `PostulacionServiceIntegrationTest` ejecutable).
 
 ### T4.9: Implementar limpieza compensatoria de objetos huerfanos
 - **Descripcion**: Al fallar persistencia MongoDB despues de guardar CV, borrar objeto; registrar orphan si el borrado falla.
@@ -499,7 +505,7 @@
 - **Tamano estimado**: 40 lineas.
 - **Dependencias**: T4.4.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: partial (cleanup compensatorio existe; job programado de hu orphan no fue confirmado).
 
 ### Criterios de "done" para PR4
 - [ ] CV valido se almacena en MinIO con metadata en MongoDB.
@@ -528,7 +534,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T3.3.1, T3.4.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (CRUD, estados y filtro publico implementados; test presente).
 
 #### T5.1.2: Endpoints internos de publicaciones
 - **Descripcion**: CRUD protegido `/api/internal/publicaciones`, previsualizacion, publicar/despublicar.
@@ -538,7 +544,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T5.1.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (CRUD y transiciones internas implementados).
 
 ### T5.2: Implementar `ContactoService` con honeypot e idempotencia
 - **Descripcion**: Validar contacto, honeypot vacio, idempotency key, persistir con estado `UNREAD`, hash de IP/fingerprint.
@@ -548,7 +554,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T3.3.3, T3.4.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (honeypot, idempotencia, CAPTCHA y persistencia implementados; test presente).
 
 ### T5.3: Implementar `DestinatarioService`
 - **Descripcion**: CRUD de destinatarios con tipo `JOB_APPLICATION`/`CONTACT_FORM`, activo/inactivo, unique `tipo + email`.
@@ -558,7 +564,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T3.3.3, T3.4.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (CRUD y estado activo/inactivo implementados).
 
 ### T5.4: Implementar eventos de dominio
 - **Descripcion**: `PostulacionReceivedEvent` y `ContactoReceivedEvent` con id, tipo y correlation ID; publicar desde servicios.
@@ -568,7 +574,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T4.4.2, T5.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (eventos de postulacion/contacto presentes).
 
 ### T5.5: Implementar correo asincrono
 > Tamano total estimado: 140 lineas.
@@ -581,7 +587,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T5.3, T5.4.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (persist-first, `@Async`, estados y reintentos implementados; test presente).
 
 #### T5.5.2: Plantillas Thymeleaf de correo
 - **Descripcion**: Plantillas `postulacion-recibida.html`, `contacto-recibido.html`, confirmacion al visitante, con escape de variables.
@@ -591,7 +597,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T5.5.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (plantillas separadas presentes).
 
 ### T5.6: Implementar endpoints publicos de publicaciones y contactos
 - **Descripcion**: `GET /api/public/publicaciones[/{slug}]`, `GET /api/public/convocatorias[/{id}]`, `POST /api/public/contactos`.
@@ -601,7 +607,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T5.1.1, T5.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (endpoints publicos implementados).
 
 ### T5.7: Implementar endpoints internos de contactos, destinatarios y reenvio
 - **Descripcion**: `/api/internal/contactos`, `/api/internal/destinatarios`, `/api/internal/notificaciones/{id}/reintentar`.
@@ -611,7 +617,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T5.2, T5.3, T5.5.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (endpoints internos y mapeos implementados).
 
 ### T5.8: Tests de publicaciones, contacto y correo
 > Tamano total estimado: 120 lineas.
@@ -624,7 +630,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T5.1.1, T5.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (tests de servicios presentes).
 
 #### T5.8.2: Tests de integracion de correo
 - **Descripcion**: Persist-first: postulacion/contacto persisten aunque SMTP falle; reintentos; destinatarios inactivos no reciben.
@@ -634,7 +640,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T5.5.1, T5.5.2.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: pending (no se encontro `MailEventListenerIntegrationTest`; solo test unitario).
 
 ### Criterios de "done" para PR5
 - [ ] Publicaciones CRUD, estados DRAFT/PUBLISHED, borradores no publicos.
@@ -659,7 +665,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: PR2, PR5.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: completed (proyecto `portal` presente y operativo).
 
 ### T6.2: Configurar `astro.config.mjs`
 - **Descripcion**: `output: 'static'`, `@astrojs/sitemap`, `astro:assets`, base URL public-api en build-time por env.
@@ -669,7 +675,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T6.1.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: completed (salida estatica/sitemap configurados; build reportado OK).
 
 ### T6.3: Crear layouts y componentes base
 - **Descripcion**: `BaseLayout.astro` con `SeoHead` (title, description, canonical, Open Graph, robots, JSON-LD), `Header.astro`, `Footer.astro`, `Card.astro`.
@@ -679,7 +685,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T6.2.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: completed (layouts, SEO, header, footer y tarjetas presentes).
 
 ### T6.4: Crear paginas de publicaciones
 - **Descripcion**: `src/pages/publicaciones/index.astro` (listado) y `[slug].astro` (detalle) usando `getStaticPaths()` contra publicaciones publicadas.
@@ -689,7 +695,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T6.3, T6.7.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: completed (listados y detalles presentes).
 
 ### T6.5: Crear paginas de convocatorias
 - **Descripcion**: `src/pages/convocatorias/index.astro` y `[id].astro` con detalle de convocatoria abierta.
@@ -699,7 +705,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T6.3, T6.7.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: completed (listados y detalles presentes).
 
 ### T6.6: Crear paginas de Trabaja con Nosotros y Contactanos
 - **Descripcion**: `src/pages/trabajaconnosotros.astro` y `src/pages/contactanos.astro` con islands progresivas (`client:visible`), honeypot, validacion y fetch a public-api.
@@ -709,7 +715,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T6.3, T6.7.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: completed (formularios, islands y Turnstile presentes).
 
 ### T6.7: Implementar API client de public-api
 - **Descripcion**: Cliente tipado en `src/lib/api-client/public-api.ts` con funciones para publicaciones, convocatorias, postulaciones y contactos; sin secretos.
@@ -719,7 +725,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T6.1.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: completed (cliente tipado sin credenciales presente).
 
 ### T6.8: Optimizar imagenes y cache
 - **Descripcion**: Uso de `astro:assets` con WebP/AVIF, `loading=lazy`, `Cache-Control` headers en nginx.
@@ -729,7 +735,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T6.3.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: partial (lazy/cache parcial; `astro:assets` y cache API no confirmados).
 
 ### T6.9: Generar sitemap y robots
 - **Descripcion**: `@astrojs/sitemap` configurado para incluir solo paths publicos; `robots.txt` con `noindex` correcto para borradores (no se generan paginas).
@@ -739,7 +745,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T6.4, T6.5.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: completed (robots y sitemap configurados; borradores no se generan).
 
 ### T6.10: Tests de build, SEO y sitemap
 - **Descripcion**: Validar que el build SSG incluye SEO, no incluye borradores y los formularios funcionan con fixture.
@@ -749,7 +755,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T6.4, T6.5, T6.6, T6.9.
 - **Especialista**: astro.
-- **Estado**: pending.
+- **Estado**: pending (build/check ejecutados, pero no existen tests Astro/fixtures automatizados).
 
 ### Criterios de "done" para PR6
 - [ ] `npm run build` genera sitio estatico.
@@ -782,7 +788,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: PR5.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (modelos del modulo presentes).
 
 ### T7.2: Crear `TalentoService`
 - **Descripcion**: Servicio que consume `admin-api` (/api/admin/talento/...) con metodos para CRUD de publicaciones, convocatorias, postulaciones, contactos y destinatarios.
@@ -792,7 +798,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T7.1.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (cliente admin y tests presentes).
 
 ### T7.3: Crear `TalentoModule` y lazy routing
 - **Descripcion**: NgModule, routing con `loadChildren`, rutas anidadas y `data.permissions`.
@@ -802,7 +808,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T7.1, T7.2.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (NgModule y lazy routing presentes).
 
 ### T7.4: Registrar permisos y rutas en `RUTAS_POR_PERMISO`
 - **Descripcion**: Mapear permisos `TALENTO_*` y `CONTABILIDAD_CONTACTOS_*` en `frontend/src/app/core/rutas-por-permiso.ts` y `app-routing.module.ts`.
@@ -812,7 +818,7 @@
 - **Tamano estimado**: 30 lineas.
 - **Dependencias**: T7.3.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (permisos y guard registrados).
 
 ### T7.5: Implementar gestion de publicaciones en Angular
 > Tamano total estimado: 130 lineas.
@@ -825,7 +831,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T7.2, T7.4.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (listado, permisos y test presentes).
 
 #### T7.5.2: `PublicacionFormComponent`
 - **Descripcion**: Formulario reactivo para crear/editar/publicar/despublicar publicacion con SEO metadata y medios.
@@ -835,7 +841,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T7.5.1.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (formulario y test presentes).
 
 ### T7.6: Implementar gestion de convocatorias en Angular
 > Tamano total estimado: 130 lineas.
@@ -848,7 +854,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T7.2, T7.4.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (listado presente).
 
 #### T7.6.2: `ConvocatoriaFormComponent`
 - **Descripcion**: Formulario para crear/editar/cerrar convocatoria.
@@ -858,7 +864,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T7.6.1.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (formulario presente).
 
 ### T7.7: Implementar gestion de postulaciones en Angular
 > Tamano total estimado: 130 lineas.
@@ -871,7 +877,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T7.2, T7.4.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (listado, fallback y test presentes).
 
 #### T7.7.2: `PostulacionDetailComponent` y descarga de CV
 - **Descripcion**: Detalle, cambio de estado y descarga autenticada del CV (proxy por admin-api).
@@ -881,7 +887,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T7.7.1.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (detalle, transicion y descarga por proxy presentes).
 
 ### T7.8: Implementar gestion de contactos y destinatarios
 - **Descripcion**: Paginas de contactos (modulo contable) y CRUD de destinatarios, usando permisos correspondientes.
@@ -891,7 +897,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T7.2, T7.4.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (pantallas y permisos presentes).
 
 ### T7.9: Crear componente `IndisponibilidadTalentoComponent`
 - **Descripcion**: Componente reutilizable que muestra exactamente `Servicio de postulaciones temporalmente no disponible` y permite reintentar sin duplicar POST.
@@ -901,7 +907,7 @@
 - **Tamano estimado**: 40 lineas.
 - **Dependencias**: T7.2.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (texto literal y componente presentes).
 
 ### T7.10: Implementar estados loading/error/empty y fallback visual
 - **Descripcion**: En cada pagina del modulo: loading skeleton/spinner, mensaje empty, error tipado y fallback de indisponibilidad.
@@ -911,7 +917,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T7.5, T7.6, T7.7, T7.8, T7.9.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (estados visuales implementados en las pantallas revisadas).
 
 ### T7.11: Tests del modulo talento
 - **Descripcion**: Tests de servicio, guards, formularios y componentes con Vitest/jsdom; verificar que usuario sin permiso no accede por URL.
@@ -921,7 +927,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T7.2, T7.3, T7.4, T7.10.
 - **Especialista**: angular.
-- **Estado**: pending.
+- **Estado**: completed (specs Angular focales presentes y reportadas verdes).
 
 ### Criterios de "done" para PR7
 - [ ] Modulo `talento` lazy-loaded con rutas protegidas por RBAC.
@@ -947,7 +953,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: PR3.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (RS256, claims, `kid`, resolver y tests focales presentes).
 
 ---
 
@@ -980,7 +986,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: T8.1.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: completed (endpoint y servicio de claves presentes).
 
 ### T8.3: Implementar `PublicApiClient` en `admin-api`
 - **Descripcion**: `RestClient` con connect 1s/read 3s, generacion de JWT S2S, propagacion de correlation ID, mapeo de errores a excepciones tipadas.
@@ -1000,7 +1006,7 @@
 - **Tamano estimado**: 80 lineas.
 - **Dependencias**: T7.4.
 - **Especialista**: springboot / angular.
-- **Estado**: pending.
+- **Estado**: completed (5 modulos, acciones y ADMIN automatico presentes; tests focales).
 
 ### T8.5: Implementar logging estructurado y eventos de observabilidad
 - **Descripcion**: JSON logs con `timestamp`, `level`, `service`, `correlationId`, `event`, `route`, `status`, `durationMs`; eventos obligatorios: `application.received`, `application.status_changed`, `contact.received`, `validation.rejected`, `rate_limit.activated`, `storage.failure`, `storage.download`, `mail.failure`, `mail.sent`, `s2s.rejected`, `dependency.unavailable`.
@@ -1010,7 +1016,7 @@
 - **Tamano estimado**: 70 lineas.
 - **Dependencias**: T3.7.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: partial (logging estructurado, correlacion y redaccion presentes; cobertura de todos los eventos no confirmada).
 
 ### T8.6: Implementar rate limiting Redis con fallback local
 - **Descripcion**: Script Lua `INCR+EXPIRE` para limites confirmados (postulaciones 3/15min + 10/dia; contactos 5/15min + 20/dia), contadores complementarios fingerprint/email, 429 con `Retry-After`, fail-open local conservador.
@@ -1053,7 +1059,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T8.6, T8.3.
 - **Especialista**: springboot.
-- **Estado**: pending.
+- **Estado**: pending (no se encontro suite integral de resiliencia; hay tests focales de rate limit).
 
 #### T8.8.3: Smoke test end-to-end del flujo completo
 - **Descripcion**: Script/manual: crear publicacion/convocatoria, postularse desde portal, descargar CV, cambiar estado, enviar contacto, verificar correo y logs.
@@ -1063,7 +1069,7 @@
 - **Tamano estimado**: 50 lineas.
 - **Dependencias**: PR4, PR5, PR6, PR7.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: pending (no se encontro script `smoke/` ni ejecucion del flujo completo).
 
 ### T8.9: Documentar arquitectura y ADRs
 > Tamano total estimado: 120 lineas.
@@ -1076,7 +1082,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: PR1-PR7.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: partial (existen ADRs 001-002; no estan documentados ADR-1 a ADR-12 individualmente).
 
 #### T8.9.2: Documentacion operativa
 - **Descripcion**: Diagrama de arquitectura, matriz de ownership de datos, matriz de redes, threat model, flujos S2S/correo/almacenamiento, runbook de rotacion de claves.
@@ -1086,7 +1092,7 @@
 - **Tamano estimado**: 60 lineas.
 - **Dependencias**: T8.9.1.
 - **Especialista**: infra.
-- **Estado**: pending.
+- **Estado**: partial (existen documentos de runtime/seguridad; faltan matriz completa y threat model dedicado).
 
 ### T8.10: Verificacion final cross-stack
 - **Descripcion**: Ejecutar suites de backend (`admin-api` y `public-api`), frontend (`npm test`) y portal (`npm run build`); corregir regressiones.
@@ -1096,7 +1102,7 @@
 - **Tamano estimado**: 40 lineas.
 - **Dependencias**: T8.8.1, T8.8.2, T7.11, T6.10.
 - **Especialista**: infra / springboot / angular / astro.
-- **Estado**: pending.
+- **Estado**: pending (suite admin completa y trazabilidad automatizada de los 47 escenarios no confirmadas).
 
 ### Criterios de "done" para PR8
 - [ ] `/api/internal/**` rechaza JWT invalido/expirado/firma incorrecta.

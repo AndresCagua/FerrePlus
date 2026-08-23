@@ -22,8 +22,19 @@ export class TalentoService {
 
   listarPublicaciones(): Observable<Publicacion[]> { return this.request(this.http.get<Publicacion[]>(`${this.baseUrl}/publicaciones`)); }
   obtenerPublicacion(id: string): Observable<Publicacion> { return this.request(this.http.get<Publicacion>(`${this.baseUrl}/publicaciones/${id}`)); }
-  crearPublicacion(payload: PublicacionPayload): Observable<Publicacion> { return this.request(this.http.post<Publicacion>(`${this.baseUrl}/publicaciones`, payload)); }
-  actualizarPublicacion(id: string, payload: PublicacionPayload): Observable<Publicacion> { return this.request(this.http.put<Publicacion>(`${this.baseUrl}/publicaciones/${id}`, payload)); }
+  crearPublicacion(payload: PublicacionPayload, portada?: File, galeria: File[] = []): Observable<Publicacion> {
+    return this.request(this.http.post<Publicacion>(`${this.baseUrl}/publicaciones`, this.multipart(payload, portada, galeria)));
+  }
+  actualizarPublicacion(id: string, payload: PublicacionPayload, portada?: File, galeria: File[] = []): Observable<Publicacion> {
+    return this.request(this.http.put<Publicacion>(`${this.baseUrl}/publicaciones/${id}`, this.multipart(payload, portada, galeria)));
+  }
+  private multipart(payload: PublicacionPayload, portada?: File, galeria: File[] = []): FormData {
+    const form = new FormData();
+    form.append('data', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    if (portada) form.append('portada', portada, portada.name);
+    galeria.forEach(file => form.append('galeria', file, file.name));
+    return form;
+  }
   cambiarEstadoPublicacion(id: string, estado: 'DRAFT' | 'PUBLISHED'): Observable<Publicacion> {
     const action = estado === 'PUBLISHED' ? 'publicar' : 'despublicar';
     return this.request(this.http.post<Publicacion>(`${this.baseUrl}/publicaciones/${id}/${action}`, {}));

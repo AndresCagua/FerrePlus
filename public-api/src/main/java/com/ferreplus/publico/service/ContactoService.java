@@ -17,10 +17,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import jakarta.servlet.http.HttpServletRequest;
 import com.ferreplus.publico.ratelimit.ClientIpResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.ferreplus.publico.config.SafeDiagnosticLog;
 
 @Service
 @RequiredArgsConstructor
 public class ContactoService {
+    private static final Logger LOG = LoggerFactory.getLogger(ContactoService.class);
     private final ContactoRepository repository;
     private final ApplicationEventPublisher events;
     private final CaptchaVerificationService captcha;
@@ -29,7 +33,11 @@ public class ContactoService {
     public Contacto create(ContactoRequestDTO request, String key, HttpServletRequest httpRequest, String fingerprint) {
         validateKey(key);
         var previous = repository.findByIdempotencyKey(key);
-        if (previous.isPresent()) return previous.get();
+        if (previous.isPresent()) {
+            LOG.info("contact.persisted outcome=idempotent_replay contactId={} correlationId={} idempotencyKey={}",
+                    previous.get().getId(), SafeDiagnosticLog.correlationId("unknown"), SafeDiagnosticLog.opaque(key));
+            return previous.get();
+        }
         if (request.honeypot() != null && !request.honeypot().isBlank())
             throw new PublicApiException(HttpStatus.BAD_REQUEST, "No fue posible procesar el contacto");
         captcha.verify(request.captchaToken());
@@ -42,8 +50,13 @@ public class ContactoService {
         try {
             saved = repository.save(item);
         } catch (org.springframework.dao.DuplicateKeyException duplicate) {
-            return repository.findByIdempotencyKey(key).orElseThrow(() -> duplicate);
+            var concurrent = repository.findByIdempotencyKey(key).orElseThrow(() -> duplicate);
+            LOG.info("contact.persisted outcome=idempotent_race contactId={} correlationId={} idempotencyKey={}",
+                    concurrent.getId(), SafeDiagnosticLog.correlationId("unknown"), SafeDiagnosticLog.opaque(key));
+            return concurrent;
         }
+        LOG.info("contact.persisted outcome=created contactId={} correlationId={} emailDomain={} messageLength={}",
+                saved.getId(), SafeDiagnosticLog.correlationId("unknown"), SafeDiagnosticLog.emailDomain(saved.getEmail()), saved.getMensaje().length());
         events.publishEvent(new ContactoReceivedEvent(saved.getId(), saved.getEmail(), currentCorrelationId()));
         return saved;
     }

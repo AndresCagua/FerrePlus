@@ -1,17 +1,29 @@
 # FerrePlus
 
-Sistema de gestión de inventario para ferreterías y bodegas de repuestos. Backend REST API con Spring Boot 3 + Angular 22 + PostgreSQL.
+Sistema de gestión de inventario para ferreterías y bodegas de repuestos, con portal público y módulo de Talento. El sistema combina un backend administrativo para la operación interna, una API pública para contenido y postulaciones, y dos interfaces web.
 
 ## Stack Tecnológico
 
 | Capa     | Tecnología                                  |
 | -------- | ------------------------------------------- |
-| Backend  | Java 21, Spring Boot 3.4, Maven             |
+| Backend administrativo | Java 21, Spring Boot 3, Maven       |
+| API pública | Java 21, Spring Boot 3, MongoDB, Redis, MinIO |
 | Frontend | Angular 22, Bootstrap 5, Angular Material   |
+| Portal público | Astro 6, salida estática con contenido consultado en runtime |
 | BD       | PostgreSQL (pgvector)                       |
 | Auth     | JWT (JSON Web Tokens)                       |
 | IA       | Google Gemini (chat + embeddings)           |
 | Backend (prod) | Docker (multi-stage)                  |
+
+### Arquitectura actual
+
+- **Admin UI (`frontend/`)**: SPA Angular para inventario, ventas, compras, reportes, usuarios, chat IA y Talento.
+- **Admin API (`admin-api/`)**: API REST autenticada con JWT para la operación interna y el proxy autenticado hacia Talento.
+- **Portal público (`portal/`)**: sitio Astro para publicaciones, convocatorias, postulaciones y contactos.
+- **API pública (`public-api/`)**: API REST para contenido público y formularios; persiste contenido en MongoDB, usa Redis para límites/estado auxiliar y MinIO para medios y CV.
+- **Traefik**: entrypoint local y enrutamiento por hostname. Cloudflare Tunnel es opcional.
+
+El portal no depende de datos embebidos en un build para las listas y detalles normales: consulta `public-api` en runtime. Por eso publicar o actualizar una publicación o convocatoria desde Talento no requiere reconstruir el portal.
 
 ## Requisitos
 
@@ -41,6 +53,9 @@ docker compose up -d --build
 Esto compila las APIs y levanta el entorno local con Traefik como entrypoint. Los puertos de
 MongoDB, Redis y MinIO quedan publicados exclusivamente en `127.0.0.1`.
 
+El `.env` local del proyecto usa Traefik HTTP en `8088` y HTTPS en `8443`. Los valores por
+defecto de Compose son `80` y `443`; si se cambian, deben ajustarse las URLs siguientes.
+
 #### Rutas locales
 
 | Servicio | URL |
@@ -51,13 +66,22 @@ MongoDB, Redis y MinIO quedan publicados exclusivamente en `127.0.0.1`.
 | API admin | `http://api-admin.localhost:8088/api` |
 | MinIO API | `http://127.0.0.1:9000` |
 | MinIO console | `http://127.0.0.1:9001` |
+| Admin UI directa (contenedor) | `http://127.0.0.1:4200` |
 
 #### Conexiones locales para DataGrip/pruebas
 
 MongoDB usa `127.0.0.1:27017`, Redis `127.0.0.1:6379` y MinIO API
 `127.0.0.1:9000`. Las credenciales se toman del `.env` local ignorado; no se
-documentan aqui. Para produccion, elimina los bloques `ports:` de MongoDB,
-Redis y MinIO: las conexiones internas continuan usando sus nombres Compose.
+documentan aqui. En DataGrip, MongoDB requiere autenticacion **User & Password**,
+base de autenticacion `admin` y la URI con `authSource=admin`, por ejemplo:
+
+```text
+mongodb://<usuario>:<password>@127.0.0.1:27017/ferreplus_public?authSource=admin
+```
+
+No borres los volumenes de Compose para resolver errores de autenticacion: el volumen
+`mongodb_data` conserva el usuario creado durante la inicializacion y sus credenciales.
+Revisa el secreto local o realiza una rotacion controlada.
 
 > **Swagger UI:** [`http://api-admin.localhost:8088/swagger-ui/index.html`](http://api-admin.localhost:8088/swagger-ui/index.html) — documentación interactiva de la API REST.
 >
@@ -72,6 +96,71 @@ npm start
 ```
 
 El frontend corre en `http://localhost:4200`.
+
+### Portal público y Talento
+
+El portal público usa las rutas `http://public.localhost:8088`, `http://api.localhost:8088/api`
+y carga publicaciones y convocatorias desde `public-api` en runtime. El contenido visible
+puede cambiar sin rebuild del portal; solo hace falta reconstruir si cambia el código o la
+configuración de la imagen.
+
+Desde **Talento** el usuario autorizado puede:
+
+- Crear, editar, publicar, despublicar y eliminar publicaciones.
+- Gestionar publicaciones con portada, galería de imágenes, video de YouTube y enlaces X.
+- Crear, editar, publicar y cerrar convocatorias.
+- Filtrar postulaciones por convocatoria, revisar su estado y descargar el CV.
+- Cambiar el estado de una postulación.
+- Consultar contactos y marcarlos como leídos/no leídos.
+- Crear, editar y eliminar destinatarios de notificaciones.
+
+Las operaciones de Talento se realizan desde el Admin UI a través del contrato autenticado
+de `admin-api`; la API pública expone únicamente el contenido y formularios públicos.
+
+### CAPTCHA Turnstile
+
+- En perfiles `dev` y `test` se puede usar `CAPTCHA_ENABLED=false` para desarrollo y pruebas.
+- En producción el CAPTCHA debe permanecer habilitado y `public-api` exige una clave secreta
+  configurada mediante `TURNSTILE_SECRET_KEY`.
+- El portal recibe la clave pública mediante `PUBLIC_TURNSTILE_SITE_KEY` y la compilación
+  también puede controlar la presentación con `PUBLIC_CAPTCHA_ENABLED`.
+- Nunca se deben incluir claves reales en este README, en el repositorio ni en logs.
+
+Para producción se recomienda usar el endpoint oficial de verificación configurado por
+`TURNSTILE_VERIFY_URL` y mantener el timeout de verificación en `CAPTCHA_TIMEOUT`.
+
+### Gmail SMTP
+
+`public-api` envía notificaciones mediante SMTP. Para Gmail, configura en el entorno local
+o de despliegue únicamente estas variables:
+
+| Variable | Valor para Gmail |
+| -------- | ---------------- |
+| `SMTP_HOST` | `smtp.gmail.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_USERNAME` | Cuenta Gmail remitente |
+| `SMTP_PASSWORD` | Contraseña de aplicación |
+| `SMTP_AUTH` | `true` |
+| `SMTP_STARTTLS_ENABLE` | `true` |
+| `SMTP_STARTTLS_REQUIRED` | `true` |
+| `SMTP_FROM` | Remitente autorizado |
+
+Gmail normalmente requiere verificación en dos pasos y una **contraseña de aplicación**;
+no uses la contraseña normal de la cuenta ni documentes ningún valor real.
+
+### Cloudflare Tunnel
+
+El servicio `cloudflared` usa el perfil opcional `tunnel` y ejecuta un **named tunnel** con
+un token montado como secreto desde `./secrets/cloudflared.token` (ruta ignorada por Git):
+
+```bash
+docker compose --profile tunnel up -d cloudflared
+```
+
+El token debe permanecer únicamente en `secrets/` o en otra ruta local ignorada y nunca se
+documenta. Un Quick Tunnel gratuito (`trycloudflare.com`) sirve para pruebas temporales,
+pero no ofrece un hostname estable ni las garantías operativas de un named tunnel; no lo
+trates como configuración de producción.
 
 ## App Móvil Flutter
 
@@ -108,7 +197,8 @@ flutter pub get
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8081
 flutter analyze
 flutter test
-flutter build apk --dart-define=API_BASE_URL=https://api.example.com
+# Para un build de despliegue, sustituye URL_REAL_DE_LA_API por la URL real.
+flutter build apk --dart-define=API_BASE_URL=URL_REAL_DE_LA_API
 ```
 
 En un emulador Android, `10.0.2.2` apunta al host del equipo. La suite debe
@@ -251,19 +341,29 @@ CI=true npm test -- --watch=false
 
 > Los tests del chat (ChatService, ChatComponent) están incluidos en la suite.
 
+### Estado de verificación
+
+En esta actualización del README no se ejecutaron Maven, la suite completa, builds de
+Angular/Astro ni pruebas de integración. Los comandos anteriores son la referencia para
+ejecutarlos. La verificación del backend administrativo sigue dependiendo de PostgreSQL
+con pgvector; la API pública usa además MongoDB, Redis, MinIO y, para ciertos flujos,
+servicios externos como Turnstile y SMTP. No se debe interpretar la existencia de tests o
+de un contenedor saludable como una ejecución exitosa de toda la suite.
+
 ## Seguridad
 
-- `admin-api/src/main/resources/application.yml` contiene credenciales locales y **está excluido de git** (`.gitignore`).
-- Usá `application.example.yml` como plantilla para tu configuración local.
-- Las credenciales de producción se inyectan vía variables de entorno en `docker-compose.yml`.
-- `docker-compose.yml` y `admin-api/Dockerfile` también están excluidos de git.
+- Usa `admin-api/src/main/resources/application.example.yml` y `.env.example` como plantillas;
+  los secretos reales deben mantenerse en archivos locales ignorados.
+- Las credenciales de despliegue se inyectan vía variables de entorno y secretos de Compose.
+- Nunca incluyas contraseñas, tokens, claves Turnstile, contraseñas de aplicación Gmail ni
+  material criptográfico en el README.
 
 ## Estructura del Proyecto
 
 ```
 ferreplus/
 ├── admin-api/                  # Spring Boot REST API administrativa
-│   ├── Dockerfile              # Multi-stage (solo local, excluido de git)
+│   ├── Dockerfile              # Build multi-stage de la API
 │   ├── pom.xml
 │   └── src/main/java/com/ferreplus/
 │       ├── config/             # Configuración (CORS, Security)

@@ -2,6 +2,7 @@ package com.ferreplus.publico.service;
 
 import com.ferreplus.publico.dto.interno.PublicacionAdminDTO;
 import com.ferreplus.publico.dto.publico.PublicacionPublicaDTO;
+import com.ferreplus.publico.dto.publico.MediaPublicaDTO;
 import com.ferreplus.publico.exception.PublicApiException;
 import com.ferreplus.publico.model.EstadoPublicacion;
 import com.ferreplus.publico.model.Publicacion;
@@ -16,6 +17,8 @@ import com.ferreplus.publico.storage.ImageFileValidator;
 import com.ferreplus.publico.storage.MinioObjectStorage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.net.URI;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +51,13 @@ public class PublicacionService {
         return repository.save(from(dto, find(id)));
     }
     public Publicacion actualizar(String id, PublicacionAdminDTO dto, MultipartFile portada, List<MultipartFile> galeria) {
-        return saveMedia(from(dto, find(id)), portada, galeria);
+        Publicacion existing = find(id);
+        var previousPortada = existing.getPortada();
+        var previousGaleria = existing.getGaleria();
+        Publicacion item = from(dto, existing);
+        if ((portada == null || portada.isEmpty()) && dto.portada() == null) item.setPortada(previousPortada);
+        if ((galeria == null || galeria.isEmpty()) && dto.galeria() == null) item.setGaleria(previousGaleria);
+        return saveMedia(item, portada, galeria);
     }
 
     public Publicacion publicar(String id) { return changeState(id, EstadoPublicacion.PUBLISHED); }
@@ -68,6 +77,7 @@ public class PublicacionService {
         if (dto.fechaVencimiento() != null && dto.fechaPublicacion() != null
                 && !dto.fechaPublicacion().isBefore(dto.fechaVencimiento()))
             throw new PublicApiException(HttpStatus.BAD_REQUEST, "La fecha de publicacion debe ser anterior al vencimiento");
+        validateUrls(dto.videoUrl(), dto.enlacesX());
         item.setTitulo(dto.titulo()); item.setSlug(dto.slug()); item.setResumen(dto.resumen());
         item.setDescripcion(dto.descripcion()); item.setPortada(dto.portada()); item.setGaleria(dto.galeria());
         item.setVideoUrl(dto.videoUrl()); item.setEnlacesX(dto.enlacesX()); item.setCategoria(dto.categoria());
@@ -108,7 +118,30 @@ public class PublicacionService {
     }
     private PublicacionPublicaDTO toPublic(Publicacion p) {
         return new PublicacionPublicaDTO(p.getId(), p.getSlug(), p.getTitulo(), p.getResumen(), p.getDescripcion(),
-                p.getPortada(), p.getGaleria(), p.getVideoUrl(), p.getEnlacesX(), p.getCategoria(),
+                publicMedia(p.getPortada()), p.getGaleria() == null ? List.of() : p.getGaleria().stream().map(this::publicMedia).toList(),
+                p.getVideoUrl(), p.getEnlacesX(), p.getCategoria(),
                 p.getFechaPublicacion(), p.getMetadataSEO());
+    }
+
+    private MediaPublicaDTO publicMedia(com.ferreplus.publico.model.ImagenMedia media) {
+        if (media == null || media.objectKey() == null) return null;
+        return new MediaPublicaDTO("/api/public/media/" + media.objectKey(), media.alt());
+    }
+
+    private void validateUrls(String videoUrl, List<String> enlacesX) {
+        if (videoUrl != null && !videoUrl.isBlank() && !isAllowedUrl(videoUrl, "youtube.com", "youtu.be"))
+            throw new PublicApiException(HttpStatus.BAD_REQUEST, "El video debe ser una URL de YouTube valida");
+        if (enlacesX != null && enlacesX.stream().anyMatch(url -> url == null || !isAllowedUrl(url, "x.com", "twitter.com")))
+            throw new PublicApiException(HttpStatus.BAD_REQUEST, "Los enlaces X deben apuntar a x.com o twitter.com");
+    }
+
+    private boolean isAllowedUrl(String value, String... hosts) {
+        try {
+            URI uri = URI.create(value.trim());
+            String host = uri.getHost();
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || host == null) return false;
+            String normalized = host.toLowerCase(Locale.ROOT);
+            return java.util.Arrays.stream(hosts).anyMatch(allowed -> normalized.equals(allowed) || normalized.endsWith("." + allowed));
+        } catch (IllegalArgumentException exception) { return false; }
     }
 }

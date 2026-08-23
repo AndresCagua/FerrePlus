@@ -9,6 +9,7 @@ import com.ferreplus.publico.model.EstadoPublicacion;
 import com.ferreplus.publico.model.Publicacion;
 import com.ferreplus.publico.repository.PublicacionRepository;
 import java.util.List;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -55,5 +56,28 @@ class PublicacionServiceTest {
                 .hasMessage("Publicacion no encontrada")
                 .extracting("status")
                 .isEqualTo(org.springframework.http.HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void rejectsVideoOutsideYoutube() {
+        var request = new PublicacionAdminDTO("Titulo", "slug", "Resumen", "Descripcion", null, null,
+                "https://example.com/video", Collections.emptyList(), null, EstadoPublicacion.DRAFT,
+                null, null, null, null);
+        assertThatThrownBy(() -> service.crear(request))
+                .isInstanceOf(com.ferreplus.publico.exception.PublicApiException.class)
+                .hasMessage("El video debe ser una URL de YouTube valida");
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void rejectsSocialLinkOutsideX() {
+        var request = new PublicacionAdminDTO("Titulo", "slug", "Resumen", "Descripcion", null, null,
+                null, List.of("https://example.com/post"), null, EstadoPublicacion.DRAFT,
+                null, null, null, null);
+
+        assertThatThrownBy(() -> service.crear(request))
+                .isInstanceOf(com.ferreplus.publico.exception.PublicApiException.class)
+                .hasMessage("Los enlaces X deben apuntar a x.com o twitter.com");
+        verifyNoInteractions(repository);
     }
 }

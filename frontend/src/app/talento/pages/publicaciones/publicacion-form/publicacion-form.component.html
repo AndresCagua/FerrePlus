@@ -1,1 +1,41 @@
-<section class="container-fluid"><h2>{{ id ? 'Editar' : 'Nueva' }} publicacion</h2><div *ngIf="error" class="alert alert-danger">{{ error }}</div><form [formGroup]="form" (ngSubmit)="save()" novalidate><div class="row"><mat-form-field class="col-md-6"><mat-label>Titulo</mat-label><input matInput formControlName="titulo"><mat-error>Titulo obligatorio</mat-error></mat-form-field><mat-form-field class="col-md-6"><mat-label>Slug</mat-label><input matInput formControlName="slug"><mat-error>Usa minusculas, numeros y guiones</mat-error></mat-form-field><mat-form-field class="col-md-6"><mat-label>Resumen</mat-label><textarea matInput formControlName="resumen"></textarea></mat-form-field><mat-form-field class="col-md-6"><mat-label>Categoria</mat-label><input matInput formControlName="categoria"></mat-form-field><mat-form-field class="col-12"><mat-label>Descripcion</mat-label><textarea matInput rows="6" formControlName="descripcion"></textarea></mat-form-field><mat-form-field class="col-md-6"><mat-label>SEO title</mat-label><input matInput formControlName="seoTitle"></mat-form-field><mat-form-field class="col-md-6"><mat-label>SEO description</mat-label><input matInput formControlName="seoDescription"></mat-form-field></div><button class="btn btn-primary" type="submit" [disabled]="saving">Guardar borrador</button> <button class="btn btn-link" type="button" routerLink="/talento/publicaciones">Cancelar</button></form></section>
+<section class="container-fluid" aria-labelledby="publicacion-title">
+  <h2 id="publicacion-title">{{ id ? 'Editar' : 'Nueva' }} publicacion</h2>
+  <div *ngIf="error" class="alert alert-danger" role="alert">{{ error }}</div>
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="row">
+      <mat-form-field class="col-md-6"><mat-label>Titulo</mat-label><input matInput formControlName="titulo"><mat-error>Titulo obligatorio</mat-error></mat-form-field>
+      <mat-form-field class="col-md-6"><mat-label>Slug</mat-label><input matInput formControlName="slug"><mat-error>Usa minusculas, numeros y guiones</mat-error></mat-form-field>
+      <mat-form-field class="col-md-6"><mat-label>Resumen</mat-label><textarea matInput formControlName="resumen"></textarea></mat-form-field>
+      <mat-form-field class="col-md-6"><mat-label>Categoria</mat-label><input matInput formControlName="categoria"></mat-form-field>
+      <mat-form-field class="col-12"><mat-label>Descripcion</mat-label><textarea matInput rows="6" formControlName="descripcion"></textarea></mat-form-field>
+
+      <div class="col-12 mb-3" aria-labelledby="media-title">
+        <h3 id="media-title" class="h5">Medios de la publicacion</h3>
+        <p class="form-text">Los archivos son opcionales. Al editar, la portada y la galeria existentes se conservan si no seleccionas reemplazos.</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="portada">Portada (imagen principal)</label>
+        <input id="portada" class="form-control" type="file" [accept]="acceptedImageTypes" (change)="onPortada($event)" aria-describedby="portada-help">
+        <div id="portada-help" class="form-text">Formatos aceptados: JPG, JPEG, PNG o WebP. Tamano maximo: 5 MB.</div>
+        @if (selectedPortadaName) { <p class="mt-2 mb-1" role="status">Nueva portada seleccionada: <strong>{{ selectedPortadaName }}</strong></p> }
+        @if (portadaPreviewUrl) { <img class="img-thumbnail mt-1" [src]="portadaPreviewUrl" alt="Vista previa de la nueva portada" width="180"> }
+        @if (!selectedPortadaName && existingPortada) {
+          <p class="mt-2 mb-1" role="status">Portada existente: <strong>{{ existingPortada.objectKey || 'imagen guardada' }}</strong>. Se conservara si no eliges otra.</p>
+          @if (existingPortadaUrl()) { <img class="img-thumbnail mt-1" [src]="existingPortadaUrl()" alt="Vista previa de la portada existente" width="180"> }
+        }
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="galeria">Galeria (imagenes adicionales)</label>
+        <input id="galeria" class="form-control" type="file" multiple [accept]="acceptedImageTypes" (change)="onGaleria($event)" aria-describedby="galeria-help">
+        <div id="galeria-help" class="form-text">JPG, JPEG, PNG o WebP de hasta 5 MB cada una. La galeria existente se conserva al editar si no seleccionas archivos.</div>
+        @if (galeria.length) { <p class="mt-2" role="status">{{ galeria.length }} imagen(es) de galeria seleccionada(s).</p> }
+      </div>
+      <mat-form-field class="col-md-6"><mat-label>Video de YouTube (opcional)</mat-label><input matInput type="url" formControlName="videoUrl" aria-describedby="video-help"><mat-hint id="video-help">Solo https://youtube.com o https://youtu.be</mat-hint><mat-error>Indica una URL de YouTube valida</mat-error></mat-form-field>
+      <mat-form-field class="col-md-6"><mat-label>Enlaces X (opcional)</mat-label><textarea matInput rows="3" formControlName="enlacesX" aria-describedby="x-help"></textarea><mat-hint id="x-help">Un enlace por linea o separado por comas. Solo x.com o twitter.com</mat-hint></mat-form-field>
+      <mat-form-field class="col-md-6"><mat-label>SEO title</mat-label><input matInput formControlName="seoTitle"></mat-form-field>
+      <mat-form-field class="col-md-6"><mat-label>SEO description</mat-label><input matInput formControlName="seoDescription"></mat-form-field>
+    </div>
+    <button class="btn btn-primary" type="submit" [disabled]="saving">Guardar borrador</button>
+    <button class="btn btn-link" type="button" routerLink="/talento/publicaciones">Cancelar</button>
+  </form>
+</section>

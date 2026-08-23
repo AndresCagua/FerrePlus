@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ferreplus.client.publico.PublicApiClient;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -30,5 +31,18 @@ class TalentoControllerTest {
                                 && path.contains("estado=RECEIVED")),
                 eq(null), eq(JsonNode.class), eq(null));
         assertThat(request.getParameterMap()).containsKey("convocatoriaId");
+    }
+
+    @Test
+    void reenviaLaTransicionComoPatchAlPublicApi() throws Exception {
+        PublicApiClient client = mock(PublicApiClient.class);
+        TalentoController controller = new TalentoController(client);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        JsonNode body = new ObjectMapper().readTree("{\"estado\":\"PUBLICADA\"}");
+
+        controller.state("publicaciones", "abc", body, request);
+
+        verify(client).exchange(eq(HttpMethod.PATCH), eq("/api/internal/publicaciones/abc"),
+                eq(body), eq(JsonNode.class), eq(null));
     }
 }

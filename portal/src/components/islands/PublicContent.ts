@@ -1,5 +1,6 @@
 import { publicApi } from '../../lib/api-client/public-api';
 import type { Convocatoria, Publicacion } from '../../lib/api-client/types';
+import { createXIcon, enhanceXEmbeds, parseXLink, parseYouTubeLink } from '../link-previews';
 
 const date = (value?: string, prefix = '') => value ? `${prefix}${new Date(value).toLocaleDateString('es-CO')}` : '';
 
@@ -11,6 +12,10 @@ function setState(container: HTMLElement, message: string, className: string): v
   container.replaceChildren();
   const state = document.createElement('div');
   state.className = className;
+  state.dataset.contentState = className === 'notice' ? 'error' : className;
+  state.dataset.stateOrigin = 'runtime';
+  state.setAttribute('role', className === 'notice' ? 'alert' : 'status');
+  state.setAttribute('aria-live', className === 'notice' ? 'assertive' : 'polite');
   state.textContent = message;
   container.append(state);
 }
@@ -36,7 +41,7 @@ export async function setupPublicacionesList(): Promise<void> {
   if (!container) return;
   try {
     const items = await publicApi.publicaciones();
-    container.replaceChildren(...items.map((item) => card(`/publicaciones/${item.slug}/`, item.titulo, item.resumen ?? item.descripcion, item.categoria ?? 'Publicacion', date(item.fechaPublicacion))));
+    container.replaceChildren(...items.map((item) => card(`/publicaciones/detail/?slug=${encodeURIComponent(item.slug)}`, item.titulo, item.resumen ?? item.descripcion, item.categoria ?? 'Publicacion', date(item.fechaPublicacion))));
     if (!items.length) setState(container, 'Todavia no hay publicaciones disponibles.', 'empty');
   } catch {
     setState(container, 'No podemos consultar las publicaciones ahora. Vuelve a intentarlo pronto.', 'notice');
@@ -55,22 +60,55 @@ function renderPublication(item: Publicacion): void {
   updateMeta(title, description);
   const content = element<HTMLElement>('[data-publicacion-detail]');
   if (!content) return;
-  content.innerHTML = `<div class="eyebrow"></div><h1></h1><div class="date"></div><p class="lede"></p><div class="article-content"></div>`;
-  (content.querySelector('.eyebrow') as HTMLElement).textContent = item.categoria ?? 'Publicacion';
-  (content.querySelector('h1') as HTMLElement).textContent = item.titulo;
-  (content.querySelector('.date') as HTMLElement).textContent = date(item.fechaPublicacion);
-  (content.querySelector('.lede') as HTMLElement).textContent = item.resumen ?? '';
-  (content.querySelector('.article-content') as HTMLElement).textContent = item.descripcion ?? '';
-  if (item.videoUrl) {
-    const link = document.createElement('p');
-    link.innerHTML = '<a rel="noreferrer">Ver video relacionado →</a>';
-    (link.firstElementChild as HTMLAnchorElement).href = item.videoUrl;
-    content.append(link);
+  content.replaceChildren();
+  const eyebrow = document.createElement('div'); eyebrow.className = 'eyebrow'; content.append(eyebrow);
+  const heading = document.createElement('h1'); content.append(heading);
+  const published = document.createElement('div'); published.className = 'date'; content.append(published);
+  const lede = document.createElement('p'); lede.className = 'lede'; content.append(lede);
+  const article = document.createElement('div'); article.className = 'article-content'; content.append(article);
+  eyebrow.textContent = item.categoria ?? 'Publicacion'; heading.textContent = item.titulo;
+  published.textContent = date(item.fechaPublicacion); lede.textContent = item.resumen ?? ''; article.textContent = item.descripcion ?? '';
+  if (item.portada?.url) { const image = document.createElement('img'); image.src = item.portada.url; image.alt = item.portada.alt ?? item.titulo; image.loading = 'lazy'; content.append(image); }
+  if (item.galeria?.length) { const gallery = document.createElement('div'); gallery.className = 'gallery'; item.galeria.forEach(media => { if (!media.url) return; const image = document.createElement('img'); image.src = media.url; image.alt = media.alt ?? item.titulo; image.loading = 'lazy'; gallery.append(image); }); content.append(gallery); }
+  const video = parseYouTubeLink(item.videoUrl);
+  if (video) {
+    const preview = document.createElement('article'); preview.className = 'link-preview youtube-preview';
+    const image = document.createElement('img'); image.src = video.thumbnail; image.alt = `Vista previa del video: ${item.titulo}`; image.loading = 'lazy'; preview.append(image);
+    const body = document.createElement('div'); body.className = 'link-preview-body';
+    const label = document.createElement('span'); label.className = 'tag'; label.textContent = 'YouTube'; body.append(label);
+    const link = document.createElement('a'); link.href = video.href; link.rel = 'noopener noreferrer'; link.target = '_blank'; link.textContent = 'Ver video relacionado'; body.append(link);
+    preview.append(body); content.append(preview);
   }
+  const social = document.createElement('div'); social.className = 'social-previews';
+  for (const value of item.enlacesX ?? []) {
+    const x = parseXLink(value); if (!x) continue;
+    const preview = document.createElement('article'); preview.className = 'link-preview x-preview'; preview.dataset.xPreview = 'true';
+    if (x.statusId) {
+      const embed = document.createElement('blockquote'); embed.className = 'twitter-tweet x-embed'; embed.dataset.xEmbed = x.statusId; embed.dataset.dnt = 'true';
+      const embedText = document.createElement('p'); embedText.lang = 'es'; embedText.dir = 'ltr'; embedText.textContent = 'Ver esta publicacion en X.'; embed.append(embedText);
+      const embedLink = document.createElement('a'); embedLink.href = x.href; embedLink.textContent = x.displayUrl; embedLink.rel = 'noopener noreferrer'; embedLink.target = '_blank'; embed.append(embedLink);
+      preview.append(embed);
+    }
+    const fallback = document.createElement('div'); fallback.className = 'x-preview-fallback';
+    const icon = document.createElement('span'); icon.className = 'x-preview-icon'; icon.append(createXIcon()); fallback.append(icon);
+    const body = document.createElement('div'); body.className = 'x-preview-body';
+    const label = document.createElement('span'); label.className = 'x-preview-network'; label.textContent = 'X'; body.append(label);
+    const source = document.createElement('span'); source.className = 'x-preview-source'; source.textContent = x.statusId ? 'Publicacion de X' : 'Enlace de X'; body.append(source);
+    const link = document.createElement('a');
+    link.className = 'x-preview-link'; link.href = x.href; link.rel = 'noopener noreferrer'; link.target = '_blank';
+    link.ariaLabel = `Abrir enlace de X en una pestana nueva: ${x.displayUrl}`;
+    const url = document.createElement('span'); url.className = 'x-preview-url'; url.textContent = x.displayUrl; url.title = x.href; link.append(url);
+    const external = document.createElement('span'); external.className = 'x-preview-external'; external.setAttribute('aria-hidden', 'true'); external.textContent = '->'; link.append(external);
+    body.append(link);
+    if (x.statusId) { const note = document.createElement('span'); note.className = 'x-preview-note'; note.textContent = 'Si X no permite la vista previa, abre la publicacion original.'; body.append(note); }
+    fallback.append(body); preview.append(fallback);
+    social.append(preview);
+  }
+  if (social.childElementCount) { content.append(social); enhanceXEmbeds(content); }
 }
 
 export async function setupPublicacionDetail(): Promise<void> {
-  const slug = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() ?? '');
+  const slug = new URLSearchParams(location.search).get('slug') ?? decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() ?? '');
   const content = element<HTMLElement>('[data-publicacion-detail]');
   if (!content || !slug || slug === 'detail') return;
   try { renderPublication(await publicApi.publicacion(slug)); }

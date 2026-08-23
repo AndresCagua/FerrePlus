@@ -8,15 +8,25 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
+import java.net.http.HttpClient;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpEntity;
+import org.springframework.core.io.Resource;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -33,14 +43,21 @@ public class PublicApiClient {
 
     @Autowired
     public PublicApiClient(RestClient.Builder builder, S2sJwtProperties properties) {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(1000); factory.setReadTimeout(3000);
-        this.client = builder.requestFactory(factory).baseUrl(properties.publicApiUrl()).build(); this.properties = properties;
+        this.client = builder.requestFactory(requestFactory()).baseUrl(properties.publicApiUrl()).build(); this.properties = properties;
         this.cachedSigningKey = loadSigningKey(keySource());
     }
     PublicApiClient(RestClient client, S2sJwtProperties properties) {
         this.client = client; this.properties = properties;
         this.cachedSigningKey = loadSigningKey(keySource());
+    }
+
+    static ClientHttpRequestFactory requestFactory() {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(1))
+                .build();
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(Duration.ofSeconds(3));
+        return factory;
     }
     public <T> T exchange(HttpMethod method, String path, Object body, Class<T> responseType, String correlationId) {
         var request = client.method(method).uri(path).header(HttpHeaders.AUTHORIZATION, "Bearer " + token())
@@ -59,6 +76,40 @@ public class PublicApiClient {
         } catch (RestClientException exception) {
             throw new PublicApiUnavailableException("public-api no disponible", exception);
         }
+    }
+
+    public <T> T exchangeMultipart(HttpMethod method, String path, String json, MultipartFile portada,
+                                    List<MultipartFile> galeria, Class<T> responseType, String correlationId) {
+        MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+        HttpHeaders dataHeaders = new HttpHeaders(); dataHeaders.setContentType(MediaType.APPLICATION_JSON);
+        form.add("data", new HttpEntity<>(json, dataHeaders));
+        addFile(form, "portada", portada);
+        if (galeria != null) galeria.forEach(file -> addFile(form, "galeria", file));
+        var request = client.method(method).uri(path).header(HttpHeaders.AUTHORIZATION, "Bearer " + token())
+                .header("X-Correlation-ID", correlationId == null ? UUID.randomUUID().toString() : correlationId)
+                .contentType(MediaType.MULTIPART_FORM_DATA);
+        try {
+            return request.body(form).retrieve().body(responseType);
+        } catch (HttpClientErrorException.BadRequest exception) {
+            throw new PublicApiValidationException("Solicitud invalida en public-api", exception);
+        } catch (HttpClientErrorException exception) {
+            throw new PublicApiHttpException(exception.getStatusCode(), "Respuesta rechazada por public-api", exception);
+        } catch (RestClientException exception) {
+            throw new PublicApiUnavailableException("public-api no disponible", exception);
+        }
+    }
+
+    private void addFile(MultiValueMap<String, Object> form, String name, MultipartFile file) {
+        if (file == null || file.isEmpty()) return;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDispositionFormData(name, file.getOriginalFilename());
+        headers.setContentType(file.getContentType() == null ? MediaType.APPLICATION_OCTET_STREAM : safeMediaType(file.getContentType()));
+        form.add(name, new HttpEntity<Resource>(file.getResource(), headers));
+    }
+
+    private MediaType safeMediaType(String value) {
+        try { return MediaType.parseMediaType(value); }
+        catch (IllegalArgumentException exception) { return MediaType.APPLICATION_OCTET_STREAM; }
     }
     private String token() {
         try {

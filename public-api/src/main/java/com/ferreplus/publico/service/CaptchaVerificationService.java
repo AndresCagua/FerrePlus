@@ -11,10 +11,13 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @EnableConfigurationProperties(CaptchaProperties.class)
 public class CaptchaVerificationService {
+    private static final Logger LOG = LoggerFactory.getLogger(CaptchaVerificationService.class);
     private final CaptchaProperties properties;
     private final RestClient client;
 
@@ -42,12 +45,15 @@ public class CaptchaVerificationService {
 
     public void verify(String token) {
         if (!properties.enabled()) {
+            LOG.info("contact.captcha outcome=disabled correlationId={}", com.ferreplus.publico.config.SafeDiagnosticLog.correlationId("unknown"));
             return;
         }
         if (token == null || token.isBlank()) {
+            LOG.info("contact.captcha outcome=failure code=missing_token correlationId={}", com.ferreplus.publico.config.SafeDiagnosticLog.correlationId("unknown"));
             throw new PublicApiException(HttpStatus.BAD_REQUEST, "CAPTCHA requerido");
         }
         if (properties.secret() == null || properties.secret().isBlank()) {
+            LOG.warn("contact.captcha outcome=failure code=not_configured correlationId={}", com.ferreplus.publico.config.SafeDiagnosticLog.correlationId("unknown"));
             throw new PublicApiException(HttpStatus.SERVICE_UNAVAILABLE, "CAPTCHA no configurado");
         }
         try {
@@ -56,11 +62,16 @@ public class CaptchaVerificationService {
                     .body("secret=" + encode(properties.secret()) + "&response=" + encode(token))
                     .retrieve().body(VerificationResponse.class);
             if (result == null || !result.success()) {
+                LOG.info("contact.captcha outcome=failure code=provider_rejected correlationId={}", com.ferreplus.publico.config.SafeDiagnosticLog.correlationId("unknown"));
                 throw new PublicApiException(HttpStatus.FORBIDDEN, "CAPTCHA invalido o expirado");
             }
+            LOG.info("contact.captcha outcome=success correlationId={}", com.ferreplus.publico.config.SafeDiagnosticLog.correlationId("unknown"));
         } catch (PublicApiException exception) {
             throw exception;
         } catch (RestClientException exception) {
+            LOG.warn("contact.captcha outcome=failure code=provider_unavailable correlationId={} failure={}",
+                    com.ferreplus.publico.config.SafeDiagnosticLog.correlationId("unknown"),
+                    com.ferreplus.publico.config.SafeDiagnosticLog.failure(exception));
             throw new PublicApiException(HttpStatus.SERVICE_UNAVAILABLE, "Proveedor CAPTCHA no disponible");
         }
     }

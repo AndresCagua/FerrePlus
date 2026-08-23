@@ -9,21 +9,44 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/admin/talento")
 public class TalentoController {
     private final PublicApiClient client;
-    public TalentoController(PublicApiClient client) { this.client = client; }
+    private final ObjectMapper objectMapper;
+    public TalentoController(PublicApiClient client) { this(client, new ObjectMapper()); }
+    @Autowired
+    public TalentoController(PublicApiClient client, ObjectMapper objectMapper) { this.client = client; this.objectMapper = objectMapper; }
     @GetMapping("/{resource}") @PreAuthorize("@talentoAuthorization.allowed(#resource, 'VER', authentication)")
     public JsonNode list(@PathVariable String resource, HttpServletRequest request) { return client.exchange(HttpMethod.GET, internalPath(resource, request), null, JsonNode.class, correlation(request)); }
     @GetMapping("/{resource}/{id}") @PreAuthorize("@talentoAuthorization.allowed(#resource, 'VER', authentication)")
     public JsonNode get(@PathVariable String resource, @PathVariable String id, HttpServletRequest request) { return client.exchange(HttpMethod.GET, internalPath(resource + "/" + id, request), null, JsonNode.class, correlation(request)); }
     @PostMapping("/{resource}") @PreAuthorize("@talentoAuthorization.allowed(#resource, 'CREAR', authentication)")
     public JsonNode create(@PathVariable String resource, @RequestBody JsonNode body, HttpServletRequest request) { return client.exchange(HttpMethod.POST, "/api/internal/" + resource, body, JsonNode.class, correlation(request)); }
+    @PostMapping(value = "/{resource}", consumes = "multipart/form-data")
+    @PreAuthorize("@talentoAuthorization.allowed(#resource, 'CREAR', authentication)")
+    public JsonNode createMultipart(@PathVariable String resource, @RequestPart("data") String data,
+                                    @RequestPart(value = "portada", required = false) MultipartFile portada,
+                                    @RequestPart(value = "galeria", required = false) List<MultipartFile> galeria,
+                                    HttpServletRequest request) {
+        return multipart(resource, null, HttpMethod.POST, data, portada, galeria, request);
+    }
     @PutMapping("/{resource}/{id}") @PreAuthorize("@talentoAuthorization.allowed(#resource, 'EDITAR', authentication)")
     public JsonNode update(@PathVariable String resource, @PathVariable String id, @RequestBody JsonNode body, HttpServletRequest request) { return client.exchange(HttpMethod.PUT, "/api/internal/" + resource + "/" + id, body, JsonNode.class, correlation(request)); }
+    @PutMapping(value = "/{resource}/{id}", consumes = "multipart/form-data")
+    @PreAuthorize("@talentoAuthorization.allowed(#resource, 'EDITAR', authentication)")
+    public JsonNode updateMultipart(@PathVariable String resource, @PathVariable String id, @RequestPart("data") String data,
+                                    @RequestPart(value = "portada", required = false) MultipartFile portada,
+                                    @RequestPart(value = "galeria", required = false) List<MultipartFile> galeria,
+                                    HttpServletRequest request) {
+        return multipart(resource, id, HttpMethod.PUT, data, portada, galeria, request);
+    }
     @PatchMapping("/{resource}/{id}") @PreAuthorize("@talentoAuthorization.allowed(#resource, 'EDITAR', authentication)")
     public JsonNode patch(@PathVariable String resource, @PathVariable String id, @RequestBody JsonNode body, HttpServletRequest request) { return client.exchange(HttpMethod.PATCH, "/api/internal/" + resource + "/" + id, body, JsonNode.class, correlation(request)); }
     @PatchMapping("/{resource}/{id}/estado") @PreAuthorize("@talentoAuthorization.allowed(#resource, 'EDITAR', authentication)")
@@ -43,6 +66,14 @@ public class TalentoController {
     @DeleteMapping("/{resource}/{id}") @PreAuthorize("@talentoAuthorization.allowed(#resource, 'ELIMINAR', authentication)")
     public ResponseEntity<Void> delete(@PathVariable String resource, @PathVariable String id, HttpServletRequest request) { client.exchange(HttpMethod.DELETE, "/api/internal/" + resource + "/" + id, null, JsonNode.class, correlation(request)); return ResponseEntity.noContent().build(); }
     private String correlation(HttpServletRequest request) { return request.getHeader("X-Correlation-ID"); }
+    private JsonNode multipart(String resource, String id, HttpMethod method, String data, MultipartFile portada,
+                               List<MultipartFile> galeria, HttpServletRequest request) {
+        if (!"publicaciones".equals(resource)) throw new com.ferreplus.exception.BadRequestException("Media no soportada para este recurso");
+        try { objectMapper.readTree(data); }
+        catch (Exception exception) { throw new com.ferreplus.exception.BadRequestException("Los datos de la publicacion no son validos"); }
+        String path = "/api/internal/" + resource + (id == null ? "" : "/" + id);
+        return client.exchangeMultipart(method, path, data, portada, galeria, JsonNode.class, correlation(request));
+    }
     private String internalPath(String resource, HttpServletRequest request) {
         var builder = UriComponentsBuilder.fromPath("/api/internal/" + resource);
         request.getParameterMap().forEach((name, values) -> Arrays.stream(values).forEach(value -> builder.queryParam(name, value)));
