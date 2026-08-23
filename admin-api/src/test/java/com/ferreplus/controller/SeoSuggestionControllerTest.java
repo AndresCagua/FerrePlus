@@ -96,4 +96,18 @@ class SeoSuggestionControllerTest {
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.status").value(502));
     }
+
+    @Test
+    @WithMockUser(authorities = "TALENTO_PUBLICACIONES_EDITAR")
+    void fallaDelProveedorDevuelve503SinExponerDetalleInterno() throws Exception {
+        when(service.suggest(any()))
+                .thenThrow(new com.ferreplus.exception.SeoSuggestionException("proveedor no disponible", 503));
+
+        mockMvc.perform(post("/api/admin/talento/publicaciones/seo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\"Publicacion\"}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.detail").value("El servicio SEO no esta disponible"));
+    }
 }

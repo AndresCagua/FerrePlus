@@ -1,6 +1,9 @@
 import { BehaviorSubject } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { SharedModule } from '../shared.module';
 import { AuthService, CurrentUser } from '../../core/auth.service';
 import { RutaPorPermiso } from '../../core/rutas-por-permiso';
 import { SidebarComponent } from './sidebar.component';
@@ -95,5 +98,41 @@ describe('SidebarComponent', () => {
 
     expect(sidebar.isExpanded(module)).toBe(true);
     expect(preventDefault).toHaveBeenCalledOnce();
+  });
+
+  it('renderiza controles ARIA reales y no deja hijos colapsados en el DOM', () => {
+    const currentUser$ = new BehaviorSubject<CurrentUser | null>({
+      email: 'editor@ferreplus.com', nombre: 'Editor', rol: 'EDITOR', usuarioId: 1,
+      permisos: ['DASHBOARD_VER', 'PRODUCTOS_VER']
+    });
+    TestBed.configureTestingModule({
+      imports: [SharedModule, RouterTestingModule],
+      providers: [{
+        provide: AuthService,
+        useValue: {
+          currentUser$,
+          hasAnyPermission: (permissions: string[]) => permissions.some(permission =>
+            currentUser$.value?.permisos.includes(permission)
+          ),
+          getCurrentUser: () => currentUser$.value,
+        }
+      }]
+    });
+    const fixture: ComponentFixture<SidebarComponent> = TestBed.createComponent(SidebarComponent);
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button[aria-controls="menu-group-bodega"]') as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    expect(button.getAttribute('aria-label')).toContain('Bodega');
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.nativeElement.querySelector('#menu-group-bodega')).toBeNull();
+
+    button.focus();
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(fixture.nativeElement.querySelector('#menu-group-bodega a')).toBeTruthy();
+    expect(document.activeElement).toBe(button);
   });
 });

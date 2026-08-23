@@ -285,73 +285,73 @@
 
 ### 5.1 Pruebas menu y RBAC
 
-- [ ] 5.1.1 Prueba: todos los items asignados a un grupo exacto; ningun huérfano
-- [ ] 5.1.2 Prueba: padre visible por descendiente autorizado
-- [ ] 5.1.3 Prueba: padre oculto cuando no hay hijos visibles
-- [ ] 5.1.4 Prueba: grupo activo se abre automaticamente
-- [ ] 5.1.5 Prueba: ruta directa sin permiso bloqueada por AuthGuard
-- [ ] 5.1.6 Prueba: persistencia localStorage restaura estado correctamente
-- [ ] 5.1.7 Verificacion ARIA: `aria-expanded`, `aria-controls`, foco visible, Enter/Space
+- [x] 5.1.1 Prueba: todos los items asignados a un grupo exacto; ningun huérfano
+- [x] 5.1.2 Prueba: padre visible por descendiente autorizado
+- [x] 5.1.3 Prueba: padre oculto cuando no hay hijos visibles
+- [x] 5.1.4 Prueba: grupo activo se abre automaticamente
+- [x] 5.1.5 Prueba: ruta directa sin permiso bloqueada por AuthGuard
+- [x] 5.1.6 Prueba: persistencia localStorage restaura estado correctamente
+- [x] 5.1.7 Verificacion ARIA: `aria-expanded`, `aria-controls`, foco visible, Enter/Space
 
 **Archivos**: Tests en `frontend/src/app/shared/sidebar/` y `frontend/src/app/core/`
 **Criterio**: Todos los escenarios de `menu-modulos/spec.md` R1-R5 cubiertos.
 
 ### 5.2 Pruebas publicaciones y slug
 
-- [ ] 5.2.1 Prueba: listado sin portada; portada conservada en modelo/formulario
-- [ ] 5.2.2 Prueba: normalizacion de slug (acentos, mayusculas, caracteres especiales)
-- [ ] 5.2.3 Prueba: fallback a `publicacion` cuando titulo sin caracteres validos
-- [ ] 5.2.4 Prueba: limite de 100 caracteres sin cortar token
-- [ ] 5.2.5 Prueba: colision secuencial usa sufijo determinista
-- [ ] 5.2.6 Prueba: carrera concurrente no produce duplicados
-- [ ] 5.2.7 Prueba: reintento agotado devuelve 409 con `SLUG_UNAVAILABLE`
-- [ ] 5.2.8 Prueba: update sin cambio de titulo conserva slug
+- [x] 5.2.1 Prueba: listado sin portada; portada conservada en modelo/formulario
+- [x] 5.2.2 Prueba: normalizacion de slug (acentos, mayusculas, caracteres especiales)
+- [x] 5.2.3 Prueba: fallback a `publicacion` cuando titulo sin caracteres validos
+- [x] 5.2.4 Prueba: limite de 100 caracteres sin cortar token
+- [x] 5.2.5 Prueba: colision secuencial usa sufijo determinista
+- [ ] 5.2.6 Prueba: carrera concurrente no produce duplicados *(bloqueada: requiere MongoDB/Testcontainers; no se ejecuta por restriccion de no modificar datos)*
+- [x] 5.2.7 Prueba: reintento agotado devuelve 409 con `SLUG_UNAVAILABLE`
+- [x] 5.2.8 Prueba: update sin cambio de titulo conserva slug
 
 **Archivos**: Tests en `public-api/src/test/java/` y `frontend/src/app/talento/`
 **Criterio**: Todos los escenarios de `seo-slug/spec.md` R1-R2 y `publicaciones/spec.md` cubiertos.
 
 ### 5.3 Pruebas SEO IA
 
-- [ ] 5.3.1 Prueba contrato: exito retorna title+description no vacios
-- [ ] 5.3.2 Prueba: 400 con entrada invalida
-- [ ] 5.3.3 Prueba: 401 sin JWT
-- [ ] 5.3.4 Prueba: 403 sin permiso
-- [ ] 5.3.5 Prueba: 503 con timeout/falla proveedor
-- [ ] 5.3.6 Prueba: respuesta incompleta no se retorna como exito
-- [ ] 5.3.7 Prueba: chat existente no regresa (contrato inmutable)
+- [x] 5.3.1 Prueba contrato: exito retorna title+description no vacios
+- [x] 5.3.2 Prueba: 400 con entrada invalida
+- [x] 5.3.3 Prueba: 401 sin JWT
+- [x] 5.3.4 Prueba: 403 sin permiso
+- [x] 5.3.5 Prueba: 503 con timeout/falla proveedor
+- [x] 5.3.6 Prueba: respuesta incompleta no se retorna como exito
+- [x] 5.3.7 Prueba: chat existente no regresa (contrato inmutable)
 
 **Archivos**: Tests en `admin-api/src/test/java/`
 **Criterio**: Todos los escenarios de `seo-slug/spec.md` R3-R4 cubiertos; chat sin cambios.
 
 ### 5.4 Pruebas portal responsive
 
-- [ ] 5.4.1 Verificacion a 320px: scrollWidth <= clientWidth
-- [ ] 5.4.2 Verificacion a 768px: columna within 696-744px
-- [ ] 5.4.3 Verificacion a 1440px: columna within 696-744px
-- [ ] 5.4.4 Verificacion YouTube: aspect-ratio 16/9, max-width 100%
-- [ ] 5.4.5 Verificacion X: centrado, wrap de URLs largas, sin overflow
-- [ ] 5.4.6 Verificacion imagenes: responsive, alt util, max-width 100%
-- [ ] 5.4.7 Verificacion borradores: DRAFT = 404, no indexable
+- [ ] 5.4.1 Verificacion a 320px: scrollWidth <= clientWidth *(no hay runtime browser en portal)*
+- [ ] 5.4.2 Verificacion a 768px: columna within 696-744px *(no hay runtime browser en portal)*
+- [ ] 5.4.3 Verificacion a 1440px: columna within 696-744px *(no hay runtime browser en portal)*
+- [x] 5.4.4 Verificacion YouTube: aspect-ratio 16/9, max-width 100%
+- [x] 5.4.5 Verificacion X: centrado, wrap de URLs largas, sin overflow
+- [x] 5.4.6 Verificacion imagenes: responsive, alt util, max-width 100%
+- [x] 5.4.7 Verificacion borradores: DRAFT = 404, no indexable
 
 **Archivos**: Tests/checks de portal
 **Criterio**: Todos los escenarios de `portal-editorial/spec.md` R3-R15 y `testing/spec.md` R4 cubiertos.
 
 ### 5.5 Auditoria de seguridad y no regresion
 
-- [ ] 5.5.1 Verificar que admin-api es unico borde autenticado para SEO
-- [ ] 5.5.2 Verificar que public-api no recibe credenciales administrativas
-- [ ] 5.5.3 Verificar que errores no filtran stack traces, prompts ni tokens
-- [ ] 5.5.4 Ejecutar suite completa backend (admin-api + public-api) y confirmar exito
-- [ ] 5.5.5 Ejecutar suite completa frontend y confirmar exito
-- [ ] 5.5.6 Verificar que chat existente mantiene autenticacion, contrato y proveedor
+- [x] 5.5.1 Verificar que admin-api es unico borde autenticado para SEO
+- [x] 5.5.2 Verificar que public-api no recibe credenciales administrativas
+- [x] 5.5.3 Verificar que errores no filtran stack traces, prompts ni tokens
+- [ ] 5.5.4 Ejecutar suite completa backend (admin-api + public-api) y confirmar exito *(bloqueada por restriccion de no modificar datos; requiere PostgreSQL/MongoDB aislados)*
+- [x] 5.5.5 Ejecutar suite completa frontend y confirmar exito
+- [x] 5.5.6 Verificar que chat existente mantiene autenticacion, contrato y proveedor
 
 **Archivos**: Verificacion cruzada, sin cambios de codigo
 **Criterio**: Todos los escenarios de `seguridad/spec.md` R1-R3 y `testing/spec.md` R5 cubiertos.
 
 ### 5.6 Documentacion de decisiones
 
-- [ ] 5.6.1 Confirmar que `design.md` refleja las decisiones tomadas
-- [ ] 5.6.2 Verificar que Open Questions del design estan cerradas o documentadas
+- [x] 5.6.1 Confirmar que `design.md` refleja las decisiones tomadas
+- [x] 5.6.2 Verificar que Open Questions del design estan cerradas o documentadas
 
 **Archivos**: `openspec/changes/reorganizar-menu-modulos/design.md`
 **Criterio**: Decisiones documentadas; open questions resueltas.

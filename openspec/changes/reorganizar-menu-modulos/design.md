@@ -49,5 +49,5 @@ No migracion masiva. Verificar el indice unico existente antes del rollout; cual
 
 ## Open Questions
 
-- [ ] Confirmar limites exactos de titulo/contenido y `timeoutSeconds` especifico para SEO (recomendado reutilizar configuracion Gemini).
-- [ ] Confirmar si el endpoint SEO debe exigir `TALENTO_PUBLICACIONES_EDITAR` exactamente o una autoridad dedicada.
+- [x] Limites exactos de SEO confirmados por DTO: titulo maximo 200, resumen maximo 500 y descripcion maxima 5000; el timeout reutiliza la configuracion Gemini existente.
+- [x] El endpoint SEO exige exactamente `TALENTO_PUBLICACIONES_EDITAR`, alineado con la autoridad de edicion existente.

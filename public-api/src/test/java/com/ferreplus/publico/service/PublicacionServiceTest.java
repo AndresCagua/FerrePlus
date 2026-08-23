@@ -128,6 +128,35 @@ class PublicacionServiceTest {
     }
 
     @Test
+    void exhaustedSlugCandidatesReturnConflictWithoutPartialSave() {
+        var request = new PublicacionAdminDTO("Talento Niño", "Resumen", "Descripcion", null, null,
+                null, List.of(), null, EstadoPublicacion.DRAFT, null, null, null, null);
+        when(repository.save(any(Publicacion.class)))
+                .thenThrow(new DuplicateKeyException("duplicate"));
+
+        assertThatThrownBy(() -> service.crear(request))
+                .isInstanceOf(com.ferreplus.publico.exception.PublicApiException.class)
+                .hasMessage("El slug no esta disponible")
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.CONFLICT);
+        verify(repository, times(5)).save(any(Publicacion.class));
+    }
+
+    @Test
+    void recalculatesSlugWhenTitleChanges() {
+        Publicacion existing = new Publicacion();
+        existing.setId("1");
+        existing.setTitulo("Titulo anterior");
+        existing.setSlug("titulo-anterior");
+        when(repository.findById("1")).thenReturn(java.util.Optional.of(existing));
+        when(repository.save(existing)).thenReturn(existing);
+        var request = new PublicacionAdminDTO("Titulo nuevo", "Resumen", "Descripcion", null, null,
+                null, List.of(), null, EstadoPublicacion.DRAFT, null, null, null, null);
+
+        assertThat(service.actualizar("1", request).getSlug()).isEqualTo("titulo-nuevo");
+    }
+
+    @Test
     void preservesSlugWhenTitleDoesNotChange() {
         Publicacion existing = new Publicacion();
         existing.setId("1"); existing.setTitulo("Titulo"); existing.setSlug("slug-final");

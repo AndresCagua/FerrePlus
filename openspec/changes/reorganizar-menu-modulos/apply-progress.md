@@ -226,3 +226,47 @@ database_modified: false
 ### Scope boundary
 
 Solo se modificaron layout/CSS/responsive del portal editorial y la estructura minima del componente publico necesaria para embeds. No se modificaron backend, slug, SEO, menu, APIs ni bases de datos. PR 5 permanece fuera de alcance.
+
+## Slice 5 / PR 5 progress — 2026-08-23
+
+```yaml
+status: partially_verified
+change: reorganizar-menu-modulos
+slice: pr5_testing
+execution_mode: interactive
+artifact_store: openspec
+skill_resolution: fallback-path
+branch: feature/reorganizar-menu-modulos
+commits_created: false
+push_performed: false
+database_modified: false
+```
+
+### Completed
+
+- Se agregaron pruebas reales del mapa RBAC y del sidebar renderizado con TestBed: asignacion exacta, padres virtuales, ruta bloqueada, localStorage, ARIA, Enter/Space, foco y colapsado sin descendientes enfocables.
+- Se ampliaron pruebas de publicaciones/slug para agotamiento de candidatos con 409 y recalculo al cambiar titulo; las pruebas existentes cubren portada fuera del listado, normalizacion, fallback, limite, colision y conservacion.
+- Se cubrieron 503 de proveedor SEO en MockMvc, manteniendo 502 exclusivamente para respuesta incompleta; chat se verifico con pruebas unitarias no persistentes.
+- Se agrego `portal/scripts/verify-editorial.mjs` y `npm run test:editorial`, sin framework ni dependencias nuevas, para validar invariantes editoriales CSS/Astro.
+- Se actualizaron tasks, decisiones cerradas en design y `verify-report-slice5.md`.
+
+### Verification
+
+- Frontend completo: 20 archivos, 116 pruebas aprobadas; build aprobado.
+- Admin-api SEO focalizado aprobado (200/400/401/403/502/503).
+- Public-api `PublicacionServiceTest` aprobado: 14 pruebas.
+- Chat unitario no persistente aprobado.
+- Portal: checks estaticos, `astro check` y build aprobados.
+- `git diff --check` aprobado.
+
+### Blocked / deferred
+
+- 5.2.6 carrera real MongoDB/Testcontainers y 5.5.4 suite backend completa no se ejecutaron para respetar la prohibicion de modificar datos persistentes; requieren base efimera aislada/autorizacion expresa.
+- Las verificaciones runtime de viewport 320/768/1440 no existen en el portal actual; se cubrieron invariantes estaticos sin inventar framework de browser.
+- PostgreSQL del chat no se toco; una prueba de integracion que requiera `localhost:5433` queda bloqueada por infraestructura.
+
+## Slice 5 verifier correction — 2026-08-23
+
+- Se reemplazo el check combinado con `&&` de `verify-editorial.mjs` por dos validaciones estaticas independientes: `justify-content:center` para `.x-preview` y `overflow-wrap:anywhere` para `.x-preview-url`.
+- Se ejecuto `portal/npm run test:editorial` y `git diff --check`, ambos aprobados.
+- No se modificaron estilos, funcionalidad del portal, dependencias, bases de datos, commits ni push.

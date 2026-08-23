@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "test:editorial": "node scripts/verify-editorial.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.6.0",
