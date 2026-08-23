@@ -7,4 +7,4 @@ import jakarta.validation.constraints.Size;
 public record PostulacionRequestDTO(@NotBlank @Size(max = 100) String nombres,
         @NotBlank @Size(max = 100) String apellidos, @NotBlank @Email @Size(max = 254) String email,
         @NotBlank @Size(max = 30) String telefono, @NotBlank @Size(max = 100) String ciudad,
-        @Size(max = 100) String honeypot) {}
+        @Size(max = 100) String honeypot, @Size(max = 4096) String captchaToken) {}

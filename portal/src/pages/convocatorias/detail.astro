@@ -1,0 +1,5 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ApplicationForm from '../../components/ApplicationForm.astro';
+---
+<BaseLayout title="Convocatoria | Ferreplus" description="Oportunidad laboral en Ferreplus." type="website"><section class="section"><div class="container grid"><article class="article" data-convocatoria-detail><div class="empty" data-content-state="loading" data-state-origin="ssr" role="status" aria-live="polite">Cargando convocatoria...</div></article><ApplicationForm convocatoriaId="" /></div></section><script>import { setupConvocatoriaDetail } from '../../components/islands/PublicContent'; setupConvocatoriaDetail();</script></BaseLayout>

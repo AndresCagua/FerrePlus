@@ -1,0 +1,5 @@
+---
+interface Props { href: string; title: string; summary?: string; eyebrow?: string; date?: string; }
+const { href, title, summary, eyebrow, date } = Astro.props;
+---
+<article class="card"><div class="tag">{eyebrow ?? 'Ferreplus'}</div><h2><a href={href}>{title}</a></h2>{summary && <p>{summary}</p>}{date && <div class="date">{date}</div>}<p><a class="button secondary" href={href}>Conocer mas</a></p></article>

@@ -324,7 +324,7 @@ Todas las solicitudes publicas, internas y administrativas relacionadas DEBEN pr
 
 ### R15: Portal Astro publico
 
-El portal DEBE ser Astro con SSG/prerender por defecto cuando sea viable, layouts y componentes reutilizables, minimo JavaScript e islands solo para interactividad necesaria. DEBE ofrecer publicaciones, convocatorias, Trabaja con Nosotros y Contactanos. DEBE generar `title`, `description`, `canonical`, Open Graph, sitemap, robots y structured data; borradores NO DEBEN ser indexables. Las imagenes DEBEN optimizarse a WebP/AVIF cuando aplique, usar lazy loading y cache HTTP adecuado. No DEBE exponer credenciales del backend en el cliente.
+El portal DEBE ser Astro con SSG/prerender por defecto cuando sea viable, layouts y componentes reutilizables, minimo JavaScript e islands solo para interactividad necesaria. DEBE ofrecer publicaciones, convocatorias, Trabaja con Nosotros y Contactanos. DEBE generar `title`, `description`, `canonical`, Open Graph, sitemap, robots y structured data; borradores NO DEBEN ser indexables. Las imagenes DEBEN optimizarse a WebP/AVIF cuando aplique, usar lazy loading y cache HTTP adecuado. No DEBE exponer credenciales del backend en el cliente. DEBE ofrecer modo claro y modo oscuro funcionales mediante un selector accesible visible en el Header.
 
 #### Scenario: Pagina publicada cumple SEO y rendimiento
 
@@ -340,6 +340,22 @@ El portal DEBE ser Astro con SSG/prerender por defecto cuando sea viable, layout
 - WHEN se genera el portal, sitemap y robots
 - THEN el borrador no se prerenderiza como pagina publica ni aparece en sitemap
 - AND no tiene metadata indexable
+
+#### Scenario: El visitante cambia y conserva el tema elegido
+
+- GIVEN el visitante ve cualquier pagina del portal
+- WHEN activa el selector de tema en el Header
+- THEN el contenido cambia inmediatamente entre modo claro y modo oscuro sin recargar
+- AND el control expone su estado mediante `aria-pressed` y una etiqueta clara
+- AND la eleccion se conserva en `localStorage` al navegar o volver a visitar el portal
+
+#### Scenario: El portal respeta la preferencia del sistema sin flash
+
+- GIVEN no existe una eleccion guardada en `localStorage`
+- WHEN el portal se pinta por primera vez
+- THEN usa `prefers-color-scheme` para seleccionar claro u oscuro
+- AND aplica el tema antes de pintar el contenido para evitar un flash del tema incorrecto
+- AND el contenido permanece legible y navegable aun sin JavaScript
 
 ### R16: Modulo Angular de talento
 
@@ -396,6 +412,45 @@ El cambio DEBE incluir tests unitarios e integracion para contratos y reglas cri
 
 ## Reglas de error y comportamiento transversal
 
+### R19: CAPTCHA Turnstile obligatorio en formularios publicos
+
+Contacto y postulacion DEBEN recibir `captchaToken` en el DTO publico y verificarlo
+server-side contra Cloudflare Turnstile antes de cualquier upload, persistencia o
+evento de correo. Un token ausente, invalido o expirado responde 400/403 y nunca
+se persiste ni se registra. Un timeout/fallo del proveedor responde 503 sin
+continuar el flujo. `CAPTCHA_ENABLED=false` solo es valido en perfiles dev/test;
+prod DEBE fallar cerrado si falta secret o configuracion. El portal solo expone
+`PUBLIC_TURNSTILE_SITE_KEY`, bloquea el submit hasta obtener token, y reinicia el
+widget tras error o uso.
+
+#### Scenario: CAPTCHA valido permite persistir
+
+- GIVEN un contacto o postulacion valida con token Turnstile valido
+- WHEN el backend verifica el token antes del caso de uso
+- THEN persiste el registro y programa la notificacion
+- AND no almacena ni loguea `captchaToken`
+
+#### Scenario: CAPTCHA ausente/invalido bloquea el formulario
+
+- GIVEN un token ausente, invalido o expirado
+- WHEN se envia contacto o postulacion
+- THEN responde 400/403 ProblemDetail
+- AND no hace upload, persistencia, evento ni envio de correo
+
+#### Scenario: Produccion falla cerrado
+
+- GIVEN perfil prod sin secret o con CAPTCHA deshabilitado
+- WHEN inicia `public-api`
+- THEN el servicio no queda listo para trafico
+
+#### Runtime de credenciales y CAPTCHA
+
+En Docker, `public-api` DEBE usar una URI MongoDB con
+`mongodb://ferreplus:<env-password>@mongodb:27017/ferreplus_public?authSource=admin`.
+DataGrip DEBE usar `127.0.0.1` y `authSource=admin`. `TURNSTILE_SECRET_KEY` solo
+puede entrar a `public-api`; `PUBLIC_TURNSTILE_SITE_KEY` solo puede entrar al
+portal publico. Ninguna de las dos variables se inyecta en Redis ni se imprime.
+
 1. `400 Bad Request` DEBE utilizarse para validacion de DTO, campos invalidos, extension/MIME/tamano de archivo e idempotencia mal formada.
 2. `401 Unauthorized` DEBE utilizarse para ausencia o expiracion de autenticacion; `403 Forbidden` para identidad autenticada sin autorizacion.
 3. `404 Not Found` DEBE utilizarse para recursos inexistentes sin revelar informacion adicional.
@@ -430,11 +485,11 @@ El cambio DEBE incluir tests unitarios e integracion para contratos y reglas cri
 | R12 | JWT S2S e endpoints internos | Seguridad | 3 |
 | R13 | Resiliencia y degradacion | Resiliencia | 1 |
 | R14 | Observabilidad y correlation IDs | Operabilidad | 2 |
-| R15 | Portal Astro publico | Frontend publico | 2 |
+| R15 | Portal Astro publico | Frontend publico | 4 |
 | R16 | Modulo Angular de talento | Frontend administrativo | 2 |
 | R17 | RBAC para modulos nuevos | Seguridad/UI | 2 |
 | R18 | Testing y documentacion | Calidad | 2 |
-| **Total** |  |  | **45** |
+| **Total** |  |  | **47** |
 
 ## Cobertura
 

@@ -1,0 +1,4 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Publicacion | Ferreplus" description="Publicacion de Ferreplus." type="article"><article class="container article" data-publicacion-detail><div class="empty" data-content-state="loading" data-state-origin="ssr" role="status" aria-live="polite">Cargando publicacion...</div></article><script>import { setupPublicacionDetail } from '../../components/islands/PublicContent'; setupPublicacionDetail();</script></BaseLayout>

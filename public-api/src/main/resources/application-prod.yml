@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+app:
+  captcha:
+    # These values intentionally have no defaults in prod.
+    enabled: ${CAPTCHA_ENABLED:true}
+    secret: ${TURNSTILE_SECRET_KEY}
+    site-key: ${PUBLIC_TURNSTILE_SITE_KEY}

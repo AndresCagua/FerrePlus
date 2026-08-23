@@ -2,5 +2,10 @@ spring:
   config:
     activate:
       on-profile: dev
+  mail:
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS_ENABLE:false}
+      mail.smtp.starttls.required: ${SMTP_STARTTLS_REQUIRED:false}
 server:
   forward-headers-strategy: framework

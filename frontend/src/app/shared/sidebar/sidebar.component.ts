@@ -1,6 +1,11 @@
-import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, EventEmitter, Input, Output, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/auth.service';
-import { RUTAS_POR_PERMISO, RutaPorPermiso } from '../../core/rutas-por-permiso';
+import {
+  filtrarRutasPorPermiso,
+  RUTAS_POR_PERMISO,
+  RutaPorPermiso
+} from '../../core/rutas-por-permiso';
 
 @Component({
   selector: 'app-sidebar',
@@ -19,14 +24,28 @@ export class SidebarComponent {
    * ruta → permiso (R7).
    */
   menuItems: RutaPorPermiso[] = RUTAS_POR_PERMISO;
+  visibleMenuItems: RutaPorPermiso[] = [];
 
-  constructor(public authService: AuthService) {}
+  private readonly destroyRef = inject(DestroyRef);
 
-  get visibleMenuItems(): RutaPorPermiso[] {
-    return this.menuItems.filter(item =>
-      !item.permissions || item.permissions.length === 0 ||
-      this.authService.hasAnyPermission(item.permissions)
-    );
+  constructor(public authService: AuthService) {
+    this.authService.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.visibleMenuItems = filtrarRutasPorPermiso(
+          this.menuItems,
+          permissions => this.authService.hasAnyPermission(permissions)
+        );
+      });
+  }
+
+  /** El grupo navega a una pagina accesible, incluso si esta colapsado. */
+  navigationRoute(item: RutaPorPermiso): string {
+    return item.children?.[0]?.route ?? item.route;
+  }
+
+  trackByRoute(_index: number, item: RutaPorPermiso): string {
+    return item.route;
   }
 
   onToggle(): void {

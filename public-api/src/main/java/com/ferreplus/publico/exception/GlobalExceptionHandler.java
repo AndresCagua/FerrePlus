@@ -13,6 +13,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.mongodb.MongoException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,14 +38,23 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PublicApiException.class)
     ResponseEntity<ProblemDetail> domain(PublicApiException exception, HttpServletRequest request) {
-        return ResponseEntity.status(exception.status()).body(problem(exception.status(),
-                exception.status().getReasonPhrase(), exception.getMessage(), request));
+        ProblemDetail detail = problem(exception.status(), exception.status().getReasonPhrase(), exception.getMessage(), request);
+        if (exception instanceof com.ferreplus.publico.storage.CvValidationException cv)
+            detail.setProperty("code", cv.code().name());
+        return ResponseEntity.status(exception.status()).body(detail);
     }
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ProblemDetail> unexpected(Exception exception, HttpServletRequest request) {
         return ResponseEntity.internalServerError().body(problem(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal server error", "No fue posible procesar la solicitud", request));
+    }
+
+    @ExceptionHandler(MongoException.class)
+    ResponseEntity<ProblemDetail> mongoFailure(Exception exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(problem(
+                HttpStatus.SERVICE_UNAVAILABLE, "Service unavailable",
+                "El servicio de contenido no esta disponible temporalmente", request));
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail, HttpServletRequest request) {

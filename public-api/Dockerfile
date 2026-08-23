@@ -12,6 +12,8 @@ RUN apt-get update \
     && useradd --system --create-home --uid 10001 appuser
 WORKDIR /app
 COPY --from=build --chown=appuser:appuser /build/target/*.jar app.jar
-USER appuser
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["java", "-jar", "app.jar"]

@@ -1,0 +1,29 @@
+---
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+const captchaEnabled = (import.meta.env.PUBLIC_CAPTCHA_ENABLED ?? 'false').toLowerCase() === 'true';
+---
+{captchaEnabled && <div class="turnstile-shell" data-turnstile data-site-key={siteKey} aria-live="polite">
+  {siteKey ? <div class="turnstile-widget" data-turnstile-widget></div> : <p class="status error" data-turnstile-error>CAPTCHA no configurado para este entorno.</p>}
+</div>}
+{captchaEnabled && siteKey && <script is:inline>
+  (() => {
+    const load = () => {
+      document.querySelectorAll('[data-turnstile]:not([data-loaded])').forEach((container) => {
+        const siteKey = container.dataset.siteKey;
+        if (!siteKey || !window.turnstile) return;
+        const widget = container.querySelector('[data-turnstile-widget]');
+        const form = container.closest('form');
+        if (!widget || !form) return;
+        const id = window.turnstile.render(widget, { sitekey: siteKey,
+          callback: (token) => { form.dataset.captchaToken = token; },
+          'expired-callback': () => { delete form.dataset.captchaToken; },
+          'error-callback': () => { delete form.dataset.captchaToken; } });
+        container.dataset.widgetId = String(id); container.dataset.loaded = 'true';
+      });
+    };
+    if (!document.querySelector('script[data-turnstile-script]')) {
+      const script = document.createElement('script'); script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true; script.defer = true; script.dataset.turnstileScript = 'true'; script.addEventListener('load', load); document.head.appendChild(script);
+    } else load();
+  })();
+</script>}

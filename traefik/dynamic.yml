@@ -14,5 +14,6 @@ http:
           - X-Correlation-ID
         accessControlAllowOriginList:
           - http://public.localhost
+          - http://public.localhost:8088
         accessControlMaxAge: 600
         addVaryHeader: true

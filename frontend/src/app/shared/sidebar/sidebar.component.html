@@ -10,16 +10,27 @@
   </div>
 
   <nav class="sidebar-nav">
-    <a
-      *ngFor="let item of visibleMenuItems"
-      [routerLink]="item.route"
-      routerLinkActive="active"
-      class="nav-item"
-      [matTooltip]="collapsed ? item.label : ''"
-      matTooltipPosition="right">
-      <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
-      <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
-    </a>
+    <ng-container *ngFor="let item of visibleMenuItems; trackBy: trackByRoute">
+      <a
+        [routerLink]="navigationRoute(item)"
+        routerLinkActive="active"
+        class="nav-item"
+        [matTooltip]="collapsed ? item.label : ''"
+        matTooltipPosition="right">
+        <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+        <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+      </a>
+      <div class="nav-submenu" *ngIf="!collapsed && item.children?.length">
+        <a
+          *ngFor="let child of item.children; trackBy: trackByRoute"
+          [routerLink]="child.route"
+          routerLinkActive="active"
+          class="nav-item nav-subitem">
+          <mat-icon class="nav-icon">{{ child.icon }}</mat-icon>
+          <span class="nav-label">{{ child.label }}</span>
+        </a>
+      </div>
+    </ng-container>
   </nav>
 
   <div class="sidebar-footer" *ngIf="!collapsed">

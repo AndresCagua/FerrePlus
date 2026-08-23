@@ -6,9 +6,7 @@ http:
         frameDeny: true
         referrerPolicy: strict-origin-when-cross-origin
         permissionsPolicy: "camera=(), geolocation=(), microphone=()"
-        stsSeconds: 31536000
-        stsIncludeSubdomains: true
-        stsPreload: false
+        # HSTS se aplica en el terminador TLS de produccion, no en HTTP localhost.
         customResponseHeaders:
           Server: ""
           X-Powered-By: ""

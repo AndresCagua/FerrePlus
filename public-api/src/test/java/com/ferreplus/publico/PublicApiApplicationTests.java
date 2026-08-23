@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -17,10 +18,22 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class PublicApiApplicationTests {
     @Autowired MockMvc mockMvc;
+    @Autowired JavaMailSenderImpl mailSender;
 
     @Test
     void contextLoadsWithoutPostgresConfiguration() {
         assertThat(PublicApiApplication.class).isNotNull();
+    }
+
+    @Test
+    void mailSenderRequiresAuthenticatedStartTlsByDefault() {
+        assertThat(mailSender.getJavaMailProperties())
+                .containsEntry("mail.smtp.auth", "true")
+                .containsEntry("mail.smtp.starttls.enable", "true")
+                .containsEntry("mail.smtp.starttls.required", "true")
+                .containsEntry("mail.smtp.connectiontimeout", "5000")
+                .containsEntry("mail.smtp.timeout", "5000")
+                .containsEntry("mail.smtp.writetimeout", "5000");
     }
 
     @Test
@@ -31,8 +44,8 @@ class PublicApiApplicationTests {
     }
 
     @Test
-    void internalPingIsAvailableForContainerReadiness() throws Exception {
+    void internalPingRequiresS2sAuthentication() throws Exception {
         mockMvc.perform(get("/api/internal/ping"))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
     }
 }

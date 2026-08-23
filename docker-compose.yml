@@ -1,0 +1,348 @@
+services:
+  traefik:
+    image: traefik:v3.6
+    container_name: ferreplus-traefik
+    environment:
+      DOCKER_API_VERSION: "1.40"
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    ports:
+      - "${TRAEFIK_HTTP_PORT:-80}:80"
+      - "${TRAEFIK_HTTPS_PORT:-443}:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+      - ./traefik/middlewares.yml:/etc/traefik/dynamic/middlewares.yml:ro
+    networks:
+      - public_net
+      - admin_net
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:8
+    container_name: ferreplus-mongodb
+    ports:
+      - "127.0.0.1:${MONGO_HOST_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-ferreplus_public}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-ferreplus}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD must be set; copy .env.example and replace the placeholder}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - public_data
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep -q 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 768M
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: ferreplus-redis
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}
+    volumes:
+      - redis_data:/data
+    networks:
+      - public_data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2024-06-13T22-53-53Z
+    container_name: ferreplus-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "127.0.0.1:${MINIO_API_HOST_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ferreplus}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set; copy .env.example and replace the placeholder}
+    volumes:
+      - minio_data:/data
+    networks:
+      - public_data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+    restart: unless-stopped
+
+  admin-api:
+    build:
+      context: ./admin-api
+      dockerfile: Dockerfile
+    container_name: ferreplus-admin-api
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SERVER_PORT: 8080
+      DB_HOST: host.docker.internal
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-ferreplus}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set; copy .env.example and replace the placeholder}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?APP_JWT_SECRET must be set; use an ignored local env file}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://admin.localhost,http://admin.localhost:8088},http://localhost:4200
+      S2S_ISSUER: ${S2S_ISSUER:-ferreplus-admin-api}
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-ferreplus-public-api}
+      S2S_KEY_ID: ${S2S_KEY_ID:-bootstrap}
+      S2S_PRIVATE_KEY_FILE: /run/secrets/s2s_private_key
+      PUBLIC_API_URL: http://public-api:8080
+    secrets:
+      - s2s_private_key
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - admin_net
+      - admin_data
+      - internal_services
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${COMPOSE_PROJECT_NAME:-ferreplus}_admin_net
+      - traefik.http.routers.admin-api.rule=Host(`api-admin.localhost`)
+      - traefik.http.routers.admin-api.entrypoints=web
+      - traefik.http.routers.admin-api.middlewares=security-headers@file,compress@file
+      - traefik.http.services.admin-api.loadbalancer.server.port=8080
+    healthcheck:
+      # El endpoint se invoca con su metodo valido; 405 ya no se considera saludable.
+      test: ["CMD-SHELL", "status=$$(curl --silent --output /dev/null --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' --data '{}' http://localhost:8080/api/auth/login); test \"$$status\" = 400 || test \"$$status\" = 401"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 768M
+    restart: unless-stopped
+
+  public-api:
+    build:
+      context: ./public-api
+      dockerfile: Dockerfile
+    container_name: ferreplus-public-api
+    environment:
+      # Produccion es el valor seguro; dev/test deben seleccionarse de forma explicita.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SERVER_PORT: 8080
+      MONGO_URI: mongodb://${MONGO_ROOT_USERNAME:-ferreplus}:${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD must be set; copy .env.example and replace the placeholder}@mongodb:27017/${MONGO_DATABASE:-ferreplus_public}?authSource=admin
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ferreplus}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set; copy .env.example and replace the placeholder}
+      MINIO_CV_BUCKET: ${MINIO_CV_BUCKET:-cv-bucket}
+      MINIO_MEDIA_BUCKET: ${MINIO_MEDIA_BUCKET:-media-bucket}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://public.localhost,http://admin.localhost}
+      CAPTCHA_ENABLED: ${CAPTCHA_ENABLED:-true}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      PUBLIC_TURNSTILE_SITE_KEY: ${PUBLIC_TURNSTILE_SITE_KEY:-}
+      TURNSTILE_VERIFY_URL: ${TURNSTILE_VERIFY_URL:-https://challenges.cloudflare.com/turnstile/v0/siteverify}
+      CAPTCHA_TIMEOUT: ${CAPTCHA_TIMEOUT:-3s}
+      S2S_ISSUER: ${S2S_ISSUER:-ferreplus-admin-api}
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-ferreplus-public-api}
+      S2S_INITIAL_PUBLIC_KEY_FILE: /run/secrets/s2s_public_key
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}
+      RATE_LIMIT_FINGERPRINT_HMAC_SECRET: ${RATE_LIMIT_FINGERPRINT_HMAC_SECRET:?RATE_LIMIT_FINGERPRINT_HMAC_SECRET must be set; use an ignored local env file}
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-true}
+      SMTP_STARTTLS_ENABLE: ${SMTP_STARTTLS_ENABLE:-true}
+      SMTP_STARTTLS_REQUIRED: ${SMTP_STARTTLS_REQUIRED:-true}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@ferreplus.local}
+    secrets:
+      - s2s_public_key
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - public_net
+      - public_data
+      - internal_services
+      - admin_net
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${COMPOSE_PROJECT_NAME:-ferreplus}_public_net
+      - traefik.http.routers.public-api.rule=Host(`api.localhost`)
+      - traefik.http.routers.public-api.entrypoints=web
+      - traefik.http.routers.public-api.middlewares=security-headers@file,compress@file,cors-public@file
+      - traefik.http.services.public-api.loadbalancer.server.port=8080
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 768M
+    restart: unless-stopped
+
+  public-web:
+    build:
+      context: ./portal
+      dockerfile: Dockerfile
+      args:
+        PUBLIC_TURNSTILE_SITE_KEY: ${PUBLIC_TURNSTILE_SITE_KEY:-}
+        PUBLIC_CAPTCHA_ENABLED: ${CAPTCHA_ENABLED:-true}
+    container_name: ferreplus-public-web
+    expose:
+      - "8080"
+    depends_on:
+      public-api:
+        condition: service_healthy
+    networks:
+      - public_net
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${COMPOSE_PROJECT_NAME:-ferreplus}_public_net
+      - traefik.http.routers.public-web.rule=Host(`public.localhost`)
+      - traefik.http.routers.public-web.entrypoints=web
+      - traefik.http.routers.public-web.service=public-web
+      - traefik.http.routers.public-web.middlewares=security-headers@file,compress@file
+      - traefik.http.services.public-web.loadbalancer.server.port=8080
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+    restart: unless-stopped
+
+  admin-web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ferreplus-admin-web
+    ports:
+      - "127.0.0.1:${ADMIN_WEB_HOST_PORT:-4200}:8080"
+    expose:
+      - "8080"
+    depends_on:
+      admin-api:
+        condition: service_healthy
+    networks:
+      - admin_net
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${COMPOSE_PROJECT_NAME:-ferreplus}_admin_net
+      - traefik.http.routers.admin-web.rule=Host(`admin.localhost`)
+      - traefik.http.routers.admin-web.entrypoints=web
+      - traefik.http.routers.admin-web.service=admin-web
+      - traefik.http.routers.admin-web.middlewares=security-headers@file,compress@file
+      - traefik.http.services.admin-web.loadbalancer.server.port=8080
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:2025.8.1
+    container_name: ferreplus-cloudflared
+    profiles: ["tunnel"]
+    user: "0:0"
+    command: ["tunnel", "--no-autoupdate", "run", "--token-file", "/run/secrets/cloudflared_token"]
+    secrets:
+      - cloudflared_token
+    depends_on:
+      traefik:
+        condition: service_healthy
+    networks:
+      - public_net
+      - admin_net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+    restart: "no"
+
+networks:
+  public_net:
+    driver: bridge
+  admin_net:
+    driver: bridge
+  public_data:
+    driver: bridge
+    # Debe admitir los binds loopback de desarrollo para DataGrip/MinIO Console.
+    # No es accesible desde Internet: todos los puertos publicados usan 127.0.0.1.
+  admin_data:
+    driver: bridge
+    internal: true
+  internal_services:
+    driver: bridge
+    internal: true
+
+volumes:
+  mongodb_data:
+  redis_data:
+  minio_data:
+
+secrets:
+  cloudflared_token:
+    file: ${CLOUDFLARED_TOKEN_FILE:-./secrets/cloudflared.token}
+  s2s_private_key:
+    file: ${S2S_PRIVATE_KEY_FILE:-./secrets/s2s-private-key.pem}
+  s2s_public_key:
+    file: ${S2S_INITIAL_PUBLIC_KEY_FILE:-./secrets/s2s-public-key.pem}

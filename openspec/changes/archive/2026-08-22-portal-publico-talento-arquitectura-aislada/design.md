@@ -266,6 +266,30 @@ jar comun.
 **Consecuencias:** Se evita fuga de campos internos y acoplamiento de build, a
 cambio de duplicacion controlada y necesidad de contract tests.
 
+### ADR-13: Temas claro y oscuro controlados en el portal
+
+**Status:** Accepted
+
+**Contexto:** El portal publico debe ofrecer la misma adaptabilidad visual que el
+admin sin reemplazar su identidad ni hacer depender la legibilidad de JavaScript.
+
+**Decision:** `BaseLayout` ejecuta un script inline temprano que aplica `data-theme`
+con la eleccion valida de `localStorage` (`ferreplus-theme`) o, en su ausencia, la
+preferencia `prefers-color-scheme`. `Header` muestra un boton toggle visible, con
+etiqueta accionable y `aria-pressed`, que cambia el atributo y persiste la eleccion
+sin recargar. `global.css` concentra tokens semanticos para superficie, texto,
+muted, borde, foco, estados y controles; el tema oscuro y el fallback del sistema
+se resuelven con variables CSS. Las transiciones se anulan para
+`prefers-reduced-motion: reduce`.
+
+**Alternativas consideradas:** Solo detectar el sistema (no permite control
+explicito); selector separado de tres estados (agrega carga cognitiva); cambiar
+clases desde JavaScript despues del render (produce flash).
+
+**Consecuencias:** El portal conserva el diseño existente y añade una superficie
+de tokens mantenible. La preferencia guardada prevalece sobre cambios posteriores
+del sistema hasta que el visitante la cambie desde el selector.
+
 ## Architecture Components and Topology
 
 ```text
@@ -708,6 +732,13 @@ usa `loading=lazy` excepto hero. Respuestas publicas agregan `Cache-Control`
 POST. Formularios son islands con `client:visible`, progressive enhancement y
 `fetch` solo a `/api/public/**`; no conocen JWT, SMTP ni MinIO.
 
+El sistema visual usa tokens CSS semanticos para los temas `light` y `dark`.
+El script inline de `BaseLayout` aplica la preferencia antes de que el navegador
+muestre el contenido; si no existe una preferencia guardada, consulta el sistema.
+El selector del `Header` cambia el tema inmediatamente, persiste en
+`localStorage` y mantiene estado accesible. Sin JavaScript, el fallback CSS de
+`prefers-color-scheme` conserva contraste y legibilidad.
+
 ## Docker Compose
 
 Servicios y redes previstas:
@@ -866,3 +897,37 @@ No hay decisiones bloqueantes: S2S, estados, limites, RBAC y politica CV fueron
 confirmados por el usuario. Queda como seguimiento operativo no bloqueante medir
 volumen real para decidir si el executor asincrono debe evolucionar a RabbitMQ y
 si Astro debe pasar parcialmente a SSR.
+
+### ADR-14: Cloudflare Turnstile server-side
+
+**Status:** Accepted. `public-api` verifica el token con `RestClient` y timeout
+corto antes de tocar MongoDB/MinIO o publicar eventos. La clave secreta vive
+solo en backend; Astro recibe unicamente la site key publica. En prod la
+configuracion es fail-closed; dev/test pueden deshabilitar explicitamente el
+provider para pruebas locales. Los errores conservan ProblemDetail y no se
+convierten en 500 generico.
+
+### Runtime operativo de la ronda de correcciones
+
+En Compose, `public-api` usa `mongodb://ferreplus:<env-password>@mongodb:27017/ferreplus_public?authSource=admin`; DataGrip usa el bind `127.0.0.1` con el mismo `authSource=admin`. El volumen no se reinicializa ni se borra. `TURNSTILE_SECRET_KEY` se inyecta solo en `public-api` y `PUBLIC_TURNSTILE_SITE_KEY` solo como build-arg de `public-web`; Redis no recibe variables CAPTCHA.
+
+El rate limit conserva las ventanas y `Retry-After`, combina la IP derivada del
+header de proxy configurado con un fingerprint normalizado y HMAC complementario
+sin permitir que este sustituya a la IP. `KeyResolver` mantiene un TTL acotado e
+invalida material cambiado o expirado. El actor de auditoria proviene del claim
+firmado S2S y del `SecurityContext`; `X-Actor` no es una fuente confiable.
+
+### Ronda 2: correcciones confirmadas
+
+El anti-corruption layer conserva `/api/admin/talento/*` y traduce a
+`/api/internal/*`, propagando 401/403 y 503 sin ocultar el estado. Se corrige el
+bootstrap S2S por `kid` usando la clave publica montada, se agregan DTOs/mapeos
+tipados para publicaciones, convocatorias, postulaciones y CV, y se recuperan
+notificaciones PENDING/FAILED con `nextAttemptAt` nulo en lotes acotados. El
+rate limit ignora fingerprints arbitrarios y usa la IP observada por proxy
+confiable, manteniendo ventanas y `Retry-After` exactos.
+
+El secreto HMAC del complemento de fingerprint/email es obligatorio y su
+ausencia impide iniciar `public-api`. Turnstile usa claves oficiales de prueba
+solo en el `.env` ignorado; el banner `For testing only` es esperado. Produccion
+exige claves reales y fail-closed.

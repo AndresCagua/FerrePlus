@@ -93,6 +93,12 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { permissions: permisosDeRuta('/logs') }
   },
+  {
+    path: 'talento',
+    loadChildren: () => import('./talento/talento.module').then(m => m.TalentoModule),
+    canActivate: [AuthGuard],
+    data: { permissions: permisosDeRuta('/talento') }
+  },
   { path: '**', redirectTo: '/dashboard' }
 ];
 

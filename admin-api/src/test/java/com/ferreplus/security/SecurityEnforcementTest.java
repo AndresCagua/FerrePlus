@@ -106,7 +106,7 @@ class SecurityEnforcementTest {
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.email").value("admin@ferreplus.com"))
                 .andExpect(jsonPath("$.rol").value("ADMIN"))
-                .andExpect(jsonPath("$.permisos.length()").value(45))
+                .andExpect(jsonPath("$.permisos.length()").value(61))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

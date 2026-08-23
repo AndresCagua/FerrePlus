@@ -4,9 +4,12 @@ import com.ferreplus.publico.model.EstadoPublicacion;
 import com.ferreplus.publico.model.Publicacion;
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface PublicacionRepository extends MongoRepository<Publicacion, String> {
     List<Publicacion> findByEstado(EstadoPublicacion estado);
     Optional<Publicacion> findBySlugAndEstado(String slug, EstadoPublicacion estado);
+    List<Publicacion> findByEstadoAndFechaPublicacionLessThanEqualAndFechaVencimientoGreaterThan(
+            EstadoPublicacion estado, Instant inicio, Instant fin);
 }
