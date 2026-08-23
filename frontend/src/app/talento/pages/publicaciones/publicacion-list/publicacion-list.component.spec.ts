@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { portadaMediaUrl } from './publicacion-list.component';
+import { PublicacionListComponent } from './publicacion-list.component';
 
-describe('portadaMediaUrl', () => {
-  it('builds a same-origin URL only for supported object keys', () => {
-    expect(portadaMediaUrl({ objectKey: '550e8400-e29b-41d4-a716-446655440000.webp' })).toBe(
-      '/media/550e8400-e29b-41d4-a716-446655440000.webp'
-    );
-    expect(portadaMediaUrl({ objectKey: 'https://attacker.example/image.webp' })).toBeNull();
-    expect(portadaMediaUrl(undefined)).toBeNull();
+describe('PublicacionListComponent', () => {
+  it('mantiene el listado sin helpers exclusivos de portada', () => {
+    const compiledTemplate = (PublicacionListComponent as typeof PublicacionListComponent & {
+      ɵcmp: { template?: () => unknown };
+    }).ɵcmp.template?.toString() ?? '';
+
+    expect(compiledTemplate).not.toContain('portada');
+    expect(PublicacionListComponent.prototype).not.toHaveProperty('portadaUrl');
+    expect(PublicacionListComponent.prototype).not.toHaveProperty('portadaFailed');
+    expect(PublicacionListComponent.prototype).not.toHaveProperty('failedPortadas');
   });
 });

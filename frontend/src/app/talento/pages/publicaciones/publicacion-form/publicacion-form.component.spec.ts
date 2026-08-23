@@ -1,9 +1,14 @@
 import { FormBuilder } from '@angular/forms';
 import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
-import { PublicacionFormComponent } from './publicacion-form.component';
+import { normalizarSlug, PublicacionFormComponent } from './publicacion-form.component';
 
 describe('PublicacionFormComponent', () => {
+  it('preview slug follows the backend normalization rules', () => {
+    expect(normalizarSlug('Talento: Niño Técnico / Bogotá')).toBe('talento-nino-tecnico-bogota');
+    expect(normalizarSlug('***')).toBe('publicacion');
+  });
+
   function createComponent() {
     const service = { obtenerPublicacion: vi.fn().mockReturnValue(of({ portada: { objectKey: '550e8400-e29b-41d4-a716-446655440000.webp' } })) };
     const component = new PublicacionFormComponent(

@@ -19,10 +19,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.net.URI;
 import java.util.Locale;
+import java.util.Objects;
+import java.text.Normalizer;
+import org.springframework.dao.DuplicateKeyException;
 
 @Service
 @RequiredArgsConstructor
 public class PublicacionService {
+    private static final int MAX_SLUG_LENGTH = 100;
+
     private final PublicacionRepository repository;
     private final ImageFileValidator imageValidator;
     private final MinioObjectStorage storage;
@@ -41,23 +46,26 @@ public class PublicacionService {
 
     public List<Publicacion> todas() { return repository.findAll(); }
 
-    public Publicacion crear(PublicacionAdminDTO dto) { return repository.save(from(dto, new Publicacion())); }
+    public Publicacion crear(PublicacionAdminDTO dto) { return persist(from(dto, new Publicacion()), normalizarSlug(dto.titulo()), true); }
     public Publicacion crear(PublicacionAdminDTO dto, MultipartFile portada, List<MultipartFile> galeria) {
         Publicacion item = from(dto, new Publicacion());
-        return saveMedia(item, portada, galeria);
+        return saveMedia(item, portada, galeria, true);
     }
 
     public Publicacion actualizar(String id, PublicacionAdminDTO dto) {
-        return repository.save(from(dto, find(id)));
+        Publicacion existing = find(id);
+        boolean titleChanged = !Objects.equals(existing.getTitulo(), dto.titulo());
+        return persist(from(dto, existing), titleChanged ? normalizarSlug(dto.titulo()) : existing.getSlug(), titleChanged);
     }
     public Publicacion actualizar(String id, PublicacionAdminDTO dto, MultipartFile portada, List<MultipartFile> galeria) {
         Publicacion existing = find(id);
         var previousPortada = existing.getPortada();
         var previousGaleria = existing.getGaleria();
+        boolean titleChanged = !Objects.equals(existing.getTitulo(), dto.titulo());
         Publicacion item = from(dto, existing);
         if ((portada == null || portada.isEmpty()) && dto.portada() == null) item.setPortada(previousPortada);
         if ((galeria == null || galeria.isEmpty()) && dto.galeria() == null) item.setGaleria(previousGaleria);
-        return saveMedia(item, portada, galeria);
+        return saveMedia(item, portada, galeria, titleChanged);
     }
 
     public Publicacion publicar(String id) { return changeState(id, EstadoPublicacion.PUBLISHED); }
@@ -78,7 +86,7 @@ public class PublicacionService {
                 && !dto.fechaPublicacion().isBefore(dto.fechaVencimiento()))
             throw new PublicApiException(HttpStatus.BAD_REQUEST, "La fecha de publicacion debe ser anterior al vencimiento");
         validateUrls(dto.videoUrl(), dto.enlacesX());
-        item.setTitulo(dto.titulo()); item.setSlug(dto.slug()); item.setResumen(dto.resumen());
+        item.setTitulo(dto.titulo()); item.setResumen(dto.resumen());
         item.setDescripcion(dto.descripcion()); item.setPortada(dto.portada()); item.setGaleria(dto.galeria());
         item.setVideoUrl(dto.videoUrl()); item.setEnlacesX(dto.enlacesX()); item.setCategoria(dto.categoria());
         item.setEstado(dto.estado()); item.setFechaPublicacion(dto.fechaPublicacion());
@@ -95,7 +103,7 @@ public class PublicacionService {
         return item.getFechaPublicacion() != null && !item.getFechaPublicacion().isAfter(now)
                 && (item.getFechaVencimiento() == null || item.getFechaVencimiento().isAfter(now));
     }
-    private Publicacion saveMedia(Publicacion item, MultipartFile portada, List<MultipartFile> gallery) {
+    private Publicacion saveMedia(Publicacion item, MultipartFile portada, List<MultipartFile> gallery, boolean regenerateSlug) {
         List<String> uploaded = new ArrayList<>();
         try {
             if (portada != null && !portada.isEmpty()) item.setPortada(upload(item, portada, null, uploaded));
@@ -104,12 +112,54 @@ public class PublicacionService {
                 for (MultipartFile image : gallery) images.add(upload(item, image, null, uploaded));
                 item.setGaleria(images);
             }
-            return repository.save(item);
+            return persist(item, normalizarSlug(item.getTitulo()), regenerateSlug);
         } catch (Exception exception) {
             uploaded.forEach(key -> { try { storage.delete(storage.mediaBucket(), key); } catch (Exception ignored) { } });
             if (exception instanceof com.ferreplus.publico.exception.PublicApiException api) throw api;
             throw new PublicApiException(HttpStatus.INTERNAL_SERVER_ERROR, "No fue posible almacenar las imagenes");
         }
+    }
+
+    private Publicacion persist(Publicacion item, String base, boolean regenerateSlug) {
+        if (!regenerateSlug) return repository.save(item);
+        for (int attempt = 1; attempt <= 5; attempt++) {
+            item.setSlug(candidate(base, attempt));
+            try {
+                return repository.save(item);
+            } catch (DuplicateKeyException collision) {
+                if (attempt == 5) throw slugUnavailable();
+            }
+        }
+        throw slugUnavailable();
+    }
+
+    private PublicApiException slugUnavailable() {
+        return new PublicApiException(HttpStatus.CONFLICT, "El slug no esta disponible", "SLUG_UNAVAILABLE");
+    }
+
+    public static String normalizarSlug(String titulo) {
+        String ascii = Normalizer.normalize(titulo == null ? "" : titulo, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT);
+        String normalized = ascii.replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
+        if (normalized.isBlank()) return "publicacion";
+        StringBuilder result = new StringBuilder();
+        for (String token : normalized.split("-")) {
+            int extra = result.length() == 0 ? token.length() : token.length() + 1;
+            if (result.length() + extra > MAX_SLUG_LENGTH) break;
+            if (result.length() > 0) result.append('-');
+            result.append(token);
+        }
+        if (result.length() > 0) return result.toString();
+
+        // Un unico token puede superar el limite; en ese caso el corte es inevitable.
+        return normalized.substring(0, Math.min(normalized.length(), MAX_SLUG_LENGTH));
+    }
+
+    private String candidate(String base, int attempt) {
+        if (attempt == 1) return base;
+        String suffix = "-" + attempt;
+        String prefix = base.substring(0, Math.min(base.length(), MAX_SLUG_LENGTH - suffix.length())).replaceAll("-+$", "");
+        return prefix + suffix;
     }
     private com.ferreplus.publico.model.ImagenMedia upload(Publicacion item, MultipartFile file, String alt, List<String> uploaded) throws IOException {
         var valid = imageValidator.validate(file); String key = java.util.UUID.randomUUID() + "." + valid.extension();

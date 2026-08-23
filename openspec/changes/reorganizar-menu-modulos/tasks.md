@@ -99,49 +99,49 @@
 
 ### 2.1 Listado — eliminar columna portada
 
-- [ ] 2.1.1 Eliminar columna `portada` del template de `publicacion-list.component.html`
-- [ ] 2.1.2 Eliminar funcion `portadaUrl()` y `portadaFailed()` de `publicacion-list.component.ts`
-- [ ] 2.1.3 Eliminar referencia a `failedPortadas` si existe
-- [ ] 2.1.4 Verificar que titulo, estado y demas columnas siguen visibles
+- [x] 2.1.1 Eliminar columna `portada` del template de `publicacion-list.component.html`
+- [x] 2.1.2 Eliminar funcion `portadaUrl()` y `portadaFailed()` de `publicacion-list.component.ts`
+- [x] 2.1.3 Eliminar referencia a `failedPortadas` si existe
+- [x] 2.1.4 Verificar que titulo, estado y demas columnas siguen visibles
 
 **Archivos**: `frontend/src/app/talento/pages/publicaciones/publicacion-list/publicacion-list.component.html`, `publicacion-list.component.ts`
 **Criterio**: La tabla ya no muestra portada; el modelo y la API no se modifican; portada sigue disponible en formulario y portal.
 
 ### 2.2 Backend — normalizacion de slug
 
-- [ ] 2.2.1 Crear metodo `normalizarSlug(String titulo)` en `PublicacionService.java` de `public-api`: transliterar acentos, minusculas, solo `[a-z0-9-]`, colapsar guiones, quitar extremos, limitar a 100 chars
-- [ ] 2.2.2 Implementar fallback a `publicacion` si el titulo no produce caracteres validos
-- [ ] 2.2.3 Implementar generador de candidatos: `base`, `base-2`, `base-3`, ..., `base-5`
+- [x] 2.2.1 Crear metodo `normalizarSlug(String titulo)` en `PublicacionService.java` de `public-api`: transliterar acentos, minusculas, solo `[a-z0-9-]`, colapsar guiones, quitar extremos, limitar a 100 chars
+- [x] 2.2.2 Implementar fallback a `publicacion` si el titulo no produce caracteres validos
+- [x] 2.2.3 Implementar generador de candidatos: `base`, `base-2`, `base-3`, ..., `base-5`
 
 **Archivos**: `public-api/src/main/java/.../service/PublicacionService.java`
 **Criterio**: `normalizarSlug("Talento: Niño Tecnico / Bogota")` retorna `talento-nino-tecnico-bogota`; titulo solo con simbolos retorna `publicacion`.
 
 ### 2.3 Backend — unicidad concurrente
 
-- [ ] 2.3.1 Modificar `create` y `update` en `PublicacionService` para generar slug desde titulo antes de persistir
-- [ ] 2.3.2 Implementar retry ante `DuplicateKeyException` con sufijo determinista hasta 5 intentos
-- [ ] 2.3.3 Devolver `409 Conflict` con codigo `SLUG_UNAVAILABLE` si se agotan intentos
-- [ ] 2.3.4 En `update`, conservar slug existente si el titulo no cambio
-- [ ] 2.3.5 Verificar que el indice unico `@Indexed(unique=true)` existe en `Publicacion.java`
+- [x] 2.3.1 Modificar `create` y `update` en `PublicacionService` para generar slug desde titulo antes de persistir
+- [x] 2.3.2 Implementar retry ante `DuplicateKeyException` con sufijo determinista hasta 5 intentos
+- [x] 2.3.3 Devolver `409 Conflict` con codigo `SLUG_UNAVAILABLE` si se agotan intentos
+- [x] 2.3.4 En `update`, conservar slug existente si el titulo no cambio
+- [x] 2.3.5 Verificar que el indice unico `@Indexed(unique=true)` existe en `Publicacion.java`
 
 **Archivos**: `public-api/src/main/java/.../service/PublicacionService.java`, `public-api/src/main/java/.../model/Publicacion.java`
 **Criterio**: Prueba de carrera: dos creates concurrentes con mismo titulo producen slugs unicos; 5 colisiones devuelven 409.
 
 ### 2.4 Backend — DTO y contrato
 
-- [ ] 2.4.1 Verificar que `PublicacionAdminDTO` o equivalente excluye slug del input del cliente (el backend es autoridad)
-- [ ] 2.4.2 Asegurar que el response incluye el slug final generado
-- [ ] 2.4.3 Verificar que `TalentoController` no necesita cambios significativos (proxy a public-api)
+- [x] 2.4.1 Verificar que `PublicacionAdminDTO` o equivalente excluye slug del input del cliente (el backend es autoridad)
+- [x] 2.4.2 Asegurar que el response incluye el slug final generado
+- [x] 2.4.3 Verificar que `TalentoController` no necesita cambios significativos (proxy a public-api)
 
 **Archivos**: DTOs en `admin-api` y `public-api`, `TalentoController.java`
 **Criterio**: El slug retornado por la API es siempre el normalizado backend; el valor del cliente se ignora.
 
 ### 2.5 Frontend — previsualizacion de slug
 
-- [ ] 2.5.1 En `publicacion-form.component.ts`, calcular slug derivado del titulo con la misma logica de normalizacion
-- [ ] 2.5.2 Mostrar slug como texto de solo lectura (no input editable)
-- [ ] 2.5.3 Ocultar el campo slug editable manual en el template
-- [ ] 2.5.4 Asegurar que el slug se envia al backend pero este lo ignora (ya autoritativo)
+- [x] 2.5.1 En `publicacion-form.component.ts`, calcular slug derivado del titulo con la misma logica de normalizacion
+- [x] 2.5.2 Mostrar slug como texto de solo lectura (no input editable)
+- [x] 2.5.3 Ocultar el campo slug editable manual en el template
+- [x] 2.5.4 Asegurar que el slug se envia al backend pero este lo ignora (ya autoritativo)
 
 **Archivos**: `frontend/src/app/talento/pages/publicaciones/publicacion-form/publicacion-form.component.ts`, `.html`
 **Criterio**: Cambiar titulo actualiza la previsualizacion; el campo slug no es editable; el formulario envia slug pero el backend lo reemplaza.

@@ -8,7 +8,7 @@ import java.util.List;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record PublicacionAdminDTO(@NotBlank String titulo, @NotBlank String slug,
+public record PublicacionAdminDTO(@NotBlank String titulo,
         String resumen, String descripcion, ImagenMedia portada, List<ImagenMedia> galeria,
         String videoUrl, List<String> enlacesX, String categoria, @NotNull EstadoPublicacion estado,
         Instant fechaPublicacion, Instant fechaVencimiento, MetadataSEO metadataSEO,
