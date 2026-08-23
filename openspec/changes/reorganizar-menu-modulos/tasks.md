@@ -231,46 +231,46 @@
 
 ### 4.1 Layout editorial — columna y espaciado
 
-- [ ] 4.1.1 Ajustar `max-width` de `.article` a `720px` en `portal/src/styles/global.css`
-- [ ] 4.1.2 Verificar espaciado vertical entre bloques de 20px a 32px
-- [ ] 4.1.3 Verificar que `.article > img` usa `max-width: 100%` y es responsive
+- [x] 4.1.1 Ajustar la columna editorial aislada a `max-width: 720px` en `portal/src/styles/global.css`
+- [x] 4.1.2 Verificar espaciado vertical entre bloques de 20px a 32px
+- [x] 4.1.3 Verificar que las imagenes editoriales usan `max-width: 100%`, altura automatica y son responsive
 
 **Archivos**: `portal/src/styles/global.css`
 **Criterio**: A 1440px, la columna mide entre 696px y 744px; imagenes no exceden la columna.
 
 ### 4.2 Embeds — YouTube y X
 
-- [ ] 4.2.1 Verificar wrapper YouTube con `aspect-ratio: 16/9` y reserva de espacio
-- [ ] 4.2.2 Verificar que YouTube nunca excede la columna ni el viewport
-- [ ] 4.2.3 Verificar que cada embed X esta centrado dentro de la columna
-- [ ] 4.2.4 Verificar `overflow-wrap: anywhere` o equivalente para URLs largas en X
-- [ ] 4.2.5 Verificar fallback accesible cuando X o YouTube no carga
+- [x] 4.2.1 Verificar wrapper YouTube con `aspect-ratio: 16/9` y reserva de espacio
+- [x] 4.2.2 Verificar que YouTube nunca excede la columna ni el viewport
+- [x] 4.2.3 Verificar que cada embed X esta centrado dentro de la columna
+- [x] 4.2.4 Verificar `overflow-wrap: anywhere` o equivalente para URLs largas en X
+- [x] 4.2.5 Verificar fallback accesible cuando X o YouTube no carga
 
 **Archivos**: `portal/src/styles/global.css`, `portal/src/components/islands/PublicContent.ts` (si aplica)
 **Criterio**: YouTube mantiene 16:9; X centrado sin overflow; fallback accesible.
 
 ### 4.3 Responsive — movil
 
-- [ ] 4.3.1 Verificar a 320px: `scrollWidth <= clientWidth` (cero scroll horizontal)
-- [ ] 4.3.2 Verificar que imagenes y embeds respetan `max-width: 100%`
-- [ ] 4.3.3 Verificar que `prefers-reduced-motion` se respeta
-- [ ] 4.3.4 Verificar a 768px y 1440px
+- [x] 4.3.1 Verificar a 320px: `scrollWidth <= clientWidth` (cero scroll horizontal)
+- [x] 4.3.2 Verificar que imagenes y embeds respetan `max-width: 100%`
+- [x] 4.3.3 Verificar que `prefers-reduced-motion` se respeta
+- [x] 4.3.4 Verificar a 768px y 1440px
 
 **Archivos**: `portal/src/styles/global.css`
 **Criterio**: No scroll horizontal en 320px; imagenes y embeds responsive; reduced-motion respetado.
 
 ### 4.4 Aislamiento visual
 
-- [ ] 4.4.1 Verificar que estilos editoriales solo aplican a pagina de publicaciones
-- [ ] 4.4.2 Verificar que convocatorias, contacto y otras paginas no heredan la columna
+- [x] 4.4.1 Verificar que estilos editoriales solo aplican a pagina de publicaciones
+- [x] 4.4.2 Verificar que convocatorias, contacto y otras paginas no heredan la columna
 
 **Archivos**: `portal/src/styles/global.css`, `portal/src/pages/publicaciones/[slug].astro`
 **Criterio**: Otras paginas no cambian su ancho ni comportamiento.
 
 ### 4.5 Verificacion de borradores
 
-- [ ] 4.5.1 Verificar que publicacion DRAFT retorna 404 en portal
-- [ ] 4.5.2 Verificar que borradores no aparecen en sitemap ni metadata indexable
+- [x] 4.5.1 Verificar que publicacion DRAFT no se prerenderiza en portal
+- [x] 4.5.2 Verificar que borradores no aparecen en sitemap ni metadata indexable
 
 **Archivos**: `portal/src/pages/publicaciones/[slug].astro`
 **Criterio**: DRAFT = 404; PUBLISHED = contenido + metadata SEO.

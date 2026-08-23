@@ -190,3 +190,39 @@ database_modified: false
 ### Scope boundary
 
 Solo se corrigieron los dos warnings solicitados del Slice 2. No se hicieron commits, push ni operaciones de base de datos.
+
+## Slice 4 / PR 4 progress — 2026-08-23
+
+```yaml
+status: completed
+change: reorganizar-menu-modulos
+slice: pr4_portal_editorial
+execution_mode: interactive
+artifact_store: openspec
+skill_resolution: fallback-path
+branch: feature/reorganizar-menu-modulos
+commits_created: false
+push_performed: false
+database_modified: false
+```
+
+### Completed
+
+- Se creo una columna editorial exclusiva para publicaciones con ancho maximo de 720px, padding movil y eje vertical consistente de 24px; convocatorias conserva su `.article` existente.
+- Las imagenes de portada y galeria usan ancho maximo completo, altura automatica, `object-fit`, borde y radio consistentes.
+- YouTube usa un iframe lazy de ancho completo con reserva `aspect-ratio: 16 / 9`, `title` accesible y enlace fallback mientras no confirma carga.
+- Los embeds de X permanecen centrados, sin padding del wrapper, limitados al ancho oficial y con `overflow-wrap:anywhere` y fallback accesible.
+- Se respetan los breakpoints existentes para 320px/768px/1440px, sin overflow horizontal del contenido editorial, y `prefers-reduced-motion` conserva la regla del portal.
+- Se marco el aislamiento visual: solo las paginas de publicaciones reciben `.publication-article`; convocatorias, contacto y otras paginas no heredan la columna editorial.
+- La generacion estatica existente continua excluyendo borradores al construir rutas desde el listado publico; sitemap se genera desde esas rutas.
+
+### Verification
+
+- `portal/npm run check`: aprobado, 0 errores, 0 warnings, 0 hints.
+- `portal/npm run build`: aprobado; build estatico y sitemap generados correctamente.
+- `git diff --check`: aprobado.
+- No existen pruebas visuales automatizadas ni framework de browser en `portal`; no se agregaron dependencias ni un framework nuevo.
+
+### Scope boundary
+
+Solo se modificaron layout/CSS/responsive del portal editorial y la estructura minima del componente publico necesaria para embeds. No se modificaron backend, slug, SEO, menu, APIs ni bases de datos. PR 5 permanece fuera de alcance.

@@ -72,12 +72,14 @@ function renderPublication(item: Publicacion): void {
   if (item.galeria?.length) { const gallery = document.createElement('div'); gallery.className = 'gallery'; item.galeria.forEach(media => { if (!media.url) return; const image = document.createElement('img'); image.src = media.url; image.alt = media.alt ?? item.titulo; image.loading = 'lazy'; gallery.append(image); }); content.append(gallery); }
   const video = parseYouTubeLink(item.videoUrl);
   if (video) {
-    const preview = document.createElement('article'); preview.className = 'link-preview youtube-preview';
-    const image = document.createElement('img'); image.src = video.thumbnail; image.alt = `Vista previa del video: ${item.titulo}`; image.loading = 'lazy'; preview.append(image);
-    const body = document.createElement('div'); body.className = 'link-preview-body';
-    const label = document.createElement('span'); label.className = 'tag'; label.textContent = 'YouTube'; body.append(label);
-    const link = document.createElement('a'); link.href = video.href; link.rel = 'noopener noreferrer'; link.target = '_blank'; link.textContent = 'Ver video relacionado'; body.append(link);
-    preview.append(body); content.append(preview);
+    const preview = document.createElement('div'); preview.className = 'publication-video';
+    const frame = document.createElement('iframe'); frame.src = video.embed; frame.title = `Video de YouTube: ${item.titulo}`;
+    frame.loading = 'lazy'; frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    frame.allowFullscreen = true; frame.addEventListener('load', () => preview.classList.add('is-loaded')); preview.append(frame);
+    const fallback = document.createElement('p'); fallback.className = 'publication-embed-fallback';
+    fallback.textContent = 'El video no se puede mostrar aqui. ';
+    const link = document.createElement('a'); link.href = video.href; link.rel = 'noopener noreferrer'; link.target = '_blank'; link.textContent = 'Abrir en YouTube'; fallback.append(link);
+    preview.append(fallback); content.append(preview);
   }
   const social = document.createElement('div'); social.className = 'social-previews';
   for (const value of item.enlacesX ?? []) {
