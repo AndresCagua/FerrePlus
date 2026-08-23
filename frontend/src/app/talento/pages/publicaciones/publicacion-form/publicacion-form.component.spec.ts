@@ -52,6 +52,7 @@ describe('PublicacionFormComponent', () => {
       {} as never, service as never, { markForCheck: vi.fn() } as never,
     );
     component.ngOnInit();
+    component.form.patchValue({ titulo: 'Titulo', resumen: 'Resumen', descripcion: 'Descripcion' });
 
     component.generateSeo();
     component.generateSeo();
@@ -74,6 +75,7 @@ describe('PublicacionFormComponent', () => {
       {} as never, service as never, { markForCheck: vi.fn() } as never,
     );
     component.ngOnInit();
+    component.form.patchValue({ titulo: 'Titulo', resumen: 'Resumen', descripcion: 'Descripcion' });
 
     component.generateSeo();
 
@@ -98,10 +100,103 @@ describe('PublicacionFormComponent', () => {
       {} as never, service as never, { markForCheck: vi.fn() } as never,
     );
     component.ngOnInit();
+    component.form.patchValue({ titulo: 'Titulo', resumen: 'Resumen', descripcion: 'Descripcion' });
 
     component.generateSeo();
 
     expect(component.seoError).toContain('incompleta');
     expect(component.form.controls.seoTitle.value).toBe('');
+  });
+
+  it('genera SEO automaticamente en un formulario nuevo cuando el contenido esta completo', () => {
+    vi.useFakeTimers();
+    const service = {
+      sugerirSeo: vi.fn().mockReturnValue(of({ title: 'SEO automatico', description: 'Descripcion SEO' })),
+      crearPublicacion: vi.fn(),
+    };
+    const component = new PublicacionFormComponent(
+      new FormBuilder(), { snapshot: { paramMap: { get: () => null } } } as never,
+      {} as never, service as never, { markForCheck: vi.fn() } as never,
+    );
+    component.ngOnInit();
+
+    component.form.controls.titulo.setValue('Titulo');
+    component.form.controls.resumen.setValue('Resumen');
+    expect(service.sugerirSeo).not.toHaveBeenCalled();
+    component.form.controls.descripcion.setValue('Descripcion');
+    vi.advanceTimersByTime(300);
+
+    expect(service.sugerirSeo).toHaveBeenCalledTimes(1);
+    expect(component.form.controls.seoTitle.value).toBe('SEO automatico');
+    vi.useRealTimers();
+  });
+
+  it('no reintenta automaticamente despues de un fallo, pero permite reintento manual', () => {
+    vi.useFakeTimers();
+    const service = {
+      sugerirSeo: vi.fn()
+        .mockReturnValueOnce(throwError(() => new Error('network failure')))
+        .mockReturnValueOnce(of({ title: 'SEO reintentado', description: 'Descripcion reintentada' })),
+    };
+    const component = new PublicacionFormComponent(
+      new FormBuilder(), { snapshot: { paramMap: { get: () => null } } } as never,
+      {} as never, service as never, { markForCheck: vi.fn() } as never,
+    );
+    component.ngOnInit();
+    component.form.patchValue({ titulo: 'Titulo', resumen: 'Resumen', descripcion: 'Descripcion' });
+
+    vi.advanceTimersByTime(300);
+
+    expect(service.sugerirSeo).toHaveBeenCalledTimes(1);
+    expect(component.seoError).toContain('No se pudo generar SEO');
+
+    component.generateSeo();
+
+    expect(service.sugerirSeo).toHaveBeenCalledTimes(2);
+    expect(component.form.controls.seoTitle.value).toBe('SEO reintentado');
+    expect(component.form.controls.seoDescription.value).toBe('Descripcion reintentada');
+    vi.useRealTimers();
+  });
+
+  it('no duplica la generacion automatica para el mismo contenido y conserva ediciones SEO', () => {
+    vi.useFakeTimers();
+    const response = new Subject<{ title: string; description: string }>();
+    const service = { sugerirSeo: vi.fn().mockReturnValue(response.asObservable()) };
+    const component = new PublicacionFormComponent(
+      new FormBuilder(), { snapshot: { paramMap: { get: () => null } } } as never,
+      {} as never, service as never, { markForCheck: vi.fn() } as never,
+    );
+    component.ngOnInit();
+    component.form.patchValue({ titulo: 'Titulo', resumen: 'Resumen', descripcion: 'Descripcion' });
+    vi.advanceTimersByTime(300);
+    component.form.controls.seoTitle.setValue('SEO editado');
+    response.next({ title: 'SEO IA', description: 'Descripcion IA' });
+    component.form.patchValue({ titulo: 'Titulo', resumen: 'Resumen', descripcion: 'Descripcion' });
+    vi.advanceTimersByTime(300);
+
+    expect(service.sugerirSeo).toHaveBeenCalledTimes(1);
+    expect(component.form.controls.seoTitle.value).toBe('SEO editado');
+    expect(component.form.controls.seoDescription.value).toBe('Descripcion IA');
+    vi.useRealTimers();
+  });
+
+  it('permite guardar aunque falle la generacion SEO automatica', () => {
+    vi.useFakeTimers();
+    const service = {
+      sugerirSeo: vi.fn().mockReturnValue(throwError(() => new Error('network failure'))),
+      crearPublicacion: vi.fn().mockReturnValue(of({})),
+    };
+    const router = { navigate: vi.fn() };
+    const component = new PublicacionFormComponent(
+      new FormBuilder(), { snapshot: { paramMap: { get: () => null } } } as never,
+      router as never, service as never, { markForCheck: vi.fn() } as never,
+    );
+    component.ngOnInit();
+    component.form.patchValue({ titulo: 'Titulo', resumen: 'Resumen', descripcion: 'Descripcion' });
+    vi.advanceTimersByTime(300);
+    component.save();
+
+    expect(service.crearPublicacion).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 });

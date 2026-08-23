@@ -29,7 +29,7 @@ public class SeoSuggestionController {
     }
 
     @PostMapping("/publicaciones/seo")
-    @PreAuthorize("hasAuthority('TALENTO_PUBLICACIONES_EDITAR')")
+    @PreAuthorize("hasAnyAuthority('TALENTO_PUBLICACIONES_CREAR', 'TALENTO_PUBLICACIONES_EDITAR')")
     public SeoSuggestionResponse suggest(@Valid @RequestBody SeoSuggestionRequest request) {
         return service.suggest(request);
     }

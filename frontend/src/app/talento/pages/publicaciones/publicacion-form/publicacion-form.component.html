@@ -33,13 +33,13 @@
       <mat-form-field class="col-md-6"><mat-label>Video de YouTube (opcional)</mat-label><input matInput type="url" formControlName="videoUrl" aria-describedby="video-help"><mat-hint id="video-help">Solo https://youtube.com o https://youtu.be</mat-hint><mat-error>Indica una URL de YouTube valida</mat-error></mat-form-field>
       <mat-form-field class="col-md-6"><mat-label>Enlaces X (opcional)</mat-label><textarea matInput rows="3" formControlName="enlacesX" aria-describedby="x-help"></textarea><mat-hint id="x-help">Un enlace por linea o separado por comas. Solo x.com o twitter.com</mat-hint></mat-form-field>
        <div class="col-12 d-flex align-items-center gap-2 mb-2">
-         <button *ngIf="id" class="btn btn-outline-primary" type="button" (click)="generateSeo()" [disabled]="seoLoading" [attr.aria-busy]="seoLoading">
+         <button class="btn btn-outline-primary" type="button" (click)="generateSeo()" [disabled]="seoLoading" [attr.aria-busy]="seoLoading">
            @if (seoLoading) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Generando... } @else { Generar con IA }
          </button>
          @if (seoLoading) { <span role="status">Generando sugerencia SEO...</span> }
        </div>
        @if (seoError) {
-         <div class="col-12 alert alert-warning" role="alert">{{ seoError }} <button *ngIf="id" type="button" class="btn btn-link p-0" (click)="generateSeo()" [disabled]="seoLoading">Reintentar</button></div>
+          <div class="col-12 alert alert-warning" role="alert">{{ seoError }} <button type="button" class="btn btn-link p-0" (click)="generateSeo()" [disabled]="seoLoading">Reintentar</button></div>
        }
        <mat-form-field class="col-md-6"><mat-label>SEO title</mat-label><input matInput formControlName="seoTitle"></mat-form-field>
        <mat-form-field class="col-md-6"><mat-label>SEO description</mat-label><input matInput formControlName="seoDescription"></mat-form-field>

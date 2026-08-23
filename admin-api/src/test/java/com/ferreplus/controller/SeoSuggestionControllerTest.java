@@ -71,6 +71,19 @@ class SeoSuggestionControllerTest {
     }
 
     @Test
+    @WithMockUser(authorities = "TALENTO_PUBLICACIONES_CREAR")
+    void permisoDeCrearTambienPuedeSolicitarSugerencia() throws Exception {
+        when(service.suggest(any())).thenReturn(new SeoSuggestionResponse("Titulo", "Descripcion"));
+
+        mockMvc.perform(post("/api/admin/talento/publicaciones/seo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\"Publicacion\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Titulo"))
+                .andExpect(jsonPath("$.description").value("Descripcion"));
+    }
+
+    @Test
     @WithMockUser(authorities = "TALENTO_PUBLICACIONES_EDITAR")
     void requestExcedidoDevuelveProblemDetail400SinInvocarIa() throws Exception {
         mockMvc.perform(post("/api/admin/talento/publicaciones/seo")
