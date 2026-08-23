@@ -87,6 +87,47 @@ Revisa el secreto local o realiza una rotacion controlada.
 >
 > **Scalar UI:** [`http://api-admin.localhost:8088/scalar`](http://api-admin.localhost:8088/scalar) — alternativa moderna a Swagger para probar los endpoints.
 
+### Inicio de una linea con URLs publicas temporales
+
+Para levantar todo el entorno local y obtener URLs publicas temporales para ambos portales:
+
+```bash
+./scripts/start-local.sh
+```
+
+El script verifica Docker, Docker Compose y `curl`; inicia los servicios de aplicacion con
+`docker compose up -d --build`, espera Traefik, las APIs y los portales, y crea dos
+contenedores efimeros `cloudflare/cloudflared:2025.8.1`. Un Quick Tunnel enruta al portal
+publico y el otro al portal admin mediante `public.localhost` y `admin.localhost`.
+
+Al finalizar imprime las dos URLs `https://<subdominio-temporal>.trycloudflare.com`. Los
+subdominios son asignados por Cloudflare y CAMBIAN en cada ejecucion; no deben guardarse como
+configuracion ni tratarse como URLs de produccion. La disponibilidad depende de Internet y de
+Cloudflare, y los Quick Tunnels no ofrecen hostname estable, autenticacion de produccion ni
+garantias operativas.
+
+El script nunca inicia ni modifica el servicio nombrado `ferreplus-cloudflared`, que usa el
+perfil opcional `tunnel` y un token local para el named tunnel. Esa alternativa conserva un
+hostname estable y debe iniciarse por separado cuando corresponda:
+
+```bash
+docker compose --profile tunnel up -d cloudflared
+```
+
+El acceso publico temporal no elimina los requisitos de la aplicacion: Turnstile sigue
+dependiendo de sus claves configuradas y Gmail SMTP sigue requiriendo una cuenta remitente y
+una contrasena de aplicacion. No incluyas esos valores en el README ni en logs.
+
+Para detener el entorno sin borrar volumenes:
+
+```bash
+./scripts/start-local.sh --stop
+```
+
+Este comando solo elimina los dos contenedores Quick Tunnel administrados por el script y
+detiene los servicios de aplicacion de Compose. No ejecuta `down`, no elimina volumenes y no
+detiene `ferreplus-cloudflared`.
+
 ### 3. Frontend
 
 ```bash
