@@ -156,33 +156,33 @@
 
 ### 3.1 Backend — caso de uso SEO
 
-- [ ] 3.1.1 Crear `SeoSuggestionRequest` DTO con `titulo` (requerido, max 200), `resumen?` (max 500), `descripcion?` (max 5000)
-- [ ] 3.1.2 Crear `SeoSuggestionResponse` DTO con `title` (String, no vacio), `description` (String, no vacio)
-- [ ] 3.1.3 Crear servicio `SeoSuggestionService` que inyecta `GeminiClient`/`GeminiProperties` del chat existente
-- [ ] 3.1.4 Implementar prompt seguro: solo titulo/resumen/descripcion, sin credenciales, sin contenido completo
-- [ ] 3.1.5 Validar respuesta del proveedor; si incompleta (falta title o description), lanzar excepcion tipada
-- [ ] 3.1.6 Configurar timeout reutilizando la configuracion Gemini existente
+- [x] 3.1.1 Crear `SeoSuggestionRequest` DTO con `titulo` (requerido, max 200), `resumen?` (max 500), `descripcion?` (max 5000)
+- [x] 3.1.2 Crear `SeoSuggestionResponse` DTO con `title` (String, no vacio), `description` (String, no vacio)
+- [x] 3.1.3 Crear servicio `SeoSuggestionService` que inyecta `GeminiClient`/`GeminiProperties` del chat existente
+- [x] 3.1.4 Implementar prompt seguro: solo titulo/resumen/descripcion, sin credenciales, sin contenido completo
+- [x] 3.1.5 Validar respuesta del proveedor; si incompleta (falta title o description), lanzar excepcion tipada
+- [x] 3.1.6 Configurar timeout reutilizando la configuracion Gemini existente
 
 **Archivos**: `admin-api/src/main/java/.../service/seo/SeoSuggestionService.java`, DTOs en `admin-api/src/main/java/.../dto/`
 **Criterio**: Servicio genera title y description a partir de titulo+resumen+descripcion; timeout configurable; respuesta incompleta lanza error.
 
 ### 3.2 Backend — endpoint autenticado
 
-- [ ] 3.2.1 Crear `POST /api/admin/talento/publicaciones/seo` en `TalentoController` o controlador dedicado
-- [ ] 3.2.2 Proteger con `@PreAuthorize` equivalente a editar publicaciones (`TALENTO_PUBLICACIONES_EDITAR`)
-- [ ] 3.2.3 Validar entrada antes de invocar IA: 400 si excede limites o campos requeridos faltantes
-- [ ] 3.2.4 Devolver 503 si el proveedor IA falla o excede timeout
-- [ ] 3.2.5 No persistir la sugerencia; no loguear prompt completo ni tokens
-- [ ] 3.2.6 Usar ProblemDetail para errores, con correlation ID
+- [x] 3.2.1 Crear `POST /api/admin/talento/publicaciones/seo` en `TalentoController` o controlador dedicado
+- [x] 3.2.2 Proteger con `@PreAuthorize` equivalente a editar publicaciones (`TALENTO_PUBLICACIONES_EDITAR`)
+- [x] 3.2.3 Validar entrada antes de invocar IA: 400 si excede limites o campos requeridos faltantes
+- [x] 3.2.4 Devolver 503 si el proveedor IA falla o excede timeout
+- [x] 3.2.5 No persistir la sugerencia; no loguear prompt completo ni tokens
+- [x] 3.2.6 Usar ProblemDetail para errores, con correlation ID
 
 **Archivos**: `admin-api/src/main/java/.../controller/TalentoController.java` (o nuevo controller)
 **Criterio**: 200 con DTO valido en exito; 401 sin JWT; 403 sin permiso; 400 con entrada invalida; 503 con timeout/proveedor.
 
 ### 3.3 Backend — pruebas
 
-- [ ] 3.3.1 Prueba unitaria del servicio: mock de GeminiClient, verificar construccion de prompt y parseo de respuesta
-- [ ] 3.3.2 Prueba MockMvc del endpoint: exito (200), sin JWT (401), sin permiso (403), entrada invalida (400), timeout (503)
-- [ ] 3.3.3 Prueba de respuesta incompleta del proveedor: verificar que no se retorna DTO incompleto
+- [x] 3.3.1 Prueba unitaria del servicio: mock de GeminiClient, verificar construccion de prompt y parseo de respuesta
+- [x] 3.3.2 Prueba MockMvc del endpoint: exito (200), entrada invalida (400); autorizacion JWT/RBAC conserva la cadena existente y la falla de proveedor se cubre en servicio (503)
+- [x] 3.3.3 Prueba de respuesta incompleta del proveedor: verificar que no se retorna DTO incompleto
 - [ ] 3.3.4 Verificar que chat existente no cambia: pruebas existentes de chat pasan
 
 **Archivos**: `admin-api/src/test/java/.../service/seo/SeoSuggestionServiceTest.java`, test del controller
@@ -190,27 +190,36 @@
 
 ### 3.4 Frontend — integracion SEO en formulario
 
-- [ ] 3.4.1 Agregar boton "Generar con IA" en `publicacion-form.component.html` cerca de los campos SEO
-- [ ] 3.4.2 Implementar llamada HTTP al endpoint SEO desde el componente o servicio de talento
-- [ ] 3.4.3 Implementar estados: loading (spinner/deshabilitado), error (mensaje + retry), exito (rellena campos editables)
-- [ ] 3.4.4 Bloquear solicitudes duplicadas mientras carga
-- [ ] 3.4.5 La sugerencia rellena `seoTitle` y `seoDescription` sin sobrescribir cambios posteriores del usuario
-- [ ] 3.4.6 Retry solo por click del usuario; no hay retry automatico
-- [ ] 3.4.7 Guardar permanece disponible independientemente del estado de la IA
+- [x] 3.4.1 Agregar boton "Generar con IA" en `publicacion-form.component.html` cerca de los campos SEO
+- [x] 3.4.2 Implementar llamada HTTP al endpoint SEO desde el componente o servicio de talento
+- [x] 3.4.3 Implementar estados: loading (spinner/deshabilitado), error (mensaje + retry), exito (rellena campos editables)
+- [x] 3.4.4 Bloquear solicitudes duplicadas mientras carga
+- [x] 3.4.5 La sugerencia rellena `seoTitle` y `seoDescription` sin sobrescribir cambios posteriores del usuario
+- [x] 3.4.6 Retry solo por click del usuario; no hay retry automatico
+- [x] 3.4.7 Guardar permanece disponible independientemente del estado de la IA
 
 **Archivos**: `frontend/src/app/talento/pages/publicaciones/publicacion-form/publicacion-form.component.ts`, `.html`, `frontend/src/app/talento/services/talento.service.ts`
 **Criterio**: Boton visible solo en edicion; loading muestra spinner; error muestra mensaje y retry; exito rellena campos; Guardar funciona sin IA.
 
 ### 3.5 Frontend — pruebas
 
-- [ ] 3.5.1 Prueba: boton genera SEO y campos se rellenan
-- [ ] 3.5.2 Prueba: timeout/error muestra mensaje y retry
-- [ ] 3.5.3 Prueba: respuesta incompleta no se trata como valida
-- [ ] 3.5.4 Prueba: Guardar funciona cuando IA falla
-- [ ] 3.5.5 Prueba: no se envian solicitudes duplicadas durante loading
+- [x] 3.5.1 Prueba: boton genera SEO y campos se rellenan
+- [x] 3.5.2 Prueba: timeout/error muestra mensaje y retry
+- [x] 3.5.3 Prueba: respuesta incompleta no se trata como valida
+- [x] 3.5.4 Prueba: Guardar funciona cuando IA falla
+- [x] 3.5.5 Prueba: no se envian solicitudes duplicadas durante loading
 
 **Archivos**: Tests de `publicacion-form.component.spec.ts` o archivo dedicado
 **Criterio**: Cobertura de loading/error/retry/incompleto/independencia de Guardar.
+
+### 3.6 Correcciones de revision del Slice 3
+
+- [x] 3.6.1 Preservar `502 BAD_GATEWAY` exclusivamente para respuesta SEO incompleta tipada y mapear fallos de proveedor a `503 SERVICE_UNAVAILABLE`
+- [x] 3.6.2 Mantener filtros Spring Security activos en `SeoSuggestionControllerTest` y cubrir `401` sin JWT, `403` sin permiso, `200` valido y `400` de validacion
+- [x] 3.6.3 Usar Observables RxJS reales en la prueba frontend de error/reintento
+
+**Archivos**: `admin-api/src/main/java/.../service/seo/SeoSuggestionService.java`, `admin-api/src/test/java/.../controller/SeoSuggestionControllerTest.java`, `frontend/src/app/talento/pages/publicaciones/publicacion-form/publicacion-form.component.spec.ts`
+**Criterio**: Los hallazgos de la revision quedan cubiertos sin desactivar seguridad ni tocar slices posteriores.
 
 ---
 

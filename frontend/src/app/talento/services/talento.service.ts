@@ -9,6 +9,17 @@ import { Postulacion, PostulacionEstado } from '../models/postulacion';
 import { Contacto } from '../models/contacto';
 import { Destinatario, DestinatarioPayload } from '../models/destinatario';
 
+export interface SeoSuggestionRequest {
+  titulo: string;
+  resumen?: string;
+  descripcion?: string;
+}
+
+export interface SeoSuggestionResponse {
+  title: string;
+  description: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TalentoService {
   private readonly baseUrl = `${environment.apiUrl}/admin/talento`;
@@ -27,6 +38,9 @@ export class TalentoService {
   }
   actualizarPublicacion(id: string, payload: PublicacionPayload, portada?: File, galeria: File[] = []): Observable<Publicacion> {
     return this.request(this.http.put<Publicacion>(`${this.baseUrl}/publicaciones/${id}`, this.multipart(payload, portada, galeria)));
+  }
+  sugerirSeo(payload: SeoSuggestionRequest): Observable<SeoSuggestionResponse> {
+    return this.request(this.http.post<SeoSuggestionResponse>(`${this.baseUrl}/publicaciones/seo`, payload));
   }
   private multipart(payload: PublicacionPayload, portada?: File, galeria: File[] = []): FormData {
     const form = new FormData();

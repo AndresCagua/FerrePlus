@@ -18,6 +18,7 @@ export function normalizarSlug(titulo: string): string {
 @Component({ selector: 'app-publicacion-form', templateUrl: './publicacion-form.component.html', changeDetection: ChangeDetectionStrategy.OnPush, standalone: false })
 export class PublicacionFormComponent implements OnInit {
   readonly id = this.route.snapshot.paramMap.get('id'); loading = false; saving = false; error = '';
+  seoLoading = false; seoError = '';
   readonly form = this.fb.group({ slug: [''], titulo: ['', [Validators.required, Validators.maxLength(160)]], resumen: ['', [Validators.required, Validators.maxLength(300)]], descripcion: ['', Validators.required], categoria: [''], videoUrl: ['', Validators.pattern(/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i)], enlacesX: [''], fechaPublicacion: [''], fechaVencimiento: [''], seoTitle: ['', Validators.required], seoDescription: ['', Validators.required], canonical: [''] });
   portada?: File;
   existingPortada?: MediaImage | null;
@@ -32,5 +33,27 @@ export class PublicacionFormComponent implements OnInit {
   onGaleria(event: Event): void { this.galeria = Array.from((event.target as HTMLInputElement).files ?? []).map(file => this.validImage(file)).filter((file): file is File => !!file); }
   private validImage(file?: File): File | undefined { if (!file) return undefined; if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > this.maxImageBytes) { this.error = 'Usa imagenes JPG, PNG o WebP de hasta 5 MB.'; return undefined; } this.error = ''; return file; }
   existingPortadaUrl(): string | null { const key = this.existingPortada?.objectKey; return key && /^[0-9a-fA-F-]{36}\.(jpg|png|webp)$/.test(key) ? `/media/${encodeURIComponent(key)}` : null; }
+  generateSeo(): void {
+    if (!this.id || this.seoLoading) return;
+    const value = this.form.getRawValue();
+    this.seoLoading = true;
+    this.seoError = '';
+    this.service.sugerirSeo({ titulo: value.titulo ?? '', resumen: value.resumen ?? '', descripcion: value.descripcion ?? '' }).subscribe({
+      next: suggestion => {
+        if (!suggestion?.title?.trim() || !suggestion?.description?.trim()) {
+          this.seoError = 'La IA devolvio una sugerencia incompleta. Puedes reintentar o editar los campos manualmente.';
+        } else {
+          this.form.patchValue({ seoTitle: suggestion.title.trim(), seoDescription: suggestion.description.trim() });
+        }
+        this.seoLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.seoError = 'No se pudo generar SEO. Verifica el contenido o reintenta.';
+        this.seoLoading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
   save(): void { if (this.form.invalid) { this.form.markAllAsTouched(); return; } this.saving = true; const v = this.form.getRawValue(); const payload: PublicacionPayload = { slug: v.slug!, titulo: v.titulo!, resumen: v.resumen!, descripcion: v.descripcion!, categoria: v.categoria || undefined, videoUrl: v.videoUrl || null, enlacesX: (v.enlacesX ?? '').split(/\r?\n|,/).map(url => url.trim()).filter(Boolean), estado: 'DRAFT', fechaPublicacion: v.fechaPublicacion || null, fechaVencimiento: v.fechaVencimiento || null, metadataSEO: { title: v.seoTitle!, description: v.seoDescription!, canonical: v.canonical || undefined } }; const request = this.id ? this.service.actualizarPublicacion(this.id, payload, this.portada, this.galeria) : this.service.crearPublicacion(payload, this.portada, this.galeria); request.subscribe({ next: () => this.router.navigate(['/talento/publicaciones']), error: err => { this.error = mensajeTalento(err); this.saving = false; this.cdr.markForCheck(); } }); }
 }

@@ -54,6 +54,69 @@ push_performed: false
 database_modified: false
 ```
 
+## Slice 3 / PR 3 progress — 2026-08-23
+
+```yaml
+status: partially_verified
+change: reorganizar-menu-modulos
+slice: pr3_seo_ia
+execution_mode: interactive
+artifact_store: openspec
+skill_resolution: fallback-path
+commits_created: false
+push_performed: false
+database_modified: false
+```
+
+### Completed
+
+- Se agregaron DTOs estrictos para solicitud/respuesta SEO con limites server-side de titulo, resumen y descripcion.
+- `SeoSuggestionService` reutiliza `GeminiClient.generate()` y la configuracion Gemini existente, construye un prompt acotado a los tres campos, valida JSON y rechaza respuestas incompletas.
+- Se agrego `POST /api/admin/talento/publicaciones/seo`, protegido con `TALENTO_PUBLICACIONES_EDITAR`, sin persistencia, con ProblemDetail para validacion/proveedor y correlation ID.
+- El formulario de edicion incorpora Generar con IA, loading, bloqueo de duplicados, error/retry manual, validacion de respuesta y campos SEO editables; Guardar no depende de la IA.
+- Se agregaron pruebas unitarias de servicio, MockMvc de exito/400 y pruebas frontend de exito, incompleto, error y duplicados.
+
+### Verification
+
+- `npm test`: 19 archivos, 112 pruebas aprobadas.
+- `npm run build`: aprobado; permanece warning existente de `sweetalert2` CommonJS.
+- `docker run --rm -v "$PWD":/app -w /app maven:3-eclipse-temurin-21 mvn -q -DskipTests package`: aprobado.
+- Pruebas focalizadas nuevas de admin-api: aprobadas (servicio y controller).
+- Prueba conjunta con chat: el chat no pudo iniciar porque el entorno no tiene PostgreSQL en `localhost:5433`; no se modifico el codigo del chat ni se ejecuto SQL.
+- `git diff --check`: aprobado.
+
+### Scope boundary
+
+No se modificaron menu, slug, public-api, portal ni bases de datos. PR 4–5 permanecen fuera de alcance. Los artefactos generados previos (`public-api/target`) y `node_modules/` aparecen en el workspace y no forman parte de este Slice.
+
+### Remaining / follow-up
+
+- La verificacion end-to-end de 401/403 y la no regresion completa del chat requiere levantar la dependencia PostgreSQL documentada por el proyecto; queda para la verificacion/integracion posterior.
+
+## Slice 3 review corrections — 2026-08-23
+
+Se fusiona este avance con el progreso previo del Slice 3; no se reemplazan sus verificaciones ni su limite de alcance.
+
+### Completed
+
+- `SeoSuggestionService` conserva `502` solo para respuesta SEO incompleta tipada; respuestas invalidas, timeouts y fallos del proveedor se clasifican como `503`.
+- `SeoSuggestionControllerTest` mantiene los filtros Spring Security activos y prueba `401` sin JWT, `403` sin autoridad de edicion, `200` con permiso, `400` autenticado y `502` para respuesta incompleta.
+- La prueba frontend de fallo/reintento usa `throwError` y `of` reales, verificando el segundo intento y que Guardar permanece disponible.
+
+### Verification
+
+- Se ejecutaron pruebas focalizadas de admin-api y frontend, build y `git diff --check`.
+- La suite completa del chat sigue bloqueada si PostgreSQL no esta disponible en `localhost:5433`; no se toca el codigo del chat ni se ejecuta SQL.
+
+```yaml
+status: partially_verified
+skill_resolution: fallback-path
+commits_created: false
+push_performed: false
+database_modified: false
+slice_boundary: pr3_seo_ia_only
+```
+
 ## Slice 2 / PR 2 progress — 2026-08-23
 
 ```yaml

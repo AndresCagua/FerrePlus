@@ -1,5 +1,5 @@
 import { FormBuilder } from '@angular/forms';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { normalizarSlug, PublicacionFormComponent } from './publicacion-form.component';
 
@@ -39,5 +39,69 @@ describe('PublicacionFormComponent', () => {
 
     expect(component.portada).toBeUndefined();
     expect(component.error).toContain('JPG, PNG o WebP');
+  });
+
+  it('rellena SEO con IA y bloquea solicitudes duplicadas mientras carga', () => {
+    const response = new Subject<{ title: string; description: string }>();
+    const service = {
+      obtenerPublicacion: vi.fn().mockReturnValue(of({ portada: null })),
+      sugerirSeo: vi.fn().mockReturnValue(response.asObservable()),
+    };
+    const component = new PublicacionFormComponent(
+      new FormBuilder(), { snapshot: { paramMap: { get: () => 'pub-1' } } } as never,
+      {} as never, service as never, { markForCheck: vi.fn() } as never,
+    );
+    component.ngOnInit();
+
+    component.generateSeo();
+    component.generateSeo();
+    response.next({ title: 'Titulo sugerido', description: 'Descripcion sugerida' });
+
+    expect(service.sugerirSeo).toHaveBeenCalledTimes(1);
+    expect(component.form.controls.seoTitle.value).toBe('Titulo sugerido');
+    expect(component.form.controls.seoDescription.value).toBe('Descripcion sugerida');
+  });
+
+  it('mantiene el guardado manual disponible cuando la IA falla', () => {
+    const service = {
+      obtenerPublicacion: vi.fn().mockReturnValue(of({ portada: null })),
+      sugerirSeo: vi.fn()
+        .mockReturnValueOnce(throwError(() => new Error('network failure')))
+        .mockReturnValueOnce(of({ title: 'Reintento SEO', description: 'Descripcion reintentada' })),
+    };
+    const component = new PublicacionFormComponent(
+      new FormBuilder(), { snapshot: { paramMap: { get: () => 'pub-1' } } } as never,
+      {} as never, service as never, { markForCheck: vi.fn() } as never,
+    );
+    component.ngOnInit();
+
+    component.generateSeo();
+
+    expect(component.seoLoading).toBe(false);
+    expect(component.seoError).toContain('No se pudo generar SEO');
+    expect(component.saving).toBe(false);
+
+    component.generateSeo();
+
+    expect(component.form.controls.seoTitle.value).toBe('Reintento SEO');
+    expect(component.form.controls.seoDescription.value).toBe('Descripcion reintentada');
+    expect(service.sugerirSeo).toHaveBeenCalledTimes(2);
+  });
+
+  it('marca como incompleta una respuesta sin ambos campos SEO', () => {
+    const service = {
+      obtenerPublicacion: vi.fn().mockReturnValue(of({ portada: null })),
+      sugerirSeo: vi.fn().mockReturnValue(of({ title: 'Solo titulo', description: '' })),
+    };
+    const component = new PublicacionFormComponent(
+      new FormBuilder(), { snapshot: { paramMap: { get: () => 'pub-1' } } } as never,
+      {} as never, service as never, { markForCheck: vi.fn() } as never,
+    );
+    component.ngOnInit();
+
+    component.generateSeo();
+
+    expect(component.seoError).toContain('incompleta');
+    expect(component.form.controls.seoTitle.value).toBe('');
   });
 });
