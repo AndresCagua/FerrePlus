@@ -155,12 +155,21 @@ export class AuthService {
    * (sin permisos asignados) — el login/guard deben manejar ese caso.
    */
   getHomeRoute(): string | null {
-    const ruta = RUTAS_POR_PERMISO.find(item =>
-      !item.permissions ||
-      item.permissions.length === 0 ||
-      this.hasAnyPermission(item.permissions)
-    );
-    return ruta ? ruta.route : null;
+    return this.firstAccessibleRoute(RUTAS_POR_PERMISO);
+  }
+
+  private firstAccessibleRoute(rutas: typeof RUTAS_POR_PERMISO): string | null {
+    for (const ruta of rutas) {
+      if (ruta.children?.length) {
+        const childRoute = this.firstAccessibleRoute(ruta.children);
+        if (childRoute) {
+          return childRoute;
+        }
+      } else if (ruta.permissions?.length && this.hasAnyPermission(ruta.permissions)) {
+        return ruta.route;
+      }
+    }
+    return null;
   }
 
   hasRole(role: string): boolean {

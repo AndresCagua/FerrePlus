@@ -1,11 +1,13 @@
 import { BehaviorSubject } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthService, CurrentUser } from '../../core/auth.service';
 import { RutaPorPermiso } from '../../core/rutas-por-permiso';
 import { SidebarComponent } from './sidebar.component';
 
 describe('SidebarComponent', () => {
+  afterEach(() => localStorage.clear());
+
   it('mantiene el menu estable y lo recalcula cuando cambian los permisos', () => {
     const currentUser$ = new BehaviorSubject<CurrentUser | null>(null);
     const permisos = new Set<string>();
@@ -28,7 +30,9 @@ describe('SidebarComponent', () => {
     });
 
     const talento = sidebar.visibleMenuItems.find(item => item.route === '/talento');
-    expect(talento?.children?.map(child => child.route)).toEqual(['/talento/contactos']);
+    const contabilidad = sidebar.visibleMenuItems.find(item => item.label === 'Contabilidad');
+    expect(talento).toBeUndefined();
+    expect(contabilidad?.children?.map(child => child.route)).toEqual(['/talento/contactos']);
     expect(sidebar.visibleMenuItems).not.toBe(initialMenu);
   });
 
@@ -44,5 +48,52 @@ describe('SidebarComponent', () => {
     } as unknown as AuthService));
 
     expect(sidebar.trackByRoute(0, item)).toBe('/productos');
+  });
+
+  it('alterna un modulo sin navegar y persiste solo su estado booleano', () => {
+    const sidebar = TestBed.runInInjectionContext(() => new SidebarComponent({
+      currentUser$: new BehaviorSubject<CurrentUser | null>(null),
+      hasAnyPermission: () => false
+    } as unknown as AuthService));
+    const module: RutaPorPermiso = {
+      label: 'Bodega', icon: 'warehouse', route: '/bodega', module: true, children: []
+    };
+
+    sidebar.toggleModule(module);
+
+    expect(sidebar.isExpanded(module)).toBe(true);
+    expect(JSON.parse(localStorage.getItem('ferreplus_menu_v1') || '{}')).toEqual({ '/bodega': true });
+  });
+
+  it('Space alterna y evita el desplazamiento de la pagina', () => {
+    const sidebar = TestBed.runInInjectionContext(() => new SidebarComponent({
+      currentUser$: new BehaviorSubject<CurrentUser | null>(null),
+      hasAnyPermission: () => false
+    } as unknown as AuthService));
+    const module: RutaPorPermiso = {
+      label: 'Bodega', icon: 'warehouse', route: '/bodega', module: true, children: []
+    };
+    const event = { key: ' ', preventDefault: () => undefined } as unknown as KeyboardEvent;
+
+    sidebar.onModuleKeydown(event, module);
+
+    expect(sidebar.isExpanded(module)).toBe(true);
+  });
+
+  it('Enter alterna el modulo y evita la navegacion implicita', () => {
+    const sidebar = TestBed.runInInjectionContext(() => new SidebarComponent({
+      currentUser$: new BehaviorSubject<CurrentUser | null>(null),
+      hasAnyPermission: () => false
+    } as unknown as AuthService));
+    const module: RutaPorPermiso = {
+      label: 'Bodega', icon: 'warehouse', route: '/bodega', module: true, children: []
+    };
+    const preventDefault = vi.fn();
+    const event = { key: 'Enter', preventDefault } as unknown as KeyboardEvent;
+
+    sidebar.onModuleKeydown(event, module);
+
+    expect(sidebar.isExpanded(module)).toBe(true);
+    expect(preventDefault).toHaveBeenCalledOnce();
   });
 });

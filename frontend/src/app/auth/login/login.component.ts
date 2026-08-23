@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
-import { RUTAS_POR_PERMISO } from '../../core/rutas-por-permiso';
+import { existeRutaParaUrl, permisosDeRuta } from '../../core/rutas-por-permiso';
 
 @Component({
   selector: 'app-login',
@@ -101,10 +101,7 @@ export class LoginComponent implements OnInit {
   private getInitialDestination(): string | null {
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     if (returnUrl) {
-      const match = RUTAS_POR_PERMISO.find(
-        item => returnUrl === item.route || returnUrl.startsWith(`${item.route}/`)
-      );
-      if (match && this.authService.hasAnyPermission(match.permissions ?? [])) {
+      if (existeRutaParaUrl(returnUrl) && this.authService.hasAnyPermission(permisosDeRuta(returnUrl))) {
         return returnUrl;
       }
     }

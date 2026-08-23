@@ -11,16 +11,25 @@
 
   <nav class="sidebar-nav">
     <ng-container *ngFor="let item of visibleMenuItems; trackBy: trackByRoute">
-      <a
-        [routerLink]="navigationRoute(item)"
-        routerLinkActive="active"
-        class="nav-item"
-        [matTooltip]="collapsed ? item.label : ''"
-        matTooltipPosition="right">
+      @if (item.module) {
+      <button
+        type="button"
+        class="nav-item module-toggle"
+        [class.active-module]="isModuleActive(item)"
+        [attr.aria-expanded]="isExpanded(item)"
+        [attr.aria-controls]="groupContentId(item)"
+        [attr.aria-label]="'Expandir o contraer ' + item.label"
+        (click)="toggleModule(item)"
+        (keydown)="onModuleKeydown($event, item)">
         <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
         <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
-      </a>
-      <div class="nav-submenu" *ngIf="!collapsed && item.children?.length">
+        <mat-icon class="module-chevron" *ngIf="!collapsed">{{ isExpanded(item) ? 'expand_less' : 'expand_more' }}</mat-icon>
+      </button>
+      <div
+        class="nav-submenu"
+        [id]="groupContentId(item)"
+        [attr.hidden]="!isExpanded(item) ? '' : null"
+        *ngIf="isExpanded(item)">
         <a
           *ngFor="let child of item.children; trackBy: trackByRoute"
           [routerLink]="child.route"
@@ -30,6 +39,17 @@
           <span class="nav-label">{{ child.label }}</span>
         </a>
       </div>
+      } @else {
+      <a
+        [routerLink]="navigationRoute(item)"
+        routerLinkActive="active"
+        class="nav-item"
+        [matTooltip]="collapsed ? item.label : ''"
+        matTooltipPosition="right">
+        <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+         <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+       </a>
+      }
     </ng-container>
   </nav>
 

@@ -178,7 +178,7 @@ describe('AuthService.getHomeRoute (navegación post-login)', () => {
     expect(service.getHomeRoute()).toBe('/dashboard');
   });
 
-  it('usuario SIN DASHBOARD_VER pero con PRODUCTOS_VER → home /productos', () => {
+  it('usuario SIN DASHBOARD_VER → primera ruta accesible en el orden modular (/productos)', () => {
     sessionStorage.setItem(
       SESSION_KEYS.permisos,
       JSON.stringify(['PRODUCTOS_VER', 'CLIENTES_CREAR', 'GASTOS_VER'])
@@ -198,6 +198,11 @@ describe('AuthService.getHomeRoute (navegación post-login)', () => {
   it('usuario SIN ningún permiso de módulo → no tiene una ruta de página accesible', () => {
     sessionStorage.setItem(SESSION_KEYS.permisos, JSON.stringify([]));
     expect(service.getHomeRoute()).toBeNull();
+  });
+
+  it('usuario sin Dashboard pero con un hijo agrupado → retorna la ruta hija', () => {
+    sessionStorage.setItem(SESSION_KEYS.permisos, JSON.stringify(['PRODUCTOS_VER']));
+    expect(service.getHomeRoute()).toBe('/productos');
   });
 
   it('sin permisos almacenados en sessionStorage → no tiene una ruta de página accesible', () => {
