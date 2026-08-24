@@ -1,1 +1,14 @@
-/build/src/test/java/com/ferreplus/publico/PublicApiApplicationTests.java
+/app/src/test/java/com/ferreplus/publico/PublicApiApplicationTests.java
+/app/src/test/java/com/ferreplus/publico/config/SafeDiagnosticLogTest.java
+/app/src/test/java/com/ferreplus/publico/controller/InternalControllerTest.java
+/app/src/test/java/com/ferreplus/publico/dto/interno/ConvocatoriaAdminDTOTest.java
+/app/src/test/java/com/ferreplus/publico/mail/MailEventListenerTest.java
+/app/src/test/java/com/ferreplus/publico/ratelimit/RateLimitFilterTest.java
+/app/src/test/java/com/ferreplus/publico/ratelimit/RateLimitServiceTest.java
+/app/src/test/java/com/ferreplus/publico/security/S2sJwtFilterTest.java
+/app/src/test/java/com/ferreplus/publico/service/CaptchaVerificationServiceTest.java
+/app/src/test/java/com/ferreplus/publico/service/ContactoServiceTest.java
+/app/src/test/java/com/ferreplus/publico/service/ConvocatoriaServiceTest.java
+/app/src/test/java/com/ferreplus/publico/service/PostulacionStateMachineTest.java
+/app/src/test/java/com/ferreplus/publico/service/PublicacionServiceTest.java
+/app/src/test/java/com/ferreplus/publico/storage/CvFileValidatorTest.java

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { TalentoService } from '../../../services/talento.service';
@@ -16,11 +16,26 @@ export function normalizarSlug(titulo: string): string {
   }, '');
 }
 
+export const MENSAJE_ENLACE_X_INVALIDO = 'El enlace de X no es valido. Usa una URL de x.com o twitter.com.';
+
+export function validarEnlacesX(control: AbstractControl): ValidationErrors | null {
+  const enlaces = String(control.value ?? '').split(/\r?\n|,/).map(url => url.trim()).filter(Boolean);
+  const invalid = enlaces.some(enlace => {
+    try {
+      const url = new URL(enlace);
+      return url.protocol !== 'https:' || !['x.com', 'twitter.com'].includes(url.hostname.toLowerCase());
+    } catch {
+      return true;
+    }
+  });
+  return invalid ? { enlacesX: MENSAJE_ENLACE_X_INVALIDO } : null;
+}
+
 @Component({ selector: 'app-publicacion-form', templateUrl: './publicacion-form.component.html', changeDetection: ChangeDetectionStrategy.OnPush, standalone: false })
 export class PublicacionFormComponent implements OnInit, OnDestroy {
   readonly id = this.route.snapshot.paramMap.get('id'); loading = false; saving = false; error = '';
   seoLoading = false; seoError = '';
-  readonly form = this.fb.group({ slug: [''], titulo: ['', [Validators.required, Validators.maxLength(160)]], resumen: ['', [Validators.required, Validators.maxLength(300)]], descripcion: ['', Validators.required], categoria: [''], videoUrl: ['', Validators.pattern(/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i)], enlacesX: [''], fechaPublicacion: [''], fechaVencimiento: [''], seoTitle: ['', Validators.maxLength(200)], seoDescription: ['', Validators.maxLength(500)], canonical: [''] });
+  readonly form = this.fb.group({ slug: [''], titulo: ['', [Validators.required, Validators.maxLength(160)]], resumen: ['', [Validators.required, Validators.maxLength(300)]], descripcion: ['', Validators.required], categoria: [''], videoUrl: ['', Validators.pattern(/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i)], enlacesX: ['', validarEnlacesX], fechaPublicacion: [''], fechaVencimiento: [''], seoTitle: ['', Validators.maxLength(200)], seoDescription: ['', Validators.maxLength(500)], canonical: [''] });
   portada?: File;
   existingPortada?: MediaImage | null;
   portadaPreviewUrl = '';

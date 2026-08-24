@@ -20,7 +20,11 @@ function mensajeErrorApi(error: unknown): string | null {
   const detail = error.error?.detail;
   const fieldErrors = error.error?.errors;
   if (fieldErrors && typeof fieldErrors === 'object') {
-    const messages = Object.values(fieldErrors).filter((message): message is string => typeof message === 'string');
+    const messages = Object.values(fieldErrors).flatMap(message => {
+      if (typeof message === 'string') return [message];
+      if (Array.isArray(message)) return message.filter((item): item is string => typeof item === 'string');
+      return [];
+    });
     if (messages.length) return messages.join(' ');
   }
   return typeof detail === 'string' ? detail : null;

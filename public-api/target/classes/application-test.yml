@@ -3,8 +3,13 @@ spring:
     activate:
       on-profile: test
 management:
+  server:
+    port: 0
   health:
     mongo:
       enabled: false
     redis:
       enabled: false
+app:
+  rate-limit:
+    fingerprint-hmac-secret: test-only-rate-limit-secret

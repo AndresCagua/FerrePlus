@@ -71,15 +71,25 @@ class PublicacionServiceTest {
     }
 
     @Test
-    void rejectsSocialLinkOutsideX() {
+    void rejectsFacebookSocialLinkOutsideX() {
         var request = new PublicacionAdminDTO("Titulo", "Resumen", "Descripcion", null, null,
-                null, List.of("https://example.com/post"), null, EstadoPublicacion.DRAFT,
+                null, List.of("https://facebook.com/ferreplus"), null, EstadoPublicacion.DRAFT,
                 null, null, null, null);
 
         assertThatThrownBy(() -> service.crear(request))
                 .isInstanceOf(com.ferreplus.publico.exception.PublicApiException.class)
-                .hasMessage("Los enlaces X deben apuntar a x.com o twitter.com");
+                .hasMessage("El enlace de X no es valido. Usa una URL de x.com o twitter.com.");
         verifyNoInteractions(repository);
+    }
+
+    @Test
+    void acceptsXAndTwitterLinks() {
+        var request = new PublicacionAdminDTO("Titulo", "Resumen", "Descripcion", null, null,
+                null, List.of("https://x.com/ferreplus", "https://twitter.com/ferreplus"), null,
+                EstadoPublicacion.DRAFT, null, null, null, null);
+        when(repository.save(any(Publicacion.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThat(service.crear(request).getEnlacesX()).containsExactlyElementsOf(request.enlacesX());
     }
 
     @Test

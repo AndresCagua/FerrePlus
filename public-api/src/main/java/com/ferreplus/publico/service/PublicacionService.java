@@ -9,6 +9,7 @@ import com.ferreplus.publico.model.Publicacion;
 import com.ferreplus.publico.repository.PublicacionRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -180,9 +181,11 @@ public class PublicacionService {
 
     private void validateUrls(String videoUrl, List<String> enlacesX) {
         if (videoUrl != null && !videoUrl.isBlank() && !isAllowedUrl(videoUrl, "youtube.com", "youtu.be"))
-            throw new PublicApiException(HttpStatus.BAD_REQUEST, "El video debe ser una URL de YouTube valida");
+            throw new PublicApiException(HttpStatus.BAD_REQUEST, "El video debe ser una URL de YouTube valida", null,
+                    Map.of("videoUrl", "El video debe ser una URL de YouTube valida"));
         if (enlacesX != null && enlacesX.stream().anyMatch(url -> url == null || !isAllowedUrl(url, "x.com", "twitter.com")))
-            throw new PublicApiException(HttpStatus.BAD_REQUEST, "Los enlaces X deben apuntar a x.com o twitter.com");
+            throw new PublicApiException(HttpStatus.BAD_REQUEST, "El enlace de X no es valido. Usa una URL de x.com o twitter.com.", null,
+                    Map.of("enlacesX", "El enlace de X no es valido. Usa una URL de x.com o twitter.com."));
     }
 
     private boolean isAllowedUrl(String value, String... hosts) {

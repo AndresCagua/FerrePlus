@@ -14,6 +14,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -66,8 +67,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(com.ferreplus.client.publico.PublicApiClient.PublicApiValidationException.class)
-    public ResponseEntity<Map<String, Object>> handlePublicApiValidation() {
-        return buildResponse(HttpStatus.BAD_REQUEST, "Solicitud rechazada por el servicio publico");
+    public ResponseEntity<Map<String, Object>> handlePublicApiValidation(com.ferreplus.client.publico.PublicApiClient.PublicApiValidationException ex) {
+        String detail = ex.errors().isEmpty() ? "La solicitud contiene campos invalidos"
+                : ex.errors().values().stream().collect(Collectors.joining(" "));
+        return buildResponse(HttpStatus.BAD_REQUEST, detail, ex.errors());
     }
 
     @ExceptionHandler(com.ferreplus.client.publico.PublicApiClient.PublicApiHttpException.class)
@@ -114,9 +117,15 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
-        return ResponseEntity.status(status).body(Map.of(
-                "error", message,
-                "timestamp", LocalDateTime.now().toString()
-        ));
+        return buildResponse(status, message, Map.of());
+    }
+
+    private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message, Map<String, String> errors) {
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("error", message);
+        response.put("detail", message);
+        if (!errors.isEmpty()) response.put("errors", errors);
+        response.put("timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(status).body(response);
     }
 }

@@ -30,6 +30,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.security.core.Authentication;
@@ -38,16 +40,20 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @Service
 @EnableConfigurationProperties(S2sJwtProperties.class)
 public class PublicApiClient {
-    private final RestClient client; private final S2sJwtProperties properties;
+    private final RestClient client; private final S2sJwtProperties properties; private final ObjectMapper objectMapper;
     private volatile CachedSigningKey cachedSigningKey;
 
     @Autowired
-    public PublicApiClient(RestClient.Builder builder, S2sJwtProperties properties) {
-        this.client = builder.requestFactory(requestFactory()).baseUrl(properties.publicApiUrl()).build(); this.properties = properties;
+    public PublicApiClient(RestClient.Builder builder, S2sJwtProperties properties, ObjectMapper objectMapper) {
+        this.client = builder.requestFactory(requestFactory()).baseUrl(properties.publicApiUrl()).build(); this.properties = properties; this.objectMapper = objectMapper;
         this.cachedSigningKey = loadSigningKey(keySource());
     }
+    public PublicApiClient(RestClient.Builder builder, S2sJwtProperties properties) { this(builder, properties, new ObjectMapper()); }
     PublicApiClient(RestClient client, S2sJwtProperties properties) {
-        this.client = client; this.properties = properties;
+        this(client, properties, new ObjectMapper());
+    }
+    PublicApiClient(RestClient client, S2sJwtProperties properties, ObjectMapper objectMapper) {
+        this.client = client; this.properties = properties; this.objectMapper = objectMapper;
         this.cachedSigningKey = loadSigningKey(keySource());
     }
 
@@ -68,7 +74,7 @@ public class PublicApiClient {
         } catch (HttpClientErrorException.Conflict exception) {
             throw new PublicApiConflictException("Conflicto en public-api", exception);
         } catch (HttpClientErrorException.BadRequest exception) {
-            throw new PublicApiValidationException("Solicitud invalida en public-api", exception);
+            throw validationException(exception);
         } catch (HttpClientErrorException exception) {
             throw new PublicApiHttpException(exception.getStatusCode(), "Respuesta rechazada por public-api", exception);
         } catch (HttpServerErrorException exception) {
@@ -91,11 +97,27 @@ public class PublicApiClient {
         try {
             return request.body(form).retrieve().body(responseType);
         } catch (HttpClientErrorException.BadRequest exception) {
-            throw new PublicApiValidationException("Solicitud invalida en public-api", exception);
+            throw validationException(exception);
         } catch (HttpClientErrorException exception) {
             throw new PublicApiHttpException(exception.getStatusCode(), "Respuesta rechazada por public-api", exception);
         } catch (RestClientException exception) {
             throw new PublicApiUnavailableException("public-api no disponible", exception);
+        }
+    }
+
+    private PublicApiValidationException validationException(HttpClientErrorException exception) {
+        try {
+            JsonNode body = objectMapper.readTree(exception.getResponseBodyAsString());
+            String detail = body != null && body.path("detail").isTextual() ? body.path("detail").asText() : "Solicitud invalida en public-api";
+            java.util.Map<String, String> errors = new java.util.LinkedHashMap<>();
+            JsonNode fields = body == null ? null : body.path("errors");
+            if (fields != null && fields.isObject()) fields.fields().forEachRemaining(entry -> {
+                if (("enlacesX".equals(entry.getKey()) || "videoUrl".equals(entry.getKey())) && entry.getValue().isTextual())
+                    errors.put(entry.getKey(), entry.getValue().asText());
+            });
+            return new PublicApiValidationException(detail, exception, errors);
+        } catch (Exception ignored) {
+            return new PublicApiValidationException("Solicitud invalida en public-api", exception, java.util.Map.of());
         }
     }
 
@@ -173,7 +195,12 @@ public class PublicApiClient {
         }
     }
     public static class PublicApiUnavailableException extends RuntimeException { public PublicApiUnavailableException(String message, Throwable cause) { super(message, cause); } }
-    public static class PublicApiValidationException extends RuntimeException { public PublicApiValidationException(String message, Throwable cause) { super(message, cause); } }
+    public static class PublicApiValidationException extends RuntimeException {
+        private final java.util.Map<String, String> errors;
+        public PublicApiValidationException(String message, Throwable cause) { this(message, cause, java.util.Map.of()); }
+        public PublicApiValidationException(String message, Throwable cause, java.util.Map<String, String> errors) { super(message, cause); this.errors = java.util.Map.copyOf(errors); }
+        public java.util.Map<String, String> errors() { return errors; }
+    }
     public static class PublicApiConflictException extends RuntimeException { public PublicApiConflictException(String message, Throwable cause) { super(message, cause); } }
     public static class PublicApiHttpException extends RuntimeException {
         private final org.springframework.http.HttpStatusCode status;

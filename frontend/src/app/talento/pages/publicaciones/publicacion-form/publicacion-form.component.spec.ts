@@ -1,12 +1,46 @@
 import { FormBuilder } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
-import { normalizarSlug, PublicacionFormComponent } from './publicacion-form.component';
+import { MENSAJE_ENLACE_X_INVALIDO, normalizarSlug, PublicacionFormComponent, validarEnlacesX } from './publicacion-form.component';
+import { mensajeTalento } from '../../../shared/talento-error.mapper';
 
 describe('PublicacionFormComponent', () => {
   it('preview slug follows the backend normalization rules', () => {
     expect(normalizarSlug('Talento: Niño Técnico / Bogotá')).toBe('talento-nino-tecnico-bogota');
     expect(normalizarSlug('***')).toBe('publicacion');
+  });
+
+  it('acepta unicamente URLs HTTPS de x.com o twitter.com', () => {
+    expect(validarEnlacesX({ value: 'https://x.com/ferreplus\nhttps://TWITTER.com/ferreplus' } as never)).toBeNull();
+    expect(validarEnlacesX({ value: 'https://facebook.com/ferreplus' } as never)).toEqual({ enlacesX: MENSAJE_ENLACE_X_INVALIDO });
+    expect(validarEnlacesX({ value: 'https://x.com.evil.example/ferreplus' } as never)).toEqual({ enlacesX: MENSAJE_ENLACE_X_INVALIDO });
+  });
+
+  it('no envia la publicacion cuando un enlace X es invalido', () => {
+    const service = { crearPublicacion: vi.fn() };
+    const component = new PublicacionFormComponent(
+      new FormBuilder(), { snapshot: { paramMap: { get: () => null } } } as never,
+      { navigate: vi.fn() } as never, service as never, { markForCheck: vi.fn() } as never,
+    );
+    component.form.patchValue({ titulo: 'Titulo', resumen: 'Resumen', descripcion: 'Descripcion', enlacesX: 'https://facebook.com/ferreplus' });
+
+    component.save();
+
+    expect(component.form.controls.enlacesX.invalid).toBe(true);
+    expect(component.form.controls.enlacesX.errors?.['enlacesX']).toBe(MENSAJE_ENLACE_X_INVALIDO);
+    expect(service.crearPublicacion).not.toHaveBeenCalled();
+  });
+
+  it('muestra el error de campo que devuelve el backend sin exponer detalles internos', () => {
+    const error = new HttpErrorResponse({ status: 400, error: {
+      detail: 'El enlace de X no es valido. Usa una URL de x.com o twitter.com.',
+      errors: { enlacesX: 'El enlace de X no es valido. Usa una URL de x.com o twitter.com.' },
+      stackTrace: 'secret',
+    } });
+
+    expect(mensajeTalento(error)).toBe(MENSAJE_ENLACE_X_INVALIDO);
+    expect(mensajeTalento(error)).not.toContain('secret');
   });
 
   function createComponent() {

@@ -97,6 +97,28 @@ class PublicApiClientTest {
     }
 
     @Test
+    void conservaDetalleYErroresDeCampoDeUnaValidacionPublica() throws Exception {
+        var generator = KeyPairGenerator.getInstance("RSA"); generator.initialize(2048);
+        var key = generator.generateKeyPair();
+        var properties = new S2sJwtProperties("iss", "aud", "admin-api", "kid",
+                Base64.getEncoder().encodeToString(key.getPrivate().getEncoded()), "", Duration.ofSeconds(120),
+                "http://public-api.test");
+        RestClient.Builder builder = RestClient.builder().baseUrl("http://public-api.test");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        PublicApiClient client = new PublicApiClient(builder.build(), properties);
+        server.expect(requestTo("http://public-api.test/api/internal/publicaciones"))
+                .andRespond(withBadRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                        .body("{\"detail\":\"El enlace de X no es valido. Usa una URL de x.com o twitter.com.\",\"errors\":{\"enlacesX\":\"El enlace de X no es valido. Usa una URL de x.com o twitter.com.\"}}"));
+
+        assertThatThrownBy(() -> client.exchange(org.springframework.http.HttpMethod.POST,
+                "/api/internal/publicaciones", java.util.Map.of(), Object.class, "c"))
+                .isInstanceOf(PublicApiClient.PublicApiValidationException.class)
+                .hasMessage("El enlace de X no es valido. Usa una URL de x.com o twitter.com.")
+                .extracting("errors.enlacesX")
+                .isEqualTo("El enlace de X no es valido. Usa una URL de x.com o twitter.com.");
+    }
+
+    @Test
     void reenviaPublicacionComoMultipartSinRegistrarElContenido() throws Exception {
         var generator = KeyPairGenerator.getInstance("RSA"); generator.initialize(2048);
         var key = generator.generateKeyPair();
