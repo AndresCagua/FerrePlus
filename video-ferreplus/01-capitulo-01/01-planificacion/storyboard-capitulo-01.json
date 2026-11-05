@@ -1,0 +1,28 @@
+{
+  "chapter": 1,
+  "title": "Qué es FerrePlus y cómo se conectan sus partes",
+  "status": "pending-human-approval",
+  "language": "es-419-neutral",
+  "targetDurationSeconds": 460,
+  "format": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "aspectRatio": "16:9"
+  },
+  "recordingAllowed": false,
+  "scenes": [
+    {"id":"T1","title":"Portada","kind":"title-card","durationSeconds":35},
+    {"id":"T2","title":"Portal público","kind":"browser","url":"http://public.localhost:8088","durationSeconds":45},
+    {"id":"T3","title":"Panel administrativo","kind":"browser","url":"http://admin.localhost:8088","durationSeconds":50},
+    {"id":"T4","title":"Arquitectura general","kind":"diagram","source":"03-diagramas/arquitectura-capitulo-01.mmd","durationSeconds":60},
+    {"id":"T5","title":"Docker Compose y Traefik","kind":"terminal","durationSeconds":55},
+    {"id":"T6","title":"Hostnames locales","kind":"diagram","durationSeconds":40},
+    {"id":"T7","title":"Servicios de datos","kind":"diagram","durationSeconds":60},
+    {"id":"T8","title":"Recorrido de una petición","kind":"diagram","durationSeconds":70},
+    {"id":"T9","title":"Cloudflare Tunnel opcional","kind":"diagram","durationSeconds":50},
+    {"id":"T10","title":"Cierre","kind":"title-card","durationSeconds":35}
+  ],
+  "approvalRequiredBeforeCapture": true,
+  "approvalFile": "02-guion/capitulo-01-borrador.md"
+}

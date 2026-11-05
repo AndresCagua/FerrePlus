@@ -37,5 +37,31 @@ bitacoras/
 
 # === Docker ===
 
-# === Producción de video local ===
-video-ferreplus/
+# === Producción de video ===
+# Keep chapter plans, scripts, subtitles, diagrams, thumbnails and lightweight
+# screenshots reviewable in Git. Exclude recordings, audio, rendered videos,
+# temporary edits, logs, runtime state and local dependencies.
+video-ferreplus/*
+!video-ferreplus/01-capitulo-01/
+!video-ferreplus/01-capitulo-01/**
+video-ferreplus/**/04-grabaciones/bruto/
+video-ferreplus/**/04-grabaciones/bruto/**
+video-ferreplus/**/05-audio/
+video-ferreplus/**/05-audio/**
+video-ferreplus/**/07-edicion/
+video-ferreplus/**/07-edicion/**
+video-ferreplus/**/08-exportados/
+video-ferreplus/**/08-exportados/**
+video-ferreplus/**/09-logs/
+video-ferreplus/**/09-logs/**
+video-ferreplus/**/10-herramientas/node_modules/
+video-ferreplus/**/10-herramientas/node_modules/**
+video-ferreplus/**/10-herramientas/obs-runtime/
+video-ferreplus/**/10-herramientas/obs-runtime/**
+video-ferreplus/**/*.mkv
+video-ferreplus/**/*.mp4
+video-ferreplus/**/*.wav
+video-ferreplus/**/*.webm
+video-ferreplus/**/*.mov
+video-ferreplus/**/*.avi
+video-ferreplus/**/*.flac

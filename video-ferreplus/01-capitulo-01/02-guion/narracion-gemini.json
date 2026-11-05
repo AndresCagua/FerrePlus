@@ -1,0 +1,5 @@
+{
+  "provider": "Google Gemini",
+  "model": "gemini-3.6-flash",
+  "narration": "FerrePlus opera en el entorno local mediante la dirección public.localhost en el puerto 8088. Su arquitectura integra de forma coordinada un portal público, un panel administrativo y diversas APIs, ejecutándose eficientemente sobre servicios contenedorizados con Docker."
+}

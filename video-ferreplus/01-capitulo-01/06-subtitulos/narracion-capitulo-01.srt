@@ -1,0 +1,367 @@
+1
+00:00:00,000 --> 00:00:01,644
+Bienvenidos a FerrePlus.
+
+2
+00:00:01,644 --> 00:00:05,275
+FerrePlus es un sistema de gestión para ferreterías y
+
+3
+00:00:05,275 --> 00:00:06,713
+bodegas de repuestos.
+
+4
+00:00:06,713 --> 00:00:10,207
+Su objetivo es centralizar la operación interna, el
+
+5
+00:00:10,207 --> 00:00:13,701
+contenido público y algunos flujos relacionados con
+
+6
+00:00:13,701 --> 00:00:15,276
+talento y comunicación.
+
+7
+00:00:15,276 --> 00:00:18,838
+En este capítulo veremos la arquitectura general del
+
+8
+00:00:18,838 --> 00:00:22,674
+sistema y la forma en que sus principales componentes se
+
+9
+00:00:22,674 --> 00:00:23,291
+conectan.
+
+10
+00:00:23,291 --> 00:00:26,942
+FerrePlus está organizado en varias piezas con
+
+11
+00:00:26,942 --> 00:00:29,244
+responsabilidades diferentes.
+
+12
+00:00:29,244 --> 00:00:33,689
+El portal público presenta información para visitantes y
+
+13
+00:00:33,689 --> 00:00:35,117
+usuarios externos.
+
+14
+00:00:35,117 --> 00:00:38,848
+Las APIs separan las reglas del servidor de las
+
+15
+00:00:38,848 --> 00:00:43,213
+interfaces visuales, y los servicios de datos almacenan
+
+16
+00:00:43,213 --> 00:00:45,991
+la información según su naturaleza.
+
+17
+00:00:45,991 --> 00:00:50,119
+La entrada HTTP local pasa por Traefik, que funciona
+
+18
+00:00:50,119 --> 00:00:52,262
+como punto de enrutamiento.
+
+19
+00:00:52,262 --> 00:00:55,748
+En el lado administrativo se encuentra la interfaz
+
+20
+00:00:55,748 --> 00:00:57,351
+principal de operación.
+
+21
+00:00:57,351 --> 00:01:00,976
+Desde allí se pueden gestionar módulos internos como
+
+22
+00:01:00,976 --> 00:01:04,811
+inventario, ventas, compras, reportes, usuarios y otras
+
+23
+00:01:04,811 --> 00:01:07,321
+áreas configuradas en la aplicación.
+
+24
+00:01:07,321 --> 00:01:11,016
+El portal público tiene una responsabilidad distinta:
+
+25
+00:01:11,016 --> 00:01:14,501
+presenta publicaciones, convocatorias, contactos y
+
+26
+00:01:14,501 --> 00:01:16,593
+postulaciones para visitantes.
+
+27
+00:01:16,593 --> 00:01:20,592
+El backend administrativo, identificado en el proyecto
+
+28
+00:01:20,592 --> 00:01:24,294
+como admin-api, atiende la operación interna y los
+
+29
+00:01:24,294 --> 00:01:27,553
+controles asociados a usuarios autenticados.
+
+30
+00:01:27,553 --> 00:01:31,403
+La public-api atiende el contenido y los formularios
+
+31
+00:01:31,403 --> 00:01:32,070
+públicos.
+
+32
+00:01:32,070 --> 00:01:36,069
+Esta separación evita que todas las partes del sistema
+
+33
+00:01:36,069 --> 00:01:39,031
+tengan acceso directo a todos los datos.
+
+34
+00:01:39,031 --> 00:01:42,585
+Cada API actúa como una frontera con sus propias
+
+35
+00:01:42,585 --> 00:01:45,844
+validaciones, contratos y responsabilidades.
+
+36
+00:01:45,844 --> 00:01:50,269
+En el entorno local, los servicios se ejecutan mediante
+
+37
+00:01:50,269 --> 00:01:51,475
+Docker Compose.
+
+38
+00:01:51,475 --> 00:01:54,533
+Traefik funciona como entrypoint HTTP.
+
+39
+00:01:54,533 --> 00:01:58,636
+En lugar de acceder a cada contenedor por separado,
+
+40
+00:01:58,636 --> 00:02:01,612
+usamos hostnames locales como public.
+
+41
+00:02:01,612 --> 00:02:02,980
+localhost, admin.
+
+42
+00:02:02,980 --> 00:02:04,187
+localhost, api.
+
+43
+00:02:04,187 --> 00:02:05,957
+localhost y api-admin.
+
+44
+00:02:05,957 --> 00:02:06,761
+localhost.
+
+45
+00:02:06,761 --> 00:02:11,186
+Esta decisión mantiene los servicios internos separados
+
+46
+00:02:11,186 --> 00:02:15,611
+y evita publicar innecesariamente las bases de datos en
+
+47
+00:02:15,611 --> 00:02:16,335
+Internet.
+
+48
+00:02:16,335 --> 00:02:20,377
+Los hostnames locales permiten que cada solicitud llegue
+
+49
+00:02:20,377 --> 00:02:22,398
+al servicio correspondiente.
+
+50
+00:02:22,398 --> 00:02:24,780
+El portal público utiliza public.
+
+51
+00:02:24,780 --> 00:02:28,317
+localhost, el panel administrativo utiliza admin.
+
+52
+00:02:28,317 --> 00:02:31,998
+localhost y las APIs cuentan con sus propias rutas.
+
+53
+00:02:31,998 --> 00:02:35,896
+Este enrutamiento centralizado hace que el flujo local
+
+54
+00:02:35,896 --> 00:02:39,722
+sea más claro y facilita probar la aplicación con una
+
+55
+00:02:39,722 --> 00:02:42,826
+entrada similar a la de un despliegue real.
+
+56
+00:02:42,826 --> 00:02:47,030
+FerrePlus utiliza distintos servicios de datos, cada uno
+
+57
+00:02:47,030 --> 00:02:49,057
+con una función específica.
+
+58
+00:02:49,057 --> 00:02:52,661
+PostgreSQL respalda la operación administrativa.
+
+59
+00:02:52,661 --> 00:02:56,715
+MongoDB almacena contenido asociado al portal público.
+
+60
+00:02:56,715 --> 00:03:00,544
+Redis se utiliza para límites y estados auxiliares.
+
+61
+00:03:00,544 --> 00:03:04,749
+MinIO proporciona almacenamiento para medios y archivos.
+
+62
+00:03:04,749 --> 00:03:08,953
+La decisión importante es qué servicio es responsable de
+
+63
+00:03:08,953 --> 00:03:12,557
+cada dato y qué componentes pueden acceder a él.
+
+64
+00:03:12,557 --> 00:03:16,319
+Veamos el recorrido general de una petición pública.
+
+65
+00:03:16,319 --> 00:03:19,357
+El navegador solicita una ruta del portal.
+
+66
+00:03:19,357 --> 00:03:23,046
+Traefik recibe la solicitud y la dirige al frontend
+
+67
+00:03:23,046 --> 00:03:23,625
+público.
+
+68
+00:03:23,625 --> 00:03:27,532
+Cuando el portal necesita contenido dinámico, consulta
+
+69
+00:03:27,532 --> 00:03:28,544
+la public-api.
+
+70
+00:03:28,544 --> 00:03:32,596
+La API valida la solicitud, aplica sus reglas de negocio
+
+71
+00:03:32,596 --> 00:03:35,923
+y consulta el almacenamiento que le pertenece.
+
+72
+00:03:35,923 --> 00:03:39,902
+Después devuelve una respuesta al portal, que actualiza
+
+73
+00:03:39,902 --> 00:03:41,928
+la pantalla para el usuario.
+
+74
+00:03:41,928 --> 00:03:44,661
+El entorno local funciona sin Cloudflare.
+
+75
+00:03:44,661 --> 00:03:48,327
+Para pruebas temporales o acceso externo controlado, el
+
+76
+00:03:48,327 --> 00:03:51,860
+proyecto puede utilizar Cloudflare Tunnel mediante el
+
+77
+00:03:51,860 --> 00:03:53,927
+perfil opcional de cloudflared.
+
+78
+00:03:53,927 --> 00:03:57,593
+El token del named tunnel se monta como secreto local y
+
+79
+00:03:57,593 --> 00:03:59,659
+no forma parte del repositorio.
+
+80
+00:03:59,659 --> 00:04:03,126
+También existe un flujo de Quick Tunnel para pruebas
+
+81
+00:04:03,126 --> 00:04:06,659
+temporales, pero sus URLs cambian y no deben tratarse
+
+82
+00:04:06,659 --> 00:04:08,859
+como configuración de producción.
+
+83
+00:04:08,859 --> 00:04:11,858
+En resumen, FerrePlus combina dos experiencias
+
+84
+00:04:11,858 --> 00:04:14,923
+principales, varias APIs, un entrypoint común y
+
+85
+00:04:14,923 --> 00:04:18,119
+servicios de datos separados por responsabilidad.
+
+86
+00:04:18,119 --> 00:04:21,575
+Las interfaces presentan y solicitan información, las
+
+87
+00:04:21,575 --> 00:04:25,096
+APIs aplican reglas y validaciones, Traefik enruta las
+
+88
+00:04:25,096 --> 00:04:28,748
+solicitudes y cada almacenamiento conserva los datos que
+
+89
+00:04:28,748 --> 00:04:29,791
+le corresponden.
+
+90
+00:04:29,791 --> 00:04:33,117
+En el siguiente capítulo veremos cómo levantar este
+
+91
+00:04:33,117 --> 00:04:36,312
+entorno local y comprobar que sus servicios están
+
+92
+00:04:36,312 --> 00:04:37,030
+saludables.

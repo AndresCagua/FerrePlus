@@ -1,0 +1,21 @@
+{
+  "title": "Qué es FerrePlus",
+  "chapter": 1,
+  "language": "es-419",
+  "durationSeconds": 25,
+  "scenes": [
+    {
+      "id": "portal-publico",
+      "title": "Portal público de FerrePlus",
+      "sourceUrl": "http://public.localhost:8088",
+      "durationSeconds": 20,
+      "narration": "FerrePlus combina un portal público, un panel administrativo y varias APIs que conectan la interfaz con los datos y servicios del sistema. En esta primera escena mostramos el portal público, que funciona detrás del entrypoint local y presenta la información disponible para los usuarios.",
+      "obsScene": "Capitulo01-PortalPublico",
+      "capture": {
+        "browserWidth": 1920,
+        "browserHeight": 1080,
+        "waitAfterLoadMs": 3000
+      }
+    }
+  ]
+}

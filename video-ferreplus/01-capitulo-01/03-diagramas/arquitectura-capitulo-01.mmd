@@ -1,0 +1,16 @@
+flowchart LR
+    Browser[Browser] --> Traefik[Traefik\nHTTP entrypoint]
+    Traefik --> AdminWeb[Admin UI\nAngular]
+    Traefik --> PublicWeb[Public Portal\nAstro]
+    Traefik --> AdminAPI[admin-api\nREST API]
+    Traefik --> PublicAPI[public-api\nREST API]
+
+    AdminWeb --> AdminAPI
+    PublicWeb --> PublicAPI
+    AdminAPI --> PostgreSQL[(PostgreSQL)]
+    PublicAPI --> MongoDB[(MongoDB)]
+    PublicAPI --> Redis[(Redis)]
+    PublicAPI --> MinIO[(MinIO)]
+
+    Cloudflare[Cloudflare\noptional] -.-> Tunnel[cloudflared\noptional]
+    Tunnel -.-> Traefik

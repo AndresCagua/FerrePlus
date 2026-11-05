@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#10252d"/><stop offset="1" stop-color="#087f7c"/></linearGradient></defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="1090" cy="120" r="250" fill="#e4a33a" opacity=".18"/>
+  <circle cx="1170" cy="570" r="330" fill="#ffffff" opacity=".06"/>
+  <g fill="none" stroke="#e4a33a" stroke-width="5" opacity=".75">
+    <path d="M820 180 L1010 300 L850 430 L1040 540"/><path d="M1010 300 L1160 210"/><path d="M850 430 L1120 430"/>
+  </g>
+  <g fill="#e4a33a"><circle cx="820" cy="180" r="12"/><circle cx="1010" cy="300" r="12"/><circle cx="850" cy="430" r="12"/><circle cx="1040" cy="540" r="12"/><circle cx="1160" cy="210" r="12"/><circle cx="1120" cy="430" r="12"/></g>
+  <text x="90" y="130" font-family="DejaVu Sans" font-size="34" font-weight="700" fill="#e4a33a" letter-spacing="6">FERREPLUS</text>
+  <text x="90" y="310" font-family="DejaVu Sans" font-size="78" font-weight="700" fill="white">Cómo funciona</text>
+  <text x="90" y="405" font-family="DejaVu Sans" font-size="78" font-weight="700" fill="white">por dentro</text>
+  <rect x="90" y="490" width="510" height="76" rx="38" fill="#e4a33a"/>
+  <text x="345" y="541" text-anchor="middle" font-family="DejaVu Sans" font-size="32" font-weight="700" fill="#10252d">CAPÍTULO 1 · ARQUITECTURA</text>
+  <text x="90" y="650" font-family="DejaVu Sans" font-size="28" fill="#dce9e7">Portal · APIs · Docker · Datos</text>
+</svg>
