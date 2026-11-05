@@ -36,3 +36,6 @@ Thumbs.db
 bitacoras/
 
 # === Docker ===
+
+# === Producción de video local ===
+video-ferreplus/

@@ -97,7 +97,7 @@ Para levantar todo el entorno local y obtener URLs publicas temporales para ambo
 
 El script verifica Docker, Docker Compose y `curl`; inicia los servicios de aplicacion con
 `docker compose up -d --build`, espera Traefik, las APIs y los portales, y crea dos
-contenedores efimeros `cloudflare/cloudflared:2025.8.1`. Un Quick Tunnel enruta al portal
+contenedores efimeros `cloudflare/cloudflared:2026.10.3`. Un Quick Tunnel enruta al portal
 publico y el otro al portal admin mediante `public.localhost` y `admin.localhost`.
 
 Al finalizar imprime las dos URLs `https://<subdominio-temporal>.trycloudflare.com`. Los

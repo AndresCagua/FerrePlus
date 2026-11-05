@@ -4,7 +4,7 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
-readonly QUICK_TUNNEL_IMAGE="cloudflare/cloudflared:2025.8.1"
+readonly QUICK_TUNNEL_IMAGE="cloudflare/cloudflared:2026.10.3"
 readonly PUBLIC_TUNNEL="ferreplus-quick-tunnel"
 readonly ADMIN_TUNNEL="ferreplus-quick-tunnel-admin"
 readonly -a COMPOSE_SERVICES=(

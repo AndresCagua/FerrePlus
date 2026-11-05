@@ -298,7 +298,7 @@ services:
     restart: unless-stopped
 
   cloudflared:
-    image: cloudflare/cloudflared:2025.8.1
+    image: cloudflare/cloudflared:2026.10.3
     container_name: ferreplus-cloudflared
     profiles: ["tunnel"]
     user: "0:0"
