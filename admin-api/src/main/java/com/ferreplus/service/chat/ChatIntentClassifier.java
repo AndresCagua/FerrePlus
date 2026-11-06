@@ -1,8 +1,9 @@
 package com.ferreplus.service.chat;
 
-import com.ferreplus.service.GeminiChatService;
+import com.ferreplus.client.TypeSafeClient;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -19,18 +20,37 @@ public class ChatIntentClassifier {
     private static final Set<ChatEntity> ENTITIES_ALLOWING_NAME = Set.of(
             ChatEntity.PRODUCTO, ChatEntity.CLIENTE, ChatEntity.PROVEEDOR, ChatEntity.USUARIO);
 
-    private final GeminiChatService geminiChatService;
+    private static final Pattern ENTITY_IN_QUESTION = Pattern.compile(
+            "\\b(productos?|clientes?|proveedores?|ventas?|compras?|gastos?|usuarios?)\\b"
+                    + "(?:\\s+(?:de|del|para)\\s+([^?.,;\\r\\n]{1,200}))?",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private final TypeSafeClient typeSafeClient;
 
-    public ChatIntentClassifier(GeminiChatService geminiChatService) {
-        this.geminiChatService = geminiChatService;
+    public ChatIntentClassifier(TypeSafeClient typeSafeClient) {
+        this.typeSafeClient = typeSafeClient;
     }
 
     public ChatIntentResult classify(String question) {
         try {
-            return parse(geminiChatService.classify(question));
+            ChatIntent intent = simpleIntent(typeSafeClient.classify(question));
+            if (intent != ChatIntent.ULTIMO_CAMBIO) {
+                return new ChatIntentResult(intent, null, Optional.empty());
+            }
+            return extractLastChange(question);
         } catch (RuntimeException exception) {
             return ChatIntentResult.unknown();
         }
+    }
+
+    private ChatIntentResult extractLastChange(String question) {
+        Matcher matcher = ENTITY_IN_QUESTION.matcher(question == null ? "" : question);
+        if (!matcher.find()) return ChatIntentResult.unknown();
+        ChatEntity entity = parseEntity(matcher.group(1).toLowerCase(Locale.ROOT));
+        String name = Optional.ofNullable(matcher.group(2)).orElse("").strip();
+        if (!ENTITIES_ALLOWING_NAME.contains(entity) && !name.isEmpty()) return ChatIntentResult.unknown();
+        if (!isSafeEntityName(name)) return ChatIntentResult.unknown();
+        return new ChatIntentResult(ChatIntent.ULTIMO_CAMBIO, entity,
+                name.isEmpty() ? Optional.empty() : Optional.of(name));
     }
 
     public ChatIntentResult parse(String response) {
@@ -63,7 +83,7 @@ public class ChatIntentClassifier {
     }
 
     private ChatIntent simpleIntent(String token) {
-        return switch (token) {
+        return switch (token == null ? "" : token.trim().toLowerCase(Locale.ROOT)) {
             case "mas_vendidos" -> ChatIntent.MAS_VENDIDOS;
             case "ventas_mes" -> ChatIntent.VENTAS_MES;
             case "stock_bajo" -> ChatIntent.STOCK_BAJO;
@@ -71,20 +91,21 @@ public class ChatIntentClassifier {
             case "mayor_gasto" -> ChatIntent.MAYOR_GASTO;
             case "proveedor_top" -> ChatIntent.PROVEEDOR_TOP;
             case "guia_catalogo" -> ChatIntent.GUIA_CATALOGO;
+            case "ultimo_cambio" -> ChatIntent.ULTIMO_CAMBIO;
             case "desconocido" -> ChatIntent.DESCONOCIDO;
             default -> ChatIntent.DESCONOCIDO;
         };
     }
 
     private ChatEntity parseEntity(String token) {
-        return switch (token) {
-            case "PRODUCTO" -> ChatEntity.PRODUCTO;
-            case "CLIENTE" -> ChatEntity.CLIENTE;
-            case "PROVEEDOR" -> ChatEntity.PROVEEDOR;
-            case "VENTA" -> ChatEntity.VENTA;
-            case "COMPRA" -> ChatEntity.COMPRA;
-            case "GASTO" -> ChatEntity.GASTO;
-            case "USUARIO" -> ChatEntity.USUARIO;
+        return switch (token.toUpperCase(Locale.ROOT)) {
+            case "PRODUCTO", "PRODUCTOS" -> ChatEntity.PRODUCTO;
+            case "CLIENTE", "CLIENTES" -> ChatEntity.CLIENTE;
+            case "PROVEEDOR", "PROVEEDORES" -> ChatEntity.PROVEEDOR;
+            case "VENTA", "VENTAS" -> ChatEntity.VENTA;
+            case "COMPRA", "COMPRAS" -> ChatEntity.COMPRA;
+            case "GASTO", "GASTOS" -> ChatEntity.GASTO;
+            case "USUARIO", "USUARIOS" -> ChatEntity.USUARIO;
             default -> throw new IllegalArgumentException("Entidad no permitida");
         };
     }

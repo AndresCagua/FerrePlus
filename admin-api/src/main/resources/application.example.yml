@@ -40,14 +40,19 @@ app:
     expiration: 86400000
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200}
-
-gemini:
-  api-key: ${GEMINI_API_KEY:}
-  base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com}
-  embedding-model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}
-  chat-model: ${GEMINI_CHAT_MODEL:gemini-3.6-flash}
-  timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:10}
-  max-retries: ${GEMINI_MAX_RETRIES:1}
+  typesafe:
+    api-key: ${TYPESAFE_API_KEY:}
+    base-url: ${TYPESAFE_BASE_URL:https://api.typesafe.ai}
+    model: ${TYPESAFE_MODEL:jev-latest}
+    timeout-seconds: ${TYPESAFE_TIMEOUT_SECONDS:10}
+    max-retries: ${TYPESAFE_MAX_RETRIES:1}
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com}
+    embedding-model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}
+    chat-model: ${GEMINI_CHAT_MODEL:gemini-3.6-flash}
+    timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:10}
+    max-retries: ${GEMINI_MAX_RETRIES:1}
 
 ---
 spring:

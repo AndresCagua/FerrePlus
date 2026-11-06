@@ -297,8 +297,11 @@ Las credenciales de Gemini se inyectan por variables de entorno (ver `applicatio
 | `GEMINI_CHAT_MODEL` | `gemini-3.6-flash` | Modelo del chat |
 | `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | Modelo de embeddings |
 | `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com` | Endpoint de Gemini |
+| `TYPESAFE_API_KEY` | — (requerida para clasificación analítica) | API key de TypeSafe AI / Jev |
+| `TYPESAFE_MODEL` | `jev-latest` | Modelo Jev usado para clasificar intenciones |
+| `TYPESAFE_BASE_URL` | `https://api.typesafe.ai` | Endpoint de TypeSafe |
 
-Las consultas analíticas se pueden desactivar con `chat.analytics.enabled: false` (default `true`).
+La clasificación de intenciones usa TypeSafe Jev y devuelve una opción cerrada; si `TYPESAFE_API_KEY` falta o el proveedor no está disponible, el chat aplica un fallback seguro y no ejecuta consultas analíticas. Las consultas analíticas se pueden desactivar con `chat.analytics.enabled: false` (default `true`).
 
 > Sin `GEMINI_API_KEY` el chat responde con un fallback seguro y las consultas analíticas siguen funcionando.
 

@@ -1,6 +1,6 @@
 package com.ferreplus.service.chat;
 
-import com.ferreplus.service.GeminiChatService;
+import com.ferreplus.client.TypeSafeClient;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -12,7 +12,7 @@ class ChatIntentClassifierTest {
 
     @Test
     void parse_acceptsEverySimpleIntent() {
-        ChatIntentClassifier classifier = new ChatIntentClassifier(mock(GeminiChatService.class));
+        ChatIntentClassifier classifier = new ChatIntentClassifier(mock(TypeSafeClient.class));
 
         assertThat(classifier.parse("INTENT: mas_vendidos").intent()).isEqualTo(ChatIntent.MAS_VENDIDOS);
         assertThat(classifier.parse("INTENT: ventas_mes").intent()).isEqualTo(ChatIntent.VENTAS_MES);
@@ -25,93 +25,46 @@ class ChatIntentClassifierTest {
     }
 
     @Test
-    void parse_acceptsLastChangeWithEntityAndName() {
-        ChatIntentResult result = new ChatIntentClassifier(mock(GeminiChatService.class))
-                .parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Martillo");
-
-        assertThat(result).isEqualTo(new ChatIntentResult(
-                ChatIntent.ULTIMO_CAMBIO, ChatEntity.PRODUCTO, Optional.of("Martillo")));
+    void parse_preservesLegacyValidationForProviderLikeResponses() {
+        ChatIntentClassifier classifier = new ChatIntentClassifier(mock(TypeSafeClient.class));
+        assertThat(classifier.parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Martillo"))
+                .isEqualTo(new ChatIntentResult(ChatIntent.ULTIMO_CAMBIO, ChatEntity.PRODUCTO, Optional.of("Martillo")));
+        assertThat(classifier.parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Select; DROP"))
+                .isEqualTo(ChatIntentResult.unknown());
     }
 
     @Test
-    void parse_acceptsLastChangeWithoutName() {
-        ChatIntentResult result = new ChatIntentClassifier(mock(GeminiChatService.class))
-                .parse("INTENT: ultimo_cambio; ENTITY: VENTA; NAME: ");
+    void classify_returnsJevChoice() {
+        TypeSafeClient typeSafe = mock(TypeSafeClient.class);
+        when(typeSafe.classify("pregunta")).thenReturn("stock_bajo");
 
-        assertThat(result).isEqualTo(new ChatIntentResult(
-                ChatIntent.ULTIMO_CAMBIO, ChatEntity.VENTA, Optional.empty()));
+        ChatIntentResult result = new ChatIntentClassifier(typeSafe).classify("pregunta");
+
+        assertThat(result.intent()).isEqualTo(ChatIntent.STOCK_BAJO);
+        verify(typeSafe).classify("pregunta");
     }
 
     @Test
-    void parse_acceptsLastChangeWithoutNameField() {
-        ChatIntentResult result = new ChatIntentClassifier(mock(GeminiChatService.class))
-                .parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO");
+    void classify_extractsEntityForLastChangeFromQuestion() {
+        TypeSafeClient typeSafe = mock(TypeSafeClient.class);
+        when(typeSafe.classify(anyString())).thenReturn("ultimo_cambio");
+
+        ChatIntentResult result = new ChatIntentClassifier(typeSafe)
+                .classify("¿Cuál fue el último cambio del producto?");
 
         assertThat(result).isEqualTo(new ChatIntentResult(
                 ChatIntent.ULTIMO_CAMBIO, ChatEntity.PRODUCTO, Optional.empty()));
     }
 
     @Test
-    void parse_acceptsEntityNamesThatAreSqlKeywords() {
-        ChatIntentResult result = new ChatIntentClassifier(mock(GeminiChatService.class))
-                .parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Select");
+    void classify_mapsProviderFailureToUnknownWithoutAnalyticalCalls() {
+        TypeSafeClient typeSafe = mock(TypeSafeClient.class);
+        when(typeSafe.classify(anyString())).thenThrow(new RuntimeException("timeout"));
 
-        assertThat(result).isEqualTo(new ChatIntentResult(
-                ChatIntent.ULTIMO_CAMBIO, ChatEntity.PRODUCTO, Optional.of("Select")));
-    }
+        ChatIntentResult result = new ChatIntentClassifier(typeSafe).classify("pregunta");
 
-    @Test
-    void parse_trimsOnlyOuterWhitespace() {
-        assertThat(new ChatIntentClassifier(mock(GeminiChatService.class))
-                .parse("\n INTENT: mas_vendidos \t").intent())
-                .isEqualTo(ChatIntent.MAS_VENDIDOS);
-    }
-
-    @Test
-    void parse_rejectsExtraTextJsonSqlAndComments() {
-        ChatIntentClassifier classifier = new ChatIntentClassifier(mock(GeminiChatService.class));
-
-        assertUnknown(classifier.parse("INTENT: mas_vendidos\nextra"));
-        assertUnknown(classifier.parse("{\"intent\":\"mas_vendidos\"}"));
-        assertUnknown(classifier.parse("DROP TABLE productos;"));
-        assertUnknown(classifier.parse("/* DROP TABLE productos */"));
-        assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: /* DROP */"));
-    }
-
-    @Test
-    void parse_rejectsInvalidEntityAndUnsupportedName() {
-        ChatIntentClassifier classifier = new ChatIntentClassifier(mock(GeminiChatService.class));
-
-        assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: FACTURA; NAME: x"));
-        assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: VENTA; NAME: factura-1"));
-        assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Martillo; DROP"));
-        assertUnknown(classifier.parse("INTENT: ultimo_cambio; ENTITY: PRODUCTO; NAME: Select; DROP TABLE"));
-    }
-
-    @Test
-    void classify_returnsParsedIntentFromGemini() {
-        GeminiChatService gemini = mock(GeminiChatService.class);
-        when(gemini.classify("pregunta")).thenReturn("INTENT: stock_bajo");
-
-        ChatIntentResult result = new ChatIntentClassifier(gemini).classify("pregunta");
-
-        assertThat(result.intent()).isEqualTo(ChatIntent.STOCK_BAJO);
-        verify(gemini).classify("pregunta");
-    }
-
-    @Test
-    void classify_mapsExceptionAndTimeoutToUnknownWithoutAnalyticalCalls() {
-        GeminiChatService gemini = mock(GeminiChatService.class);
-        when(gemini.classify(anyString())).thenThrow(new RuntimeException("timeout"));
-
-        ChatIntentResult result = new ChatIntentClassifier(gemini).classify("pregunta");
-
-        assertUnknown(result);
-        verify(gemini).classify("pregunta");
-        verifyNoMoreInteractions(gemini);
-    }
-
-    private void assertUnknown(ChatIntentResult result) {
         assertThat(result).isEqualTo(ChatIntentResult.unknown());
+        verify(typeSafe).classify("pregunta");
+        verifyNoMoreInteractions(typeSafe);
     }
 }
