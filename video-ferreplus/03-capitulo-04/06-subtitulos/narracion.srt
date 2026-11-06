@@ -1,0 +1,331 @@
+1
+00:00:00,000 --> 00:00:03,927
+En este capítulo vamos a observar las interfaces web de
+
+2
+00:00:03,927 --> 00:00:07,212
+FerrePlus desde el punto de vista del usuario.
+
+3
+00:00:07,212 --> 00:00:10,782
+Veremos el portal público, el panel administrativo
+
+4
+00:00:10,782 --> 00:00:14,780
+Angular, la navegación por módulos y la forma en que las
+
+5
+00:00:14,780 --> 00:00:16,780
+pantallas consumen las APIs.
+
+6
+00:00:16,780 --> 00:00:20,635
+También revisaremos los estados de carga, los errores,
+
+7
+00:00:20,635 --> 00:00:24,491
+la autenticación y la integración visible del chat IA.
+
+8
+00:00:24,491 --> 00:00:28,040
+El portal público está construido con Astro y está
+
+9
+00:00:28,040 --> 00:00:31,092
+orientado a visitantes y usuarios externos.
+
+10
+00:00:31,092 --> 00:00:34,499
+Desde sus páginas se puede consultar información
+
+11
+00:00:34,499 --> 00:00:38,048
+pública, publicaciones, convocatorias, contactos y
+
+12
+00:00:38,048 --> 00:00:40,816
+oportunidades relacionadas con talento.
+
+13
+00:00:40,816 --> 00:00:44,719
+La presentación visual está separada de la API pública,
+
+14
+00:00:44,719 --> 00:00:48,623
+que entrega el contenido dinámico cuando la interfaz lo
+
+15
+00:00:48,623 --> 00:00:49,262
+necesita.
+
+16
+00:00:49,262 --> 00:00:52,535
+La navegación pública comienza en la página principal y
+
+17
+00:00:52,535 --> 00:00:55,629
+continúa hacia las secciones que corresponden a cada
+
+18
+00:00:55,629 --> 00:00:56,700
+tipo de contenido.
+
+19
+00:00:56,700 --> 00:01:00,032
+Una publicación puede abrirse desde su listado hacia una
+
+20
+00:01:00,032 --> 00:01:03,246
+página de detalle y una convocatoria puede mostrar sus
+
+21
+00:01:03,246 --> 00:01:05,567
+datos antes de iniciar una postulación.
+
+22
+00:01:05,567 --> 00:01:08,899
+Cada ruta presenta estados diferentes según la respuesta
+
+23
+00:01:08,899 --> 00:01:09,494
+de la API.
+
+24
+00:01:09,494 --> 00:01:12,641
+El panel administrativo tiene una frontera distinta
+
+25
+00:01:12,641 --> 00:01:15,789
+porque sus funcionalidades requieren autenticación.
+
+26
+00:01:15,789 --> 00:01:18,381
+El usuario inicia sesión desde la pantalla
+
+27
+00:01:18,381 --> 00:01:21,652
+correspondiente y el backend valida sus credenciales.
+
+28
+00:01:21,652 --> 00:01:24,737
+Cuando la autenticación es correcta, la aplicación
+
+29
+00:01:24,737 --> 00:01:28,132
+recibe la información necesaria para mantener la sesión
+
+30
+00:01:28,132 --> 00:01:30,909
+y conocer los permisos efectivos del usuario.
+
+31
+00:01:30,909 --> 00:01:34,118
+Durante la demostración no mostramos credenciales ni
+
+32
+00:01:34,118 --> 00:01:34,550
+tokens.
+
+33
+00:01:34,550 --> 00:01:38,169
+Después de iniciar sesión, Angular muestra el panel
+
+34
+00:01:38,169 --> 00:01:41,078
+administrativo y sus módulos disponibles.
+
+35
+00:01:41,078 --> 00:01:44,626
+La navegación lateral permite acceder a productos,
+
+36
+00:01:44,626 --> 00:01:48,315
+clientes, proveedores, ventas, compras, movimientos,
+
+37
+00:01:48,315 --> 00:01:52,218
+gastos, reportes, usuarios, talento y el chat IA, según
+
+38
+00:01:52,218 --> 00:01:53,992
+los permisos del usuario.
+
+39
+00:01:53,992 --> 00:01:57,824
+La aplicación cambia de módulo mediante rutas internas
+
+40
+00:01:57,824 --> 00:02:00,662
+sin recargar completamente el navegador.
+
+41
+00:02:00,662 --> 00:02:04,421
+Cada módulo administrativo tiene sus propios componentes
+
+42
+00:02:04,421 --> 00:02:05,226
+y servicios.
+
+43
+00:02:05,226 --> 00:02:08,650
+En productos, por ejemplo, la pantalla solicita los
+
+44
+00:02:08,650 --> 00:02:12,006
+registros al backend, muestra un estado de carga y
+
+45
+00:02:12,006 --> 00:02:15,764
+transforma la respuesta en una tabla que puede consultar
+
+46
+00:02:15,764 --> 00:02:16,503
+el usuario.
+
+47
+00:02:16,503 --> 00:02:19,859
+La interfaz no accede directamente a PostgreSQL ni
+
+48
+00:02:19,859 --> 00:02:21,470
+construye consultas SQL.
+
+49
+00:02:21,470 --> 00:02:25,018
+La comunicación entre la interfaz y el backend ocurre
+
+50
+00:02:25,018 --> 00:02:26,625
+mediante contratos HTTP.
+
+51
+00:02:26,625 --> 00:02:29,436
+La aplicación envía una solicitud a la API
+
+52
+00:02:29,436 --> 00:02:33,118
+administrativa y recibe una respuesta que transforma en
+
+53
+00:02:33,118 --> 00:02:34,122
+datos visuales.
+
+54
+00:02:34,122 --> 00:02:37,737
+En esta demostración mostramos únicamente el estado de
+
+55
+00:02:37,737 --> 00:02:41,486
+la solicitud; los tokens, credenciales y datos sensibles
+
+56
+00:02:41,486 --> 00:02:42,758
+permanecen ocultos.
+
+57
+00:02:42,758 --> 00:02:46,032
+Las interfaces también deben representar los estados
+
+58
+00:02:46,032 --> 00:02:47,669
+intermedios y los errores.
+
+59
+00:02:47,669 --> 00:02:51,069
+Mientras una solicitud está pendiente, los componentes
+
+60
+00:02:51,069 --> 00:02:54,028
+muestran indicadores de carga y evitan acciones
+
+61
+00:02:54,028 --> 00:02:54,721
+duplicadas.
+
+62
+00:02:54,721 --> 00:02:58,121
+Si la API responde con un error, la aplicación muestra
+
+63
+00:02:58,121 --> 00:03:01,458
+un mensaje entendible o un estado vacío y devuelve el
+
+64
+00:03:01,458 --> 00:03:02,654
+control al usuario.
+
+65
+00:03:02,654 --> 00:03:05,952
+El panel también incluye el chat IA de FerrePlus.
+
+66
+00:03:05,952 --> 00:03:09,318
+Desde la interfaz, el usuario envía una pregunta y
+
+67
+00:03:09,318 --> 00:03:12,617
+recibe una respuesta junto con sus fuentes cuando
+
+68
+00:03:12,617 --> 00:03:13,424
+corresponde.
+
+69
+00:03:13,424 --> 00:03:17,059
+En este capítulo solo observamos su integración dentro
+
+70
+00:03:17,059 --> 00:03:17,733
+del panel.
+
+71
+00:03:17,733 --> 00:03:21,300
+La clasificación con Jev, el RAG, los embeddings y la
+
+72
+00:03:21,300 --> 00:03:24,464
+búsqueda semántica se explicarán en un capítulo
+
+73
+00:03:24,464 --> 00:03:25,070
+dedicado.
+
+74
+00:03:25,070 --> 00:03:28,428
+Las interfaces web de FerrePlus separan presentación,
+
+75
+00:03:28,428 --> 00:03:31,025
+navegación y comunicación con el backend.
+
+76
+00:03:31,025 --> 00:03:34,447
+Astro atiende la experiencia pública, Angular organiza
+
+77
+00:03:34,447 --> 00:03:37,488
+la operación administrativa y los servicios HTTP
+
+78
+00:03:37,488 --> 00:03:39,959
+conectan ambas interfaces con sus APIs.
+
+79
+00:03:39,959 --> 00:03:43,253
+Los estados de carga, los errores y la autenticación
+
+80
+00:03:43,253 --> 00:03:45,787
+forman parte de la experiencia completa.
+
+81
+00:03:45,787 --> 00:03:49,208
+En el siguiente capítulo seguiremos una petición desde
+
+82
+00:03:49,208 --> 00:03:52,376
+la API y revisaremos sus validaciones y límites de
+
+83
+00:03:52,376 --> 00:03:53,390
+responsabilidad.

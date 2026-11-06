@@ -1,0 +1,18 @@
+{
+  "chapter": 4,
+  "title": "Interfaces web de FerrePlus",
+  "status": "approved",
+  "format": {"width": 1920, "height": 1080, "fps": 30},
+  "scenes": [
+    {"id":"T1","title":"Introducción","kind":"title","chapter":"4","durationSeconds":35,"visual":"Interfaces web de FerrePlus","subtitle":"Portal público y panel administrativo","description":"Navegación, APIs, estados y autenticación.","tags":["Portal Astro","Panel Angular","APIs"]},
+    {"id":"T2","title":"Portal público","kind":"browser","sourceUrl":"http://public.localhost:8088","durationSeconds":45},
+    {"id":"T3","title":"Navegación pública","kind":"browser","sourceUrl":"http://public.localhost:8088","durationSeconds":45},
+    {"id":"T4","title":"Inicio de sesión","kind":"browser","sourceUrl":"http://admin.localhost:8088/auth","durationSeconds":40},
+    {"id":"T5","title":"Dashboard Angular","kind":"browser","sourceUrl":"http://admin.localhost:8088/dashboard","auth":{"emailEnv":"VIDEO_ADMIN_EMAIL","passwordEnv":"VIDEO_ADMIN_PASSWORD","successPath":"/dashboard"},"durationSeconds":50},
+    {"id":"T6","title":"Módulo de productos","kind":"browser","sourceUrl":"http://admin.localhost:8088/productos","auth":{"emailEnv":"VIDEO_ADMIN_EMAIL","passwordEnv":"VIDEO_ADMIN_PASSWORD","successPath":"/productos"},"durationSeconds":50},
+    {"id":"T7","title":"Consumo de API","kind":"terminal","durationSeconds":45,"command":"curl -s -o /dev/null -w 'HTTP status: %{http_code}\\n' -H 'Host: api-admin.localhost' http://127.0.0.1:8088/api/productos","caption":"La interfaz consume contratos HTTP; no se muestran tokens ni respuestas sensibles."},
+    {"id":"T8","title":"Carga, errores y autenticación","kind":"diagram","durationSeconds":45,"caption":"Solicitud → carga → respuesta o error → estado visible"},
+    {"id":"T9","title":"Chat IA integrado","kind":"browser","sourceUrl":"http://admin.localhost:8088/dashboard","auth":{"emailEnv":"VIDEO_ADMIN_EMAIL","passwordEnv":"VIDEO_ADMIN_PASSWORD","successPath":"/dashboard"},"durationSeconds":45},
+    {"id":"T10","title":"Cierre","kind":"closing","durationSeconds":35,"caption":"Astro, Angular, APIs, estados y autenticación."}
+  ]
+}

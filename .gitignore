@@ -53,6 +53,10 @@ video-ferreplus/**/09-logs/
 video-ferreplus/**/09-logs/**
 video-ferreplus/**/10-herramientas/node_modules/
 video-ferreplus/**/10-herramientas/node_modules/**
+video-ferreplus/**/10-herramientas/.venv/
+video-ferreplus/**/10-herramientas/.venv/**
+video-ferreplus/**/10-herramientas/.venv-*/
+video-ferreplus/**/10-herramientas/.venv-*/**
 video-ferreplus/**/10-herramientas/obs-runtime/
 video-ferreplus/**/10-herramientas/obs-runtime/**
 video-ferreplus/**/*.mkv
