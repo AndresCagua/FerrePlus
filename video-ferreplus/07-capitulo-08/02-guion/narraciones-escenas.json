@@ -1,0 +1,13 @@
+{
+  "language": "es-419-neutral",
+  "scenes": [
+    {"id":"T1","text":"En este capítulo revisaremos las defensas que protegen FerrePlus. Veremos autorización con JWT, comunicación interna con tokens de servicio, secretos entregados en runtime, CORS, validación, rate limiting y Cloudflare Turnstile. También veremos qué información nunca debe aparecer en una demostración o en un log."},
+    {"id":"T2","text":"El panel administrativo usa una sesión sin estado. La autenticación comienza en el endpoint de login y las peticiones posteriores llevan un Bearer token. El backend valida el token, busca al usuario activo y resuelve sus autoridades antes de permitir una operación. La interfaz no reemplaza las reglas del servidor."},
+    {"id":"T3","text":"Cuando una ruta administrativa recibe una petición sin autenticación, la cadena de seguridad la rechaza antes de ejecutar el controlador. En esta prueba solo mostramos el código HTTP. No imprimimos el token, no usamos datos de negocio y no convertimos una credencial real en material de edición."},
+    {"id":"T4","text":"CORS restringe los orígenes, métodos y headers que pueden usar los navegadores. La API pública agrega headers defensivos como Content Security Policy, frame denial y una política de referer limitada. Además, los DTOs validan tamaño, formato y campos requeridos antes de llegar al servicio."},
+    {"id":"T5","text":"Las operaciones públicas más sensibles tienen límites por ventanas corta y diaria. Redis aplica los contadores con una operación atómica y devuelve Retry-After cuando el límite se supera. Si Redis deja de estar disponible, el sistema no desactiva la protección: usa una ventana local más conservadora."},
+    {"id":"T6","text":"Los formularios públicos integran Cloudflare Turnstile cuando el entorno lo habilita. El portal recibe únicamente la site key pública y guarda el resultado del widget en el formulario. La clave secreta permanece en el backend, donde se valida el token contra Cloudflare. En un entorno local sin CAPTCHA activo, el componente no inventa una validación."},
+    {"id":"T7","text":"Los secretos se mantienen fuera de Git y llegan mediante variables o archivos montados en runtime. Las claves privadas de servicio solo se montan en el contenedor que firma. Los logs públicos usan dominio de email, longitudes y banderas; no registran contraseñas, tokens, CV, emails completos ni claves privadas."},
+    {"id":"T8","text":"La seguridad de FerrePlus es una suma de límites: JWT y autoridades para el panel, JWT de servicio entre APIs, CORS y headers defensivos, validación, rate limiting, Turnstile y secretos fuera de Git. Una demostración segura muestra la protección sin convertir los secretos en parte del video."}
+  ]
+}

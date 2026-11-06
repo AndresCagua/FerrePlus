@@ -1,0 +1,15 @@
+{
+  "chapter": 9,
+  "title": "Cloudflare Tunnel",
+  "status": "approved",
+  "format": {"width": 1920, "height": 1080, "fps": 30},
+  "scenes": [
+    {"id":"T1","title":"Introducción","kind":"title","chapter":"9","durationSeconds":32,"visual":"Cloudflare Tunnel","subtitle":"Del acceso temporal al túnel nombrado","description":"Cómo exponer el entorno sin publicar secretos.","tags":["Quick Tunnel","cloudflared","Traefik","Docker"]},
+    {"id":"T2","title":"Quick Tunnel local","kind":"terminal","durationSeconds":38,"command":"grep -n -E 'PUBLIC_TUNNEL|ADMIN_TUNNEL|docker run.*cloudflared|trycloudflare|http-host-header|network host' ../scripts/start-local.sh","caption":"El script local crea túneles temporales separados para los hosts público y administrativo; no imprime tokens."},
+    {"id":"T3","title":"Perfil opcional","kind":"terminal","durationSeconds":36,"command":"grep -n -A18 -B2 'cloudflared:' ../docker-compose.yml","caption":"El servicio nombrado pertenece al perfil opcional tunnel y espera a Traefik saludable."},
+    {"id":"T4","title":"Token como secreto","kind":"terminal","durationSeconds":34,"command":"grep -n -E 'token-file|cloudflared_token|CLOUDFLARED_TOKEN_FILE|secrets:' ../docker-compose.yml ../.env.example","caption":"El token se monta desde un archivo ignorado y se entrega al contenedor por Docker secrets."},
+    {"id":"T5","title":"Cloudflare → cloudflared → Traefik","kind":"tunnel-diagram","durationSeconds":38,"caption":"Cliente externo → Cloudflare Edge → cloudflared → Traefik → portal o API local"},
+    {"id":"T6","title":"Actualización controlada","kind":"terminal","durationSeconds":34,"command":"grep -n -E 'QUICK_TUNNEL_IMAGE|--no-autoupdate|image: cloudflare/cloudflared|profiles:|restart:' ../scripts/start-local.sh ../docker-compose.yml","caption":"La imagen está fijada y cloudflared no se actualiza automáticamente durante la ejecución."},
+    {"id":"T7","title":"Cierre","kind":"closing","durationSeconds":32,"caption":"Quick Tunnel para pruebas; named tunnel para operación controlada; secretos fuera del video."}
+  ]
+}

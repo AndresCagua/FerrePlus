@@ -1,0 +1,14 @@
+{
+  "chapter": 13,
+  "voice": "es-MX-DaliaNeural",
+  "scenes": [
+    {"id":"T1","text":"En este último capítulo reunimos las prácticas que mantienen FerrePlus verificable. Vamos a ejecutar pruebas, comprobar la salud de los servicios, revisar diagnósticos y recorrer una actualización reversible sin mostrar secretos."},
+    {"id":"T2","text":"El backend se prueba con Maven dentro de un contenedor. La suite combina pruebas unitarias, de seguridad e integración, y se ejecuta de forma reproducible sin instalar Maven en la máquina local."},
+    {"id":"T3","text":"El frontend también se verifica en modo CI. Ejecutar la suite sin vigilancia interactiva permite repetir el mismo resultado en una integración continua y detectar regresiones antes de reconstruir las imágenes."},
+    {"id":"T4","text":"Docker Compose define healthchecks para las dependencias y para las aplicaciones. Las APIs esperan a MongoDB, Redis, MinIO y Mailpit antes de iniciar, reduciendo fallos causados por el orden de arranque."},
+    {"id":"T5","text":"Cuando algo falla, empezamos por el estado de los contenedores y las últimas líneas relevantes de los logs. El diagnóstico debe ser acotado: no hace falta imprimir tokens, cuerpos de solicitudes ni información personal."},
+    {"id":"T6","text":"Los endpoints de salud ayudan a separar una falla de infraestructura de una falla funcional. Un código HTTP observable confirma si cada capa responde antes de profundizar en el problema."},
+    {"id":"T7","text":"Una actualización segura sigue cuatro pasos: revisar los cambios, reconstruir, verificar healthchecks y logs, y volver a una versión anterior si la comprobación falla. La reversibilidad es parte del mantenimiento."},
+    {"id":"T8","text":"Con pruebas reproducibles, healthchecks, diagnósticos acotados y rollback, FerrePlus puede evolucionar sin perder trazabilidad. Probar, observar, actualizar y poder volver atrás cierra la serie técnica."}
+  ]
+}

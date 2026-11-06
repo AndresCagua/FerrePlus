@@ -1,0 +1,16 @@
+{
+  "chapter": 7,
+  "title": "Chat IA, embeddings y RAG",
+  "status": "approved",
+  "format": {"width": 1920, "height": 1080, "fps": 30},
+  "scenes": [
+    {"id":"T1","title":"Introducción","kind":"title","chapter":"7","durationSeconds":34,"visual":"Chat IA, embeddings y RAG","subtitle":"Clasificar, buscar y responder","description":"Cómo el asistente FerrePlus usa contexto y fuentes.","tags":["Jev","pgvector","Gemini","RAG"]},
+    {"id":"T2","title":"Widget de chat","kind":"browser","sourceUrl":"http://admin.localhost:8088/dashboard","auth":{"emailEnv":"VIDEO_ADMIN_EMAIL","passwordEnv":"VIDEO_ADMIN_PASSWORD","successPath":"/dashboard"},"durationSeconds":34},
+    {"id":"T3","title":"POST /api/chat","kind":"terminal","durationSeconds":40,"command":"TOKEN=$(curl -sS -H 'Host: api-admin.localhost' -H 'Content-Type: application/json' -d '{\"email\":\"'\"$VIDEO_ADMIN_EMAIL\"'\",\"password\":\"'\"$VIDEO_ADMIN_PASSWORD\"'\"}' http://127.0.0.1:8088/api/auth/login | jq -r '.token'); curl -sS -o /dev/null -w 'HTTP status: %{http_code}\\n' -H 'Host: api-admin.localhost' -H \"Authorization: Bearer $TOKEN\" -H 'Content-Type: application/json' -d '{\"question\":\"¿Cómo se usa el catálogo?\"}' http://127.0.0.1:8088/api/chat","caption":"Flujo real autenticado; las credenciales y el token solo existen durante el comando y no se muestran."},
+    {"id":"T4","title":"Clasificación y rutas","kind":"diagram","durationSeconds":40,"caption":"Pregunta → Jev → intención permitida → consulta analítica o búsqueda RAG → respuesta segura"},
+    {"id":"T5","title":"Embeddings y pgvector","kind":"terminal","durationSeconds":38,"command":"grep -n -E 'vector\\(768\\)|embedding <=>' ../admin-api/src/main/resources/db/V1__chatbot_rag.sql ../admin-api/src/main/java/com/ferreplus/repository/DocumentEmbeddingRepository.java","caption":"La búsqueda semántica usa vectores de 768 dimensiones y distancia en PostgreSQL."},
+    {"id":"T6","title":"Contexto y fuentes","kind":"terminal","durationSeconds":34,"command":"grep -n -E 'sources|context|findNearest|No dispongo de datos suficientes' ../admin-api/src/main/java/com/ferreplus/service/chat/RagService.java ../admin-api/src/main/java/com/ferreplus/service/chat/ChatService.java","caption":"El contexto se construye desde documentos recuperados y las fuentes se devuelven por separado."},
+    {"id":"T7","title":"Respuesta en el panel","kind":"browser","sourceUrl":"http://admin.localhost:8088/dashboard","auth":{"emailEnv":"VIDEO_ADMIN_EMAIL","passwordEnv":"VIDEO_ADMIN_PASSWORD","successPath":"/dashboard"},"durationSeconds":40},
+    {"id":"T8","title":"Cierre","kind":"closing","durationSeconds":34,"caption":"Whitelist, solo lectura, RAG, fuentes y fallback seguro."}
+  ]
+}

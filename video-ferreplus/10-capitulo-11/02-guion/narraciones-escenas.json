@@ -1,0 +1,13 @@
+{
+  "language": "es-419-neutral",
+  "scenes": [
+    {"id":"T1","text":"En este capítulo veremos el ciclo completo de reclutamiento de FerrePlus. El recorrido empieza cuando Talento publica una oferta laboral, continúa cuando una persona se postula desde el portal y termina con la revisión interna y las notificaciones por correo."},
+    {"id":"T2","text":"Desde Talento se crea la convocatoria con título, descripción, requisitos, ubicación, modalidad y fechas. Primero se guarda como borrador y luego se publica. Esta separación permite preparar la oferta antes de hacerla visible para las personas candidatas."},
+    {"id":"T3","text":"Una vez publicada, la oferta aparece en el portal público dentro de Convocatorias. La información se presenta de forma clara y el portal ofrece el acceso al formulario de postulación. El mismo dato que administra Talento se convierte en una oportunidad visible para el público."},
+    {"id":"T4","text":"Ahora simulamos la postulación con datos completamente ficticios. El formulario envía los datos personales de demostración y un CV PDF de prueba como multipart. El backend valida el archivo, asocia la candidatura con la convocatoria y devuelve una respuesta de creación exitosa."},
+    {"id":"T5","text":"La postulación también dispara dos notificaciones. Una llega al equipo de Talento para iniciar la revisión y otra confirma la recepción a la persona candidata. Mailpit permite inspeccionar este comportamiento localmente sin enviar correos a cuentas reales."},
+    {"id":"T6","text":"De vuelta en Talento, el equipo puede consultar las postulaciones asociadas a la convocatoria y abrir el detalle de la candidatura. Desde allí el proceso puede avanzar por estados como recibida, en revisión, aceptada o rechazada, manteniendo la trazabilidad del flujo."},
+    {"id":"T7","text":"Como la captura utiliza datos de demostración, terminamos limpiando la convocatoria, el archivo, las notificaciones y los mensajes locales. El entorno queda listo para repetir la prueba sin contaminar datos reales."},
+    {"id":"T8","text":"Este flujo demuestra una capacidad de negocio completa: publicación editorial, portal público, carga segura de archivos, persistencia, notificaciones diferenciadas y gestión interna de candidatos. No es solo una pantalla; es un proceso integrado de contratación."}
+  ]
+}

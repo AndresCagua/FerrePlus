@@ -162,6 +162,30 @@ services:
           memory: 768M
     restart: unless-stopped
 
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    container_name: ferreplus-mailpit
+    ports:
+      - "127.0.0.1:${MAILPIT_SMTP_HOST_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_WEB_HOST_PORT:-8025}:8025"
+    networks:
+      - public_net
+      - internal_services
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${COMPOSE_PROJECT_NAME:-ferreplus}_public_net
+      - traefik.http.routers.mailpit.rule=Host(`mailpit.localhost`)
+      - traefik.http.routers.mailpit.entrypoints=web
+      - traefik.http.routers.mailpit.middlewares=security-headers@file,compress@file
+      - traefik.http.services.mailpit.loadbalancer.server.port=8025
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--quiet", "http://127.0.0.1:8025/api/v1/info"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
   public-api:
     build:
       context: ./public-api
@@ -189,14 +213,15 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set; use an ignored local env file}
       RATE_LIMIT_FINGERPRINT_HMAC_SECRET: ${RATE_LIMIT_FINGERPRINT_HMAC_SECRET:?RATE_LIMIT_FINGERPRINT_HMAC_SECRET must be set; use an ignored local env file}
-      SMTP_HOST: ${SMTP_HOST:-localhost}
-      SMTP_PORT: ${SMTP_PORT:-1025}
-      SMTP_USERNAME: ${SMTP_USERNAME:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_AUTH: ${SMTP_AUTH:-true}
-      SMTP_STARTTLS_ENABLE: ${SMTP_STARTTLS_ENABLE:-true}
-      SMTP_STARTTLS_REQUIRED: ${SMTP_STARTTLS_REQUIRED:-true}
-      SMTP_FROM: ${SMTP_FROM:-no-reply@ferreplus.local}
+      # The local Compose profile always routes test mail to Mailpit; external SMTP stays out of captures.
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_USERNAME: ""
+      SMTP_PASSWORD: ""
+      SMTP_AUTH: "false"
+      SMTP_STARTTLS_ENABLE: "false"
+      SMTP_STARTTLS_REQUIRED: "false"
+      SMTP_FROM: no-reply@ferreplus.local
     secrets:
       - s2s_public_key
     depends_on:
@@ -205,6 +230,8 @@ services:
       redis:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      mailpit:
         condition: service_healthy
     networks:
       - public_net

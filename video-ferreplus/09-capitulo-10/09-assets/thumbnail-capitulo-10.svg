@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#172630"/><stop offset="1" stop-color="#087875"/></linearGradient></defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="1110" cy="170" r="270" fill="#e4a33a" opacity=".17"/>
+  <g fill="none" stroke="#e4a33a" stroke-width="8" stroke-linecap="round"><path d="M820 360 H1100"/><path d="M1030 290 L1100 360 L1030 430"/></g>
+  <rect x="735" y="285" width="130" height="150" rx="18" fill="#078b86" stroke="#fff" stroke-width="4"/><rect x="900" y="285" width="130" height="150" rx="18" fill="#e4a33a" stroke="#fff" stroke-width="4"/><rect x="1065" y="285" width="130" height="150" rx="18" fill="#17252d" stroke="#fff" stroke-width="4"/>
+  <text x="800" y="350" text-anchor="middle" font-family="DejaVu Sans" font-size="25" font-weight="700" fill="white">TALENTO</text><text x="965" y="350" text-anchor="middle" font-family="DejaVu Sans" font-size="25" font-weight="700" fill="#17252d">API</text><text x="1130" y="350" text-anchor="middle" font-family="DejaVu Sans" font-size="23" font-weight="700" fill="white">PORTAL</text>
+  <text x="90" y="130" font-family="DejaVu Sans" font-size="34" font-weight="700" fill="#e4a33a" letter-spacing="6">FERREPLUS</text>
+  <text x="90" y="315" font-family="DejaVu Sans" font-size="79" font-weight="700" fill="white">Publicar contenido</text>
+  <text x="90" y="410" font-family="DejaVu Sans" font-size="48" font-weight="700" fill="#e4a33a">Del panel al portal público</text>
+  <rect x="90" y="500" width="400" height="76" rx="38" fill="#e4a33a"/>
+  <text x="290" y="551" text-anchor="middle" font-family="DejaVu Sans" font-size="31" font-weight="700" fill="#172630">CAPÍTULO 10</text>
+  <text x="90" y="650" font-family="DejaVu Sans" font-size="28" fill="#dce9e7">Talento · API · slug · publicación</text>
+</svg>

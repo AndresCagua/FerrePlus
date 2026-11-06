@@ -1,0 +1,143 @@
+1
+00:00:00,000 --> 00:00:03,195
+En este último capítulo reunimos las prácticas que
+
+2
+00:00:03,195 --> 00:00:05,239
+mantienen FerrePlus verificable.
+
+3
+00:00:05,239 --> 00:00:08,498
+Vamos a ejecutar pruebas, comprobar la salud de los
+
+4
+00:00:08,498 --> 00:00:11,437
+servicios, revisar diagnósticos y recorrer una
+
+5
+00:00:11,437 --> 00:00:14,376
+actualización reversible sin mostrar secretos.
+
+6
+00:00:14,376 --> 00:00:17,977
+El backend se prueba con Maven dentro de un contenedor.
+
+7
+00:00:17,977 --> 00:00:21,250
+La suite combina pruebas unitarias, de seguridad e
+
+8
+00:00:21,250 --> 00:00:24,589
+integración, y se ejecuta de forma reproducible sin
+
+9
+00:00:24,589 --> 00:00:26,880
+instalar Maven en la máquina local.
+
+10
+00:00:26,880 --> 00:00:29,600
+El frontend también se verifica en modo CI.
+
+11
+00:00:29,600 --> 00:00:32,890
+Ejecutar la suite sin vigilancia interactiva permite
+
+12
+00:00:32,890 --> 00:00:36,433
+repetir el mismo resultado en una integración continua y
+
+13
+00:00:36,433 --> 00:00:39,912
+detectar regresiones antes de reconstruir las imágenes.
+
+14
+00:00:39,912 --> 00:00:43,708
+Docker Compose define healthchecks para las dependencias
+
+15
+00:00:43,708 --> 00:00:45,334
+y para las aplicaciones.
+
+16
+00:00:45,334 --> 00:00:49,130
+Las APIs esperan a MongoDB, Redis, MinIO y Mailpit antes
+
+17
+00:00:49,130 --> 00:00:52,790
+de iniciar, reduciendo fallos causados por el orden de
+
+18
+00:00:52,790 --> 00:00:53,400
+arranque.
+
+19
+00:00:53,400 --> 00:00:56,682
+Cuando algo falla, empezamos por el estado de los
+
+20
+00:00:56,682 --> 00:01:00,098
+contenedores y las últimas líneas relevantes de los
+
+21
+00:01:00,098 --> 00:01:00,433
+logs.
+
+22
+00:01:00,433 --> 00:01:04,116
+El diagnóstico debe ser acotado: no hace falta imprimir
+
+23
+00:01:04,116 --> 00:01:07,800
+tokens, cuerpos de solicitudes ni información personal.
+
+24
+00:01:07,800 --> 00:01:11,155
+Los endpoints de salud ayudan a separar una falla de
+
+25
+00:01:11,155 --> 00:01:13,672
+infraestructura de una falla funcional.
+
+26
+00:01:13,672 --> 00:01:17,285
+Un código HTTP observable confirma si cada capa responde
+
+27
+00:01:17,285 --> 00:01:19,608
+antes de profundizar en el problema.
+
+28
+00:01:19,608 --> 00:01:23,378
+Una actualización segura sigue cuatro pasos: revisar los
+
+29
+00:01:23,378 --> 00:01:27,013
+cambios, reconstruir, verificar healthchecks y logs, y
+
+30
+00:01:27,013 --> 00:01:30,715
+volver a una versión anterior si la comprobación falla.
+
+31
+00:01:30,715 --> 00:01:33,744
+La reversibilidad es parte del mantenimiento.
+
+32
+00:01:33,744 --> 00:01:37,451
+Con pruebas reproducibles, healthchecks, diagnósticos
+
+33
+00:01:37,451 --> 00:01:41,088
+acotados y rollback, FerrePlus puede evolucionar sin
+
+34
+00:01:41,088 --> 00:01:42,486
+perder trazabilidad.
+
+35
+00:01:42,486 --> 00:01:46,403
+Probar, observar, actualizar y poder volver atrás cierra
+
+36
+00:01:46,403 --> 00:01:47,592
+la serie técnica.

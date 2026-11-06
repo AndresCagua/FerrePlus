@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#162732"/><stop offset="1" stop-color="#075c68"/></linearGradient></defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="1100" cy="180" r="270" fill="#e4a33a" opacity=".17"/>
+  <path d="M1020 120 L1160 175 L1145 350 Q1100 455 1020 500 Q940 455 895 350 L880 175 Z" fill="none" stroke="#e4a33a" stroke-width="12" opacity=".9"/>
+  <path d="M1020 215 v145 M950 290 h140" stroke="#e4a33a" stroke-width="12" stroke-linecap="round"/>
+  <text x="90" y="130" font-family="DejaVu Sans" font-size="34" font-weight="700" fill="#e4a33a" letter-spacing="6">FERREPLUS</text>
+  <text x="90" y="315" font-family="DejaVu Sans" font-size="92" font-weight="700" fill="white">Seguridad</text>
+  <text x="90" y="410" font-family="DejaVu Sans" font-size="43" font-weight="700" fill="#e4a33a">JWT · CORS · RATE LIMITING</text>
+  <rect x="90" y="500" width="375" height="76" rx="38" fill="#e4a33a"/>
+  <text x="277" y="551" text-anchor="middle" font-family="DejaVu Sans" font-size="31" font-weight="700" fill="#162732">CAPÍTULO 8</text>
+  <text x="90" y="650" font-family="DejaVu Sans" font-size="28" fill="#dce9e7">Turnstile · secretos · autorización</text>
+</svg>

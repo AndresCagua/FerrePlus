@@ -1,0 +1,16 @@
+{
+  "chapter": 5,
+  "title": "APIs y límites de responsabilidad",
+  "status": "approved",
+  "format": {"width": 1920, "height": 1080, "fps": 30},
+  "scenes": [
+    {"id":"T1","title":"Introducción","kind":"title","chapter":"5","durationSeconds":32,"visual":"APIs y límites de responsabilidad","subtitle":"Contratos, validación y errores","description":"Cómo cada servicio recibe, valida y responde.","tags":["admin-api","public-api","DTOs"]},
+    {"id":"T2","title":"API pública","kind":"terminal","durationSeconds":30,"command":"curl -sS -H 'Host: api.localhost' http://127.0.0.1:8088/api/public/ping","caption":"Respuesta real del public-api; no se muestran datos personales ni secretos."},
+    {"id":"T3","title":"API administrativa protegida","kind":"terminal","durationSeconds":35,"command":"curl -sS -o /dev/null -w 'HTTP status: %{http_code}\\n' -H 'Host: api-admin.localhost' http://127.0.0.1:8088/api/productos","caption":"Los recursos administrativos requieren autenticación y autoridad efectiva."},
+    {"id":"T4","title":"DTOs y validación","kind":"terminal","durationSeconds":38,"command":"curl -sS -X POST -H 'Host: api-admin.localhost' -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8088/api/auth/login","caption":"Una solicitud inválida se rechaza antes de ejecutar la operación."},
+    {"id":"T5","title":"Errores consistentes","kind":"terminal","durationSeconds":38,"command":"curl -sS -H 'Host: api.localhost' http://127.0.0.1:8088/api/public/media/archivo-inexistente.jpg","caption":"La API pública devuelve un problema controlado sin exponer trazas internas."},
+    {"id":"T6","title":"Límites de responsabilidad","kind":"diagram","durationSeconds":42,"caption":"Cliente → API → servicio → almacenamiento; cada límite valida y transforma la información."},
+    {"id":"T7","title":"Flujo completo de una petición","kind":"terminal","durationSeconds":42,"command":"curl -sS -o /dev/null -w 'HTTP status: %{http_code}\\n' -H 'Host: api.localhost' http://127.0.0.1:8088/api/public/publicaciones","caption":"La petición entra por el contrato HTTP y termina en una respuesta pública controlada."},
+    {"id":"T8","title":"Cierre","kind":"closing","durationSeconds":32,"caption":"APIs separadas, contratos explícitos, validación y errores seguros."}
+  ]
+}

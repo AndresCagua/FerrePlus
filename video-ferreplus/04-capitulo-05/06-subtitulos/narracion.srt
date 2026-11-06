@@ -1,0 +1,215 @@
+1
+00:00:00,000 --> 00:00:03,421
+En este capítulo vamos a seguir las APIs de FerrePlus y
+
+2
+00:00:03,421 --> 00:00:06,593
+los límites de responsabilidad entre sus servicios.
+
+3
+00:00:06,593 --> 00:00:09,952
+Veremos la diferencia entre la API administrativa y la
+
+4
+00:00:09,952 --> 00:00:13,124
+API pública, el papel de los DTOs, la validación de
+
+5
+00:00:13,124 --> 00:00:16,109
+entradas, las respuestas de error y el recorrido
+
+6
+00:00:16,109 --> 00:00:17,664
+completo de una petición.
+
+7
+00:00:17,664 --> 00:00:20,682
+La API pública expone únicamente las operaciones
+
+8
+00:00:20,682 --> 00:00:23,449
+destinadas a visitantes y usuarios externos.
+
+9
+00:00:23,449 --> 00:00:26,593
+Este ping es una comprobación mínima y controlada:
+
+10
+00:00:26,593 --> 00:00:29,988
+confirma qué servicio respondió sin consultar bases de
+
+11
+00:00:29,988 --> 00:00:32,378
+datos ni mostrar información sensible.
+
+12
+00:00:32,378 --> 00:00:35,647
+Las rutas públicas transforman los datos internos en
+
+13
+00:00:35,647 --> 00:00:37,848
+respuestas pensadas para el portal.
+
+14
+00:00:37,848 --> 00:00:41,071
+La API administrativa tiene una frontera diferente.
+
+15
+00:00:41,071 --> 00:00:44,547
+Una consulta de productos no se acepta solamente porque
+
+16
+00:00:44,547 --> 00:00:48,087
+la ruta exista: primero debe existir una sesión válida y
+
+17
+00:00:48,087 --> 00:00:51,121
+después una autoridad que permita ver productos.
+
+18
+00:00:51,121 --> 00:00:54,281
+Esta separación evita que una ruta operativa quede
+
+19
+00:00:54,281 --> 00:00:57,504
+disponible para cualquier cliente sin autorización.
+
+20
+00:00:57,504 --> 00:01:00,889
+Los DTOs describen la forma esperada de una entrada.
+
+21
+00:01:00,889 --> 00:01:03,949
+Las anotaciones de validación comprueban campos
+
+22
+00:01:03,949 --> 00:01:07,269
+obligatorios, formatos, tamaños y valores positivos
+
+23
+00:01:07,269 --> 00:01:09,091
+antes de llamar al servicio.
+
+24
+00:01:09,091 --> 00:01:12,607
+En este ejemplo enviamos un cuerpo vacío al login para
+
+25
+00:01:12,607 --> 00:01:15,666
+observar una respuesta controlada, sin utilizar
+
+26
+00:01:15,666 --> 00:01:16,968
+credenciales reales.
+
+27
+00:01:16,968 --> 00:01:19,908
+Los errores también forman parte del contrato.
+
+28
+00:01:19,908 --> 00:01:23,488
+Cuando un recurso público no existe, la API responde con
+
+29
+00:01:23,488 --> 00:01:26,428
+un problema identificable y un mensaje seguro.
+
+30
+00:01:26,428 --> 00:01:30,008
+El cliente recibe información suficiente para mostrar un
+
+31
+00:01:30,008 --> 00:01:33,076
+estado entendible, pero no recibe una traza, una
+
+32
+00:01:33,076 --> 00:01:36,144
+consulta interna ni detalles de infraestructura.
+
+33
+00:01:36,144 --> 00:01:39,556
+El límite de responsabilidad se repite en cada capa.
+
+34
+00:01:39,556 --> 00:01:42,771
+El cliente construye una solicitud, la API valida
+
+35
+00:01:42,771 --> 00:01:46,314
+autenticación y formato, el servicio aplica las reglas
+
+36
+00:01:46,314 --> 00:01:49,856
+de negocio y el almacenamiento persiste o consulta los
+
+37
+00:01:49,856 --> 00:01:50,250
+datos.
+
+38
+00:01:50,250 --> 00:01:53,859
+Cada frontera transforma la información y evita que una
+
+39
+00:01:53,859 --> 00:01:57,336
+capa conozca responsabilidades que pertenecen a otra.
+
+40
+00:01:57,336 --> 00:02:00,748
+Aquí vemos el flujo completo de una petición pública.
+
+41
+00:02:00,748 --> 00:02:03,838
+El cliente envía una solicitud HTTP a través del
+
+42
+00:02:03,838 --> 00:02:06,993
+entrypoint local, la ruta llega al public-api, el
+
+43
+00:02:06,993 --> 00:02:10,211
+servicio consulta su almacenamiento y la respuesta
+
+44
+00:02:10,211 --> 00:02:12,465
+vuelve con un contrato serializado.
+
+45
+00:02:12,465 --> 00:02:15,619
+La observabilidad y el manejo de errores permiten
+
+46
+00:02:15,619 --> 00:02:17,808
+diagnosticar sin exponer secretos.
+
+47
+00:02:17,808 --> 00:02:21,369
+Las APIs de FerrePlus separan responsabilidades mediante
+
+48
+00:02:21,369 --> 00:02:22,704
+contratos explícitos.
+
+49
+00:02:22,704 --> 00:02:25,884
+La API administrativa protege la operación, la API
+
+50
+00:02:25,884 --> 00:02:29,063
+pública limita la exposición, los DTOs validan las
+
+51
+00:02:29,063 --> 00:02:32,052
+entradas y los manejadores convierten fallos en
+
+52
+00:02:32,052 --> 00:02:33,260
+respuestas seguras.
+
+53
+00:02:33,260 --> 00:02:36,694
+En el siguiente capítulo veremos cómo se organizan los
+
+54
+00:02:36,694 --> 00:02:40,128
+datos y los almacenamientos detrás de estas fronteras.

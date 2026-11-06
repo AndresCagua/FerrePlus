@@ -1,0 +1,12 @@
+{
+  "language": "es-419-neutral",
+  "scenes": [
+    {"id":"T1","text":"En este capítulo seguiremos un flujo completo de negocio: crear una publicación desde el módulo Talento, convertirla en contenido publicado y verificarla desde el portal público. Usaremos un título, resumen y descripción ficticios, y eliminaremos el dato al terminar la demostración."},
+    {"id":"T2","text":"El recorrido comienza en el módulo Talento del panel administrativo. La sección de publicaciones lista el contenido y ofrece la acción para crear uno nuevo, siempre detrás de autenticación y permisos. El panel es la frontera de operación; el portal público no escribe directamente en esta colección."},
+    {"id":"T3","text":"El formulario solicita título, resumen, descripción y categoría. También admite medios opcionales, video, enlaces y metadatos SEO. Al guardar, el cliente envía los datos como multipart y el backend valida el contrato antes de delegar la operación al servicio público interno."},
+    {"id":"T4","text":"La prueba crea primero un borrador ficticio. El backend genera el slug a partir del título y devuelve el identificador de la publicación. Luego la acción publicar cambia su estado. En pantalla solo mostramos códigos HTTP, el slug de prueba y nunca el token ni una respuesta con información privada."},
+    {"id":"T5","text":"Con el contenido publicado, la API pública puede resolverlo por slug. Esta verificación ocurre en el host público y confirma que el portal consume únicamente publicaciones visibles. La separación entre el endpoint administrativo y el endpoint público mantiene clara la responsabilidad de cada lado."},
+    {"id":"T6","text":"La demostración termina eliminando el dato ficticio mediante la ruta administrativa. Así el entorno vuelve a su estado anterior y no se contaminan los datos locales con contenido de prueba. En un flujo real, esta etapa dependería de la política editorial y de retención del proyecto."},
+    {"id":"T7","text":"El flujo completo conecta Talento, la API administrativa, el servicio público y el portal: borrador, publicación, consulta por slug y limpieza controlada. La misma estrategia permite seguir otros procesos de FerrePlus con evidencia real y datos seguros."}
+  ]
+}

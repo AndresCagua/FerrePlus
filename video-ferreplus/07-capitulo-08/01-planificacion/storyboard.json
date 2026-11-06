@@ -1,0 +1,16 @@
+{
+  "chapter": 8,
+  "title": "Seguridad",
+  "status": "approved",
+  "format": {"width": 1920, "height": 1080, "fps": 30},
+  "scenes": [
+    {"id":"T1","title":"Introducción","kind":"title","chapter":"8","durationSeconds":32,"visual":"Seguridad en FerrePlus","subtitle":"Autorización, secretos y protección pública","description":"Cómo se protegen las rutas y los datos sin exponer credenciales.","tags":["JWT","CORS","Turnstile","Rate limiting"]},
+    {"id":"T2","title":"JWT y autorización","kind":"browser","sourceUrl":"http://admin.localhost:8088/login","durationSeconds":34},
+    {"id":"T3","title":"Ruta protegida","kind":"terminal","durationSeconds":34,"command":"curl -sS -o /dev/null -w 'Protected admin route: HTTP %{http_code}\\n' -H 'Host: api-admin.localhost' http://127.0.0.1:8088/api/productos","caption":"Una ruta administrativa sin Bearer token no se procesa como una petición autenticada."},
+    {"id":"T4","title":"CORS, validación y headers","kind":"terminal","durationSeconds":38,"command":"printf '%s\\n' 'CORS preflight:'; curl -sS -D - -o /dev/null -X OPTIONS -H 'Host: api.localhost' -H 'Origin: http://public.localhost' -H 'Access-Control-Request-Method: POST' http://127.0.0.1:8088/api/public/contactos | grep -i -E 'HTTP/|access-control|content-security|x-content-type|referrer-policy|permissions-policy'","caption":"La respuesta permite orígenes configurados y publica solo headers de seguridad necesarios."},
+    {"id":"T5","title":"Rate limiting","kind":"terminal","durationSeconds":38,"command":"grep -n -E '3, 900|5, 900|10, 86400|20, 86400|TOO_MANY_REQUESTS|Retry-After|fallback' ../public-api/src/main/java/com/ferreplus/publico/ratelimit/RateLimitService.java ../public-api/src/main/java/com/ferreplus/publico/ratelimit/RateLimitFilter.java","caption":"Las rutas sensibles tienen límites por ventana y una degradación local conservadora si Redis no responde."},
+    {"id":"T6","title":"Turnstile y formularios","kind":"browser","sourceUrl":"http://public.localhost:8088/contactanos/","navigationWaitUntil":"domcontentloaded","durationSeconds":36},
+    {"id":"T7","title":"Secretos y logs seguros","kind":"terminal","durationSeconds":36,"command":"printf '%s\\n' 'Ignored runtime files:'; git check-ignore .env secrets/s2s-private-key.pem; printf '%s\\n' 'Safe logging fields:'; grep -n -E 'emailDomain|nameLength|messageLength|hasFingerprint|opaque' ../public-api/src/main/java/com/ferreplus/publico/controller/PublicController.java","caption":"Los secretos se inyectan en runtime y los logs registran metadatos acotados, no valores sensibles."},
+    {"id":"T8","title":"Cierre","kind":"closing","durationSeconds":32,"caption":"JWT, S2S, CORS, validación, rate limiting, Turnstile y secretos fuera de Git."}
+  ]
+}

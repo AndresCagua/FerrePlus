@@ -1,0 +1,16 @@
+{
+  "chapter": 6,
+  "title": "Persistencia y almacenamiento",
+  "status": "approved",
+  "format": {"width": 1920, "height": 1080, "fps": 30},
+  "scenes": [
+    {"id":"T1","title":"Introducción","kind":"title","chapter":"6","durationSeconds":32,"visual":"Persistencia y almacenamiento","subtitle":"Datos, límites y servicios","description":"Dónde vive cada tipo de información en FerrePlus.","tags":["PostgreSQL","MongoDB","Redis","MinIO"]},
+    {"id":"T2","title":"Servicios y volúmenes","kind":"terminal","durationSeconds":32,"command":"docker compose ps --format 'table {{.Name}}\\t{{.Service}}\\t{{.State}}'","caption":"Los servicios se ejecutan localmente y sus datos persistentes usan volúmenes separados."},
+    {"id":"T3","title":"PostgreSQL administrativo","kind":"terminal","durationSeconds":32,"command":"pg_isready -h 127.0.0.1 -p 5432","caption":"PostgreSQL respalda la operación administrativa mediante repositorios JPA."},
+    {"id":"T4","title":"MongoDB público","kind":"terminal","durationSeconds":32,"command":"docker compose exec -T mongodb mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'","caption":"MongoDB almacena documentos del contenido público y confirma su disponibilidad."},
+    {"id":"T5","title":"Redis y límites","kind":"terminal","durationSeconds":32,"command":"docker compose exec -T redis sh -c 'REDISCLI_AUTH=\"$REDIS_PASSWORD\" redis-cli ping'","caption":"Redis mantiene contadores temporales para rate limiting; la contraseña no se muestra."},
+    {"id":"T6","title":"MinIO para archivos","kind":"terminal","durationSeconds":32,"command":"curl -sS -o /dev/null -w 'MinIO health: %{http_code}\\n' http://127.0.0.1:9000/minio/health/live","caption":"MinIO separa buckets para medios públicos y archivos privados como CVs."},
+    {"id":"T7","title":"Ownership y redes internas","kind":"diagram","durationSeconds":42,"caption":"Cada servicio posee sus datos y se conecta únicamente a las redes necesarias: operación, contenido público y servicios internos."},
+    {"id":"T8","title":"Cierre","kind":"closing","durationSeconds":32,"caption":"PostgreSQL, MongoDB, Redis, MinIO, ownership y redes aisladas."}
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "chapter": 12,
+  "voice": "es-MX-DaliaNeural",
+  "scenes": [
+    {"id":"T1","text":"En este capítulo seguimos el formulario de Contactanos desde el portal público hasta la persistencia y la notificación interna. Todo se ejecuta localmente con datos ficticios."},
+    {"id":"T2","text":"El formulario solicita nombre, correo, teléfono opcional, asunto y mensaje. La interfaz existente también incorpora honeypot y Turnstile para proteger el endpoint."},
+    {"id":"T3","text":"Al enviar los datos, la API pública responde con estado doscientos uno y devuelve el identificador del contacto junto con su estado inicial. La clave de idempotencia evita duplicar un mismo envío."},
+    {"id":"T4","text":"ContactoService valida los campos, protege la información técnica y guarda el registro en MongoDB como no leído. Después publica un evento de contacto recibido para desacoplar la persistencia del envío de correo."},
+    {"id":"T5","text":"El listener de correo consume el evento y genera una única notificación interna. Mailpit permite inspeccionarla localmente sin entregar mensajes a ningún proveedor externo."},
+    {"id":"T6","text":"La evidencia se limita al total de mensajes y al asunto. No necesitamos mostrar el cuerpo completo, credenciales, tokens ni información personal para demostrar que el flujo funcionó."},
+    {"id":"T7","text":"Al finalizar, eliminamos el registro ficticio, la notificación asociada y el mensaje de Mailpit. Así el entorno queda limpio para repetir la demostración."},
+    {"id":"T8","text":"El resultado es un flujo completo y trazable: formulario, validación, persistencia, evento y notificación interna local. Una integración simple de explicar y segura de verificar."}
+  ]
+}

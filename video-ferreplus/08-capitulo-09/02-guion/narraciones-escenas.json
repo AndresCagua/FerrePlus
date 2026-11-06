@@ -1,0 +1,12 @@
+{
+  "language": "es-419-neutral",
+  "scenes": [
+    {"id":"T1","text":"En este capítulo seguimos el camino desde un entorno local hasta Cloudflare Tunnel. Vamos a diferenciar los Quick Tunnels temporales de un named tunnel, revisar el perfil opcional de Docker Compose, ver cómo se monta el token como secreto y entender el recorrido Cloudflare, cloudflared, Traefik y la aplicación."},
+    {"id":"T2","text":"El script de desarrollo crea dos Quick Tunnels temporales: uno para el host público y otro para el host administrativo. Ambos usan la red del host y un header de destino para que Traefik seleccione el router correcto. Cloudflare genera URLs efímeras. Son útiles para una prueba puntual, pero no deben confundirse con una publicación permanente."},
+    {"id":"T3","text":"La configuración estable está separada en un perfil opcional llamado tunnel. Así, el servicio cloudflared no se inicia en cada entorno local por accidente. El contenedor espera a que Traefik esté saludable, se conecta a las redes pública y administrativa y se reinicia solo según la política declarada."},
+    {"id":"T4","text":"En el named tunnel, el token no aparece en el comando ni en la imagen. Compose lo monta como un Docker secret desde un archivo local ignorado. cloudflared recibe únicamente la ruta interna del archivo mediante token-file. En una captura segura mostramos la configuración de montaje, nunca el contenido del secreto."},
+    {"id":"T5","text":"El recorrido tiene cuatro fronteras. El cliente llega al Edge de Cloudflare. El proceso cloudflared mantiene la conexión saliente y reenvía el tráfico hacia Traefik. Traefik decide si la solicitud corresponde al portal público o al panel administrativo y finalmente la entrega al servicio local indicado."},
+    {"id":"T6","text":"La actualización también es una decisión operativa. La imagen de cloudflared está fijada a una versión concreta y el proceso usa no-autoupdate. Para cambiarla se modifica la referencia de imagen, se revisa la configuración y se recrea el servicio de manera controlada, sin reemplazar el token ni imprimirlo en logs."},
+    {"id":"T7","text":"Quick Tunnel sirve para una prueba temporal y named tunnel para una exposición controlada. En ambos casos, Traefik sigue siendo el entrypoint y el token permanece fuera de Git. El siguiente capítulo recorrerá un flujo completo de negocio a través de estas fronteras."}
+  ]
+}

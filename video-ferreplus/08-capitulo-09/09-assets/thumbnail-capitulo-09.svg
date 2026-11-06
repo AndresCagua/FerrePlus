@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#172630"/><stop offset="1" stop-color="#075f6e"/></linearGradient></defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="1110" cy="160" r="270" fill="#e4a33a" opacity=".16"/>
+  <g fill="none" stroke="#e4a33a" stroke-width="8" stroke-linecap="round"><path d="M820 330 H1110"/><path d="M900 270 l-80 60 80 60"/><path d="M1030 270 l80 60-80 60"/></g>
+  <g fill="#e4a33a"><circle cx="820" cy="330" r="18"/><circle cx="1110" cy="330" r="18"/></g>
+  <rect x="900" y="255" width="130" height="150" rx="18" fill="none" stroke="#fff" stroke-width="6" opacity=".75"/>
+  <text x="90" y="130" font-family="DejaVu Sans" font-size="34" font-weight="700" fill="#e4a33a" letter-spacing="6">FERREPLUS</text>
+  <text x="90" y="315" font-family="DejaVu Sans" font-size="84" font-weight="700" fill="white">Cloudflare</text>
+  <text x="90" y="405" font-family="DejaVu Sans" font-size="84" font-weight="700" fill="#e4a33a">Tunnel</text>
+  <rect x="90" y="500" width="375" height="76" rx="38" fill="#e4a33a"/>
+  <text x="277" y="551" text-anchor="middle" font-family="DejaVu Sans" font-size="31" font-weight="700" fill="#172630">CAPÍTULO 9</text>
+  <text x="90" y="650" font-family="DejaVu Sans" font-size="28" fill="#dce9e7">Quick Tunnel · Traefik · secretos</text>
+</svg>

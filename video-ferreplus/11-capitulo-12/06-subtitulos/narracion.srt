@@ -1,0 +1,135 @@
+1
+00:00:00,000 --> 00:00:03,466
+En este capítulo seguimos el formulario de Contactanos
+
+2
+00:00:03,466 --> 00:00:06,675
+desde el portal público hasta la persistencia y la
+
+3
+00:00:06,675 --> 00:00:08,023
+notificación interna.
+
+4
+00:00:08,023 --> 00:00:11,040
+Todo se ejecuta localmente con datos ficticios.
+
+5
+00:00:11,040 --> 00:00:14,438
+El formulario solicita nombre, correo, teléfono
+
+6
+00:00:14,438 --> 00:00:16,390
+opcional, asunto y mensaje.
+
+7
+00:00:16,390 --> 00:00:20,005
+La interfaz existente también incorpora honeypot y
+
+8
+00:00:20,005 --> 00:00:22,608
+Turnstile para proteger el endpoint.
+
+9
+00:00:22,608 --> 00:00:26,247
+Al enviar los datos, la API pública responde con estado
+
+10
+00:00:26,247 --> 00:00:29,885
+doscientos uno y devuelve el identificador del contacto
+
+11
+00:00:29,885 --> 00:00:31,737
+junto con su estado inicial.
+
+12
+00:00:31,737 --> 00:00:35,376
+La clave de idempotencia evita duplicar un mismo envío.
+
+13
+00:00:35,376 --> 00:00:38,356
+ContactoService valida los campos, protege la
+
+14
+00:00:38,356 --> 00:00:42,065
+información técnica y guarda el registro en MongoDB como
+
+15
+00:00:42,065 --> 00:00:42,661
+no leído.
+
+16
+00:00:42,661 --> 00:00:46,039
+Después publica un evento de contacto recibido para
+
+17
+00:00:46,039 --> 00:00:49,152
+desacoplar la persistencia del envío de correo.
+
+18
+00:00:49,152 --> 00:00:52,630
+El listener de correo consume el evento y genera una
+
+19
+00:00:52,630 --> 00:00:54,436
+única notificación interna.
+
+20
+00:00:54,436 --> 00:00:58,048
+Mailpit permite inspeccionarla localmente sin entregar
+
+21
+00:00:58,048 --> 00:01:00,456
+mensajes a ningún proveedor externo.
+
+22
+00:01:00,456 --> 00:01:04,188
+La evidencia se limita al total de mensajes y al asunto.
+
+23
+00:01:04,188 --> 00:01:07,919
+No necesitamos mostrar el cuerpo completo, credenciales,
+
+24
+00:01:07,919 --> 00:01:11,384
+tokens ni información personal para demostrar que el
+
+25
+00:01:11,384 --> 00:01:12,384
+flujo funcionó.
+
+26
+00:01:12,384 --> 00:01:15,889
+Al finalizar, eliminamos el registro ficticio, la
+
+27
+00:01:15,889 --> 00:01:19,179
+notificación asociada y el mensaje de Mailpit.
+
+28
+00:01:19,179 --> 00:01:22,254
+Así el entorno queda limpio para repetir la
+
+29
+00:01:22,254 --> 00:01:23,184
+demostración.
+
+30
+00:01:23,184 --> 00:01:26,505
+El resultado es un flujo completo y trazable:
+
+31
+00:01:26,505 --> 00:01:29,899
+formulario, validación, persistencia, evento y
+
+32
+00:01:29,899 --> 00:01:31,892
+notificación interna local.
+
+33
+00:01:31,892 --> 00:01:35,286
+Una integración simple de explicar y segura de
+
+34
+00:01:35,286 --> 00:01:36,024
+verificar.

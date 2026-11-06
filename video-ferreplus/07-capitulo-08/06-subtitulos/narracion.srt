@@ -1,0 +1,219 @@
+1
+00:00:00,000 --> 00:00:03,728
+En este capítulo revisaremos las defensas que protegen
+
+2
+00:00:03,728 --> 00:00:04,418
+FerrePlus.
+
+3
+00:00:04,418 --> 00:00:08,145
+Veremos autorización con JWT, comunicación interna con
+
+4
+00:00:08,145 --> 00:00:11,666
+tokens de servicio, secretos entregados en runtime,
+
+5
+00:00:11,666 --> 00:00:15,463
+CORS, validación, rate limiting y Cloudflare Turnstile.
+
+6
+00:00:15,463 --> 00:00:19,190
+También veremos qué información nunca debe aparecer en
+
+7
+00:00:19,190 --> 00:00:21,192
+una demostración o en un log.
+
+8
+00:00:21,192 --> 00:00:24,470
+El panel administrativo usa una sesión sin estado.
+
+9
+00:00:24,470 --> 00:00:28,075
+La autenticación comienza en el endpoint de login y las
+
+10
+00:00:28,075 --> 00:00:31,091
+peticiones posteriores llevan un Bearer token.
+
+11
+00:00:31,091 --> 00:00:34,565
+El backend valida el token, busca al usuario activo y
+
+12
+00:00:34,565 --> 00:00:37,580
+resuelve sus autoridades antes de permitir una
+
+13
+00:00:37,580 --> 00:00:38,236
+operación.
+
+14
+00:00:38,236 --> 00:00:41,448
+La interfaz no reemplaza las reglas del servidor.
+
+15
+00:00:41,448 --> 00:00:45,032
+Cuando una ruta administrativa recibe una petición sin
+
+16
+00:00:45,032 --> 00:00:48,616
+autenticación, la cadena de seguridad la rechaza antes
+
+17
+00:00:48,616 --> 00:00:50,408
+de ejecutar el controlador.
+
+18
+00:00:50,408 --> 00:00:53,395
+En esta prueba solo mostramos el código HTTP.
+
+19
+00:00:53,395 --> 00:00:57,046
+No imprimimos el token, no usamos datos de negocio y no
+
+20
+00:00:57,046 --> 00:01:00,696
+convertimos una credencial real en material de edición.
+
+21
+00:01:00,696 --> 00:01:04,245
+CORS restringe los orígenes, métodos y headers que
+
+22
+00:01:04,245 --> 00:01:06,233
+pueden usar los navegadores.
+
+23
+00:01:06,233 --> 00:01:09,995
+La API pública agrega headers defensivos como Content
+
+24
+00:01:09,995 --> 00:01:13,899
+Security Policy, frame denial y una política de referer
+
+25
+00:01:13,899 --> 00:01:14,538
+limitada.
+
+26
+00:01:14,538 --> 00:01:18,016
+Además, los DTOs validan tamaño, formato y campos
+
+27
+00:01:18,016 --> 00:01:20,784
+requeridos antes de llegar al servicio.
+
+28
+00:01:20,784 --> 00:01:24,255
+Las operaciones públicas más sensibles tienen límites
+
+29
+00:01:24,255 --> 00:01:26,089
+por ventanas corta y diaria.
+
+30
+00:01:26,089 --> 00:01:29,691
+Redis aplica los contadores con una operación atómica y
+
+31
+00:01:29,691 --> 00:01:32,834
+devuelve Retry-After cuando el límite se supera.
+
+32
+00:01:32,834 --> 00:01:35,978
+Si Redis deja de estar disponible, el sistema no
+
+33
+00:01:35,978 --> 00:01:39,253
+desactiva la protección: usa una ventana local más
+
+34
+00:01:39,253 --> 00:01:40,104
+conservadora.
+
+35
+00:01:40,104 --> 00:01:43,623
+Los formularios públicos integran Cloudflare Turnstile
+
+36
+00:01:43,623 --> 00:01:45,578
+cuando el entorno lo habilita.
+
+37
+00:01:45,578 --> 00:01:49,227
+El portal recibe únicamente la site key pública y guarda
+
+38
+00:01:49,227 --> 00:01:51,898
+el resultado del widget en el formulario.
+
+39
+00:01:51,898 --> 00:01:55,157
+La clave secreta permanece en el backend, donde se
+
+40
+00:01:55,157 --> 00:01:57,372
+valida el token contra Cloudflare.
+
+41
+00:01:57,372 --> 00:02:01,021
+En un entorno local sin CAPTCHA activo, el componente no
+
+42
+00:02:01,021 --> 00:02:02,520
+inventa una validación.
+
+43
+00:02:02,520 --> 00:02:06,403
+Los secretos se mantienen fuera de Git y llegan mediante
+
+44
+00:02:06,403 --> 00:02:09,245
+variables o archivos montados en runtime.
+
+45
+00:02:09,245 --> 00:02:12,851
+Las claves privadas de servicio solo se montan en el
+
+46
+00:02:12,851 --> 00:02:14,307
+contenedor que firma.
+
+47
+00:02:14,307 --> 00:02:17,981
+Los logs públicos usan dominio de email, longitudes y
+
+48
+00:02:17,981 --> 00:02:21,725
+banderas; no registran contraseñas, tokens, CV, emails
+
+49
+00:02:21,725 --> 00:02:23,736
+completos ni claves privadas.
+
+50
+00:02:23,736 --> 00:02:27,586
+La seguridad de FerrePlus es una suma de límites: JWT y
+
+51
+00:02:27,586 --> 00:02:31,365
+autoridades para el panel, JWT de servicio entre APIs,
+
+52
+00:02:31,365 --> 00:02:35,075
+CORS y headers defensivos, validación, rate limiting,
+
+53
+00:02:35,075 --> 00:02:37,455
+Turnstile y secretos fuera de Git.
+
+54
+00:02:37,455 --> 00:02:40,884
+Una demostración segura muestra la protección sin
+
+55
+00:02:40,884 --> 00:02:43,824
+convertir los secretos en parte del video.

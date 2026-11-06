@@ -1,0 +1,247 @@
+1
+00:00:00,000 --> 00:00:03,569
+En este capítulo vamos a seguir el chat IA de FerrePlus
+
+2
+00:00:03,569 --> 00:00:06,684
+desde el panel administrativo hasta sus rutas de
+
+3
+00:00:06,684 --> 00:00:07,332
+respuesta.
+
+4
+00:00:07,332 --> 00:00:10,772
+Veremos cómo se clasifica una pregunta, cuándo se usa
+
+5
+00:00:10,772 --> 00:00:14,276
+una consulta analítica, cuándo se utiliza RAG, cómo se
+
+6
+00:00:14,276 --> 00:00:17,650
+generan embeddings, cómo PostgreSQL busca documentos
+
+7
+00:00:17,650 --> 00:00:21,024
+similares y cómo las fuentes acompañan la respuesta.
+
+8
+00:00:21,024 --> 00:00:24,164
+El asistente aparece como un widget dentro del panel
+
+9
+00:00:24,164 --> 00:00:27,243
+administrativo y solo está disponible para usuarios
+
+10
+00:00:27,243 --> 00:00:28,028
+autenticados.
+
+11
+00:00:28,028 --> 00:00:31,167
+La interfaz conserva el contexto de la conversación,
+
+12
+00:00:31,167 --> 00:00:34,548
+muestra el estado de carga y presenta las fuentes cuando
+
+13
+00:00:34,548 --> 00:00:37,446
+la respuesta proviene de documentos recuperados.
+
+14
+00:00:37,446 --> 00:00:40,827
+No es una ruta pública ni una ventana que pueda saltarse
+
+15
+00:00:40,827 --> 00:00:42,216
+los permisos del panel.
+
+16
+00:00:42,216 --> 00:00:45,649
+El flujo comienza con un POST autenticado a la ruta de
+
+17
+00:00:45,649 --> 00:00:45,967
+chat.
+
+18
+00:00:45,967 --> 00:00:49,463
+El cuerpo contiene únicamente la pregunta y el servidor
+
+19
+00:00:49,463 --> 00:00:51,815
+valida su tamaño antes de procesarla.
+
+20
+00:00:51,815 --> 00:00:55,057
+En esta demostración las credenciales y el token se
+
+21
+00:00:55,057 --> 00:00:58,617
+mantienen en variables de entorno durante el comando; la
+
+22
+00:00:58,617 --> 00:01:01,732
+pantalla solo muestra el status HTTP y no imprime
+
+23
+00:01:01,732 --> 00:01:02,304
+secretos.
+
+24
+00:01:02,304 --> 00:01:05,959
+Después de recibir la pregunta, el sistema clasifica la
+
+25
+00:01:05,959 --> 00:01:08,086
+intención mediante TypeSafe Jev.
+
+26
+00:01:08,086 --> 00:01:11,276
+Las intenciones permitidas forman una whitelist.
+
+27
+00:01:11,276 --> 00:01:14,731
+Una pregunta analítica se dirige a servicios de solo
+
+28
+00:01:14,731 --> 00:01:17,655
+lectura, mientras que una consulta de guía o
+
+29
+00:01:17,655 --> 00:01:20,048
+conocimiento se dirige al flujo RAG.
+
+30
+00:01:20,048 --> 00:01:23,570
+Si la intención no es segura o no puede validarse, el
+
+31
+00:01:23,570 --> 00:01:25,896
+sistema usa un fallback controlado.
+
+32
+00:01:25,896 --> 00:01:29,886
+En el flujo RAG, el texto de la pregunta se convierte en
+
+33
+00:01:29,886 --> 00:01:33,163
+un embedding de 768 dimensiones usando Gemini.
+
+34
+00:01:33,163 --> 00:01:36,226
+Los documentos indexados conservan su tipo,
+
+35
+00:01:36,226 --> 00:01:40,073
+identificador, texto, metadata y vector en PostgreSQL.
+
+36
+00:01:40,073 --> 00:01:43,422
+La consulta ordena los documentos por distancia
+
+37
+00:01:43,422 --> 00:01:47,055
+vectorial mediante pgvector y limita la cantidad de
+
+38
+00:01:47,055 --> 00:01:48,480
+contexto recuperado.
+
+39
+00:01:48,480 --> 00:01:51,781
+Los documentos más cercanos se combinan en un contexto
+
+40
+00:01:51,781 --> 00:01:52,270
+acotado.
+
+41
+00:01:52,270 --> 00:01:55,693
+Ese contexto se envía al generador con la instrucción de
+
+42
+00:01:55,693 --> 00:01:59,056
+responder únicamente con la información disponible y no
+
+43
+00:01:59,056 --> 00:02:01,012
+inventar cifras, rutas ni pasos.
+
+44
+00:02:01,012 --> 00:02:04,435
+Las fuentes se proyectan en una estructura separada para
+
+45
+00:02:04,435 --> 00:02:07,858
+que la interfaz pueda mostrarlas sin marcadores internos
+
+46
+00:02:07,858 --> 00:02:08,592
+en el texto.
+
+47
+00:02:08,592 --> 00:02:12,151
+La respuesta vuelve al panel como un contrato con texto
+
+48
+00:02:12,151 --> 00:02:12,798
+y fuentes.
+
+49
+00:02:12,798 --> 00:02:16,293
+Si la búsqueda no encuentra documentos suficientes, el
+
+50
+00:02:16,293 --> 00:02:19,658
+sistema informa que no dispone de datos suficientes.
+
+51
+00:02:19,658 --> 00:02:23,281
+Si falla una dependencia o una validación, la ruta evita
+
+52
+00:02:23,281 --> 00:02:26,840
+improvisar una respuesta y devuelve un fallback seguro.
+
+53
+00:02:26,840 --> 00:02:30,141
+La interfaz mantiene el control y muestra el estado
+
+54
+00:02:30,141 --> 00:02:31,176
+correspondiente.
+
+55
+00:02:31,176 --> 00:02:34,353
+El chat IA combina una whitelist de intenciones,
+
+56
+00:02:34,353 --> 00:02:37,728
+consultas analíticas de solo lectura y recuperación
+
+57
+00:02:37,728 --> 00:02:39,184
+semántica con fuentes.
+
+58
+00:02:39,184 --> 00:02:42,493
+Jev ayuda a clasificar, Gemini genera embeddings y
+
+59
+00:02:42,493 --> 00:02:45,736
+respuestas, pgvector recupera contexto y el panel
+
+60
+00:02:45,736 --> 00:02:47,192
+presenta el resultado.
+
+61
+00:02:47,192 --> 00:02:50,567
+En el siguiente capítulo revisaremos las medidas de
+
+62
+00:02:50,567 --> 00:02:53,016
+seguridad que protegen estos límites.

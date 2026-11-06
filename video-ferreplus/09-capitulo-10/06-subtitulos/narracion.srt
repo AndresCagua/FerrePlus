@@ -1,0 +1,183 @@
+1
+00:00:00,000 --> 00:00:03,071
+En este capítulo seguiremos un flujo completo de
+
+2
+00:00:03,071 --> 00:00:06,589
+negocio: crear una publicación desde el módulo Talento,
+
+3
+00:00:06,589 --> 00:00:10,043
+convertirla en contenido publicado y verificarla desde
+
+4
+00:00:10,043 --> 00:00:11,195
+el portal público.
+
+5
+00:00:11,195 --> 00:00:14,649
+Usaremos un título, resumen y descripción ficticios, y
+
+6
+00:00:14,649 --> 00:00:17,784
+eliminaremos el dato al terminar la demostración.
+
+7
+00:00:17,784 --> 00:00:21,115
+El recorrido comienza en el módulo Talento del panel
+
+8
+00:00:21,115 --> 00:00:22,076
+administrativo.
+
+9
+00:00:22,076 --> 00:00:25,599
+La sección de publicaciones lista el contenido y ofrece
+
+10
+00:00:25,599 --> 00:00:28,737
+la acción para crear uno nuevo, siempre detrás de
+
+11
+00:00:28,737 --> 00:00:30,339
+autenticación y permisos.
+
+12
+00:00:30,339 --> 00:00:33,862
+El panel es la frontera de operación; el portal público
+
+13
+00:00:33,862 --> 00:00:36,552
+no escribe directamente en esta colección.
+
+14
+00:00:36,552 --> 00:00:40,307
+El formulario solicita título, resumen, descripción y
+
+15
+00:00:40,307 --> 00:00:41,015
+categoría.
+
+16
+00:00:41,015 --> 00:00:44,557
+También admite medios opcionales, video, enlaces y
+
+17
+00:00:44,557 --> 00:00:45,549
+metadatos SEO.
+
+18
+00:00:45,549 --> 00:00:49,445
+Al guardar, el cliente envía los datos como multipart y
+
+19
+00:00:49,445 --> 00:00:52,916
+el backend valida el contrato antes de delegar la
+
+20
+00:00:52,916 --> 00:00:55,608
+operación al servicio público interno.
+
+21
+00:00:55,608 --> 00:00:58,620
+La prueba crea primero un borrador ficticio.
+
+22
+00:00:58,620 --> 00:01:02,455
+El backend genera el slug a partir del título y devuelve
+
+23
+00:01:02,455 --> 00:01:04,851
+el identificador de la publicación.
+
+24
+00:01:04,851 --> 00:01:07,726
+Luego la acción publicar cambia su estado.
+
+25
+00:01:07,726 --> 00:01:11,218
+En pantalla solo mostramos códigos HTTP, el slug de
+
+26
+00:01:11,218 --> 00:01:15,052
+prueba y nunca el token ni una respuesta con información
+
+27
+00:01:15,052 --> 00:01:15,600
+privada.
+
+28
+00:01:15,600 --> 00:01:18,709
+Con el contenido publicado, la API pública puede
+
+29
+00:01:18,709 --> 00:01:20,004
+resolverlo por slug.
+
+30
+00:01:20,004 --> 00:01:23,502
+Esta verificación ocurre en el host público y confirma
+
+31
+00:01:23,502 --> 00:01:27,129
+que el portal consume únicamente publicaciones visibles.
+
+32
+00:01:27,129 --> 00:01:30,432
+La separación entre el endpoint administrativo y el
+
+33
+00:01:30,432 --> 00:01:33,864
+endpoint público mantiene clara la responsabilidad de
+
+34
+00:01:33,864 --> 00:01:34,512
+cada lado.
+
+35
+00:01:34,512 --> 00:01:37,678
+La demostración termina eliminando el dato ficticio
+
+36
+00:01:37,678 --> 00:01:39,664
+mediante la ruta administrativa.
+
+37
+00:01:39,664 --> 00:01:42,768
+Así el entorno vuelve a su estado anterior y no se
+
+38
+00:01:42,768 --> 00:01:46,057
+contaminan los datos locales con contenido de prueba.
+
+39
+00:01:46,057 --> 00:01:49,409
+En un flujo real, esta etapa dependería de la política
+
+40
+00:01:49,409 --> 00:01:51,768
+editorial y de retención del proyecto.
+
+41
+00:01:51,768 --> 00:01:54,541
+El flujo completo conecta Talento, la API
+
+42
+00:01:54,541 --> 00:01:57,788
+administrativa, el servicio público y el portal:
+
+43
+00:01:57,788 --> 00:02:01,238
+borrador, publicación, consulta por slug y limpieza
+
+44
+00:02:01,238 --> 00:02:01,982
+controlada.
+
+45
+00:02:01,982 --> 00:02:05,500
+La misma estrategia permite seguir otros procesos de
+
+46
+00:02:05,500 --> 00:02:08,544
+FerrePlus con evidencia real y datos seguros.

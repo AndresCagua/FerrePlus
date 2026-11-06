@@ -1,0 +1,239 @@
+1
+00:00:00,000 --> 00:00:03,642
+En este capítulo vamos a revisar cómo FerrePlus organiza
+
+2
+00:00:03,642 --> 00:00:05,983
+la persistencia y el almacenamiento.
+
+3
+00:00:05,983 --> 00:00:09,299
+Veremos por qué la operación administrativa utiliza
+
+4
+00:00:09,299 --> 00:00:12,421
+PostgreSQL, por qué el contenido público vive en
+
+5
+00:00:12,421 --> 00:00:15,867
+MongoDB, cómo Redis sostiene los límites temporales y
+
+6
+00:00:15,867 --> 00:00:18,338
+cómo MinIO almacena medios y archivos.
+
+7
+00:00:18,338 --> 00:00:21,720
+También veremos ownership de datos y redes internas.
+
+8
+00:00:21,720 --> 00:00:25,133
+El entorno local separa los servicios y sus volúmenes
+
+9
+00:00:25,133 --> 00:00:25,970
+persistentes.
+
+10
+00:00:25,970 --> 00:00:29,382
+La lista muestra qué contenedores están activos, pero
+
+11
+00:00:29,382 --> 00:00:32,731
+los datos no se mezclan automáticamente entre ellos.
+
+12
+00:00:32,731 --> 00:00:35,886
+Esta separación permite reconstruir una parte del
+
+13
+00:00:35,886 --> 00:00:39,427
+entorno sin convertir cada servicio en dueño de toda la
+
+14
+00:00:39,427 --> 00:00:40,200
+información.
+
+15
+00:00:40,200 --> 00:00:43,860
+La operación administrativa usa PostgreSQL como base
+
+16
+00:00:43,860 --> 00:00:44,634
+relacional.
+
+17
+00:00:44,634 --> 00:00:48,576
+Los repositorios JPA de admin-api trabajan con entidades
+
+18
+00:00:48,576 --> 00:00:52,025
+y relaciones de negocio como productos, clientes,
+
+19
+00:00:52,025 --> 00:00:54,207
+proveedores, ventas y usuarios.
+
+20
+00:00:54,207 --> 00:00:57,515
+Esta comprobación solo confirma que el servidor
+
+21
+00:00:57,515 --> 00:01:01,316
+PostgreSQL está disponible; no muestra credenciales ni
+
+22
+00:01:01,316 --> 00:01:03,216
+consultas con datos reales.
+
+23
+00:01:03,216 --> 00:01:06,935
+El contenido público usa MongoDB mediante repositorios
+
+24
+00:01:06,935 --> 00:01:07,899
+de documentos.
+
+25
+00:01:07,899 --> 00:01:11,686
+Publicaciones, convocatorias, contactos y postulaciones
+
+26
+00:01:11,686 --> 00:01:15,542
+se modelan como documentos que pertenecen al public-api.
+
+27
+00:01:15,542 --> 00:01:18,848
+El ping del servidor confirma disponibilidad sin
+
+28
+00:01:18,848 --> 00:01:22,084
+imprimir colecciones, documentos ni información
+
+29
+00:01:22,084 --> 00:01:22,704
+personal.
+
+30
+00:01:22,704 --> 00:01:25,978
+Redis tiene una responsabilidad diferente: mantener
+
+31
+00:01:25,978 --> 00:01:28,161
+estado auxiliar de corta duración.
+
+32
+00:01:28,161 --> 00:01:31,179
+El servicio de rate limiting usa contadores con
+
+33
+00:01:31,179 --> 00:01:34,389
+expiración para limitar operaciones por ventana de
+
+34
+00:01:34,389 --> 00:01:34,839
+tiempo.
+
+35
+00:01:34,839 --> 00:01:38,434
+Si Redis falla, el código dispone de un fallback acotado
+
+36
+00:01:38,434 --> 00:01:42,030
+en memoria; eso permite degradar de forma controlada sin
+
+37
+00:01:42,030 --> 00:01:45,240
+convertir Redis en la fuente principal de negocio.
+
+38
+00:01:45,240 --> 00:01:48,185
+MinIO se utiliza como almacenamiento de objetos.
+
+39
+00:01:48,185 --> 00:01:51,314
+La aplicación separa buckets para medios públicos y
+
+40
+00:01:51,314 --> 00:01:53,461
+archivos privados como currículums.
+
+41
+00:01:53,461 --> 00:01:56,406
+Los objetos se validan antes de almacenarse y se
+
+42
+00:01:56,406 --> 00:01:59,841
+recuperan mediante una abstracción de almacenamiento; en
+
+43
+00:01:59,841 --> 00:02:03,277
+la demostración solo comprobamos el health endpoint y no
+
+44
+00:02:03,277 --> 00:02:05,424
+mostramos archivos ni credenciales.
+
+45
+00:02:05,424 --> 00:02:08,472
+El ownership se completa con las redes internas.
+
+46
+00:02:08,472 --> 00:02:11,393
+PostgreSQL pertenece al límite de la operación
+
+47
+00:02:11,393 --> 00:02:14,886
+administrativa, MongoDB, Redis y MinIO sirven al límite
+
+48
+00:02:14,886 --> 00:02:18,252
+público, y las redes internas conectan únicamente los
+
+49
+00:02:18,252 --> 00:02:20,538
+servicios que necesitan comunicarse.
+
+50
+00:02:20,538 --> 00:02:23,904
+Los puertos publicados en desarrollo quedan ligados a
+
+51
+00:02:23,904 --> 00:02:26,952
+loopback y los secretos permanecen fuera de Git.
+
+52
+00:02:26,952 --> 00:02:30,552
+FerrePlus no trata todos los datos como si fueran
+
+53
+00:02:30,552 --> 00:02:31,140
+iguales.
+
+54
+00:02:31,140 --> 00:02:34,960
+PostgreSQL conserva la operación relacional, MongoDB
+
+55
+00:02:34,960 --> 00:02:38,560
+organiza contenido público, Redis mantiene estado
+
+56
+00:02:38,560 --> 00:02:41,058
+temporal y MinIO almacena objetos.
+
+57
+00:02:41,058 --> 00:02:44,511
+Los owners, volúmenes y redes hacen visible esa
+
+58
+00:02:44,511 --> 00:02:45,319
+separación.
+
+59
+00:02:45,319 --> 00:02:49,066
+En el siguiente capítulo seguiremos el chat IA, sus
+
+60
+00:02:49,066 --> 00:02:50,976
+embeddings y su flujo RAG.
