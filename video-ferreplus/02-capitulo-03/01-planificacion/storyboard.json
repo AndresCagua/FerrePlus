@@ -1,0 +1,18 @@
+{
+  "chapter": 3,
+  "title": "Levantar FerrePlus localmente",
+  "status": "approved",
+  "format": {"width": 1920, "height": 1080, "fps": 30},
+  "scenes": [
+    {"id":"T1","title":"Introducción","kind":"title","durationSeconds":35,"visual":"Cómo levantar FerrePlus localmente"},
+    {"id":"T2","title":"Requisitos","kind":"terminal","durationSeconds":40,"command":"docker --version && docker compose version && git status --short","caption":"Comprobaciones iniciales sin mostrar secretos."},
+    {"id":"T3","title":"Configuración local","kind":"config","durationSeconds":45,"caption":"Variables esperadas; los valores permanecen ocultos."},
+    {"id":"T4","title":"Construcción y arranque","kind":"terminal","durationSeconds":55,"command":"docker compose up -d --build","caption":"Arranque controlado del entorno local."},
+    {"id":"T5","title":"Dependencias","kind":"diagram","durationSeconds":45,"caption":"Datos → APIs → interfaces → entrypoint"},
+    {"id":"T6","title":"Healthchecks","kind":"terminal","durationSeconds":55,"command":"docker compose ps","caption":"running no siempre significa healthy."},
+    {"id":"T7","title":"Diagnóstico","kind":"terminal","durationSeconds":50,"command":"docker compose logs --tail=30 admin-api","caption":"Revisar errores recientes sin publicar secretos."},
+    {"id":"T8","title":"Dashboard real","kind":"browser","sourceUrl":"http://admin.localhost:8088","auth":{"emailEnv":"VIDEO_ADMIN_EMAIL","passwordEnv":"VIDEO_ADMIN_PASSWORD"},"durationSeconds":45},
+    {"id":"T9","title":"Portal público real","kind":"browser","sourceUrl":"http://public.localhost:8088","durationSeconds":40},
+    {"id":"T10","title":"Detención segura y cierre","kind":"closing","command":"./scripts/start-local.sh --stop","durationSeconds":45,"caption":"Detener servicios sin eliminar volúmenes."}
+  ]
+}

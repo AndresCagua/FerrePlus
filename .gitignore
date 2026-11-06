@@ -38,12 +38,9 @@ bitacoras/
 # === Docker ===
 
 # === Producción de video ===
-# Keep chapter plans, scripts, subtitles, diagrams, thumbnails and lightweight
-# screenshots reviewable in Git. Exclude recordings, audio, rendered videos,
-# temporary edits, logs, runtime state and local dependencies.
-video-ferreplus/*
-!video-ferreplus/01-capitulo-01/
-!video-ferreplus/01-capitulo-01/**
+# Keep every chapter's plans, scripts, subtitles, diagrams, thumbnails and
+# lightweight screenshots reviewable in Git. Exclude only recordings, audio,
+# rendered videos, temporary edits, logs, runtime state and local dependencies.
 video-ferreplus/**/04-grabaciones/bruto/
 video-ferreplus/**/04-grabaciones/bruto/**
 video-ferreplus/**/05-audio/

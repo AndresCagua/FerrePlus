@@ -1,0 +1,355 @@
+1
+00:00:00,000 --> 00:00:03,839
+En el video anterior conocimos la arquitectura general
+
+2
+00:00:03,839 --> 00:00:04,763
+de FerrePlus.
+
+3
+00:00:04,763 --> 00:00:08,531
+En este capítulo vamos a poner ese entorno en marcha.
+
+4
+00:00:08,531 --> 00:00:12,086
+Veremos los requisitos, la configuración local, el
+
+5
+00:00:12,086 --> 00:00:16,067
+arranque mediante Docker Compose, los healthchecks y las
+
+6
+00:00:16,067 --> 00:00:19,764
+comprobaciones básicas para saber si el sistema está
+
+7
+00:00:19,764 --> 00:00:21,044
+listo para usarse.
+
+8
+00:00:21,044 --> 00:00:24,883
+Todo el procedimiento se realizará sin mostrar claves,
+
+9
+00:00:24,883 --> 00:00:26,731
+tokens ni datos sensibles.
+
+10
+00:00:26,731 --> 00:00:30,590
+Para levantar FerrePlus localmente se necesitan Docker,
+
+11
+00:00:30,590 --> 00:00:34,449
+Docker Compose y las herramientas auxiliares utilizadas
+
+12
+00:00:34,449 --> 00:00:36,484
+por los scripts del proyecto.
+
+13
+00:00:36,484 --> 00:00:39,782
+También se requiere disponer de los archivos de
+
+14
+00:00:39,782 --> 00:00:43,641
+configuración locales y de los secretos necesarios para
+
+15
+00:00:43,641 --> 00:00:47,360
+la base de datos, la autenticación, Redis, MinIO y la
+
+16
+00:00:47,360 --> 00:00:49,394
+comunicación entre servicios.
+
+17
+00:00:49,394 --> 00:00:52,622
+Los valores reales no se muestran en pantalla.
+
+18
+00:00:52,622 --> 00:00:56,167
+Antes de iniciar los contenedores, Docker Compose
+
+19
+00:00:56,167 --> 00:00:59,640
+obtiene la configuración desde el entorno local.
+
+20
+00:00:59,640 --> 00:01:03,402
+Allí se definen valores como las credenciales de las
+
+21
+00:01:03,402 --> 00:01:07,164
+bases de datos, la clave JWT, las claves de Gemini y
+
+22
+00:01:07,164 --> 00:01:10,564
+TypeSafe, los puertos locales y las opciones de
+
+23
+00:01:10,564 --> 00:01:11,866
+Cloudflare Tunnel.
+
+24
+00:01:11,866 --> 00:01:15,484
+Los secretos permanecen fuera de Git y se inyectan
+
+25
+00:01:15,484 --> 00:01:18,233
+únicamente durante la ejecución local.
+
+26
+00:01:18,233 --> 00:01:21,376
+Con los requisitos y la configuración preparados, el
+
+27
+00:01:21,376 --> 00:01:24,157
+entorno puede iniciar mediante Docker Compose.
+
+28
+00:01:24,157 --> 00:01:27,179
+El comando principal construye las imágenes que lo
+
+29
+00:01:27,179 --> 00:01:30,141
+necesitan y levanta los servicios definidos en el
+
+30
+00:01:30,141 --> 00:01:30,685
+proyecto.
+
+31
+00:01:30,685 --> 00:01:33,647
+El primer arranque puede tardar más porque Docker
+
+32
+00:01:33,647 --> 00:01:36,972
+descarga imágenes, construye las aplicaciones y prepara
+
+33
+00:01:36,972 --> 00:01:37,576
+las redes.
+
+34
+00:01:37,576 --> 00:01:40,598
+En ejecuciones posteriores se reutilizan las capas
+
+35
+00:01:40,598 --> 00:01:41,324
+disponibles.
+
+36
+00:01:41,324 --> 00:01:43,914
+No todos los servicios comienzan de manera
+
+37
+00:01:43,914 --> 00:01:44,778
+independiente.
+
+38
+00:01:44,778 --> 00:01:48,232
+Algunos esperan a que sus dependencias estén disponibles
+
+39
+00:01:48,232 --> 00:01:49,404
+antes de continuar.
+
+40
+00:01:49,404 --> 00:01:52,858
+Las APIs necesitan conectarse con sus servicios de datos
+
+41
+00:01:52,858 --> 00:01:56,250
+y los componentes públicos dependen de MongoDB, Redis o
+
+42
+00:01:56,250 --> 00:01:58,347
+MinIO según el flujo que atiendan.
+
+43
+00:01:58,347 --> 00:02:01,739
+Por eso un contenedor puede estar iniciado y todavía no
+
+44
+00:02:01,739 --> 00:02:03,775
+estar listo para recibir tráfico.
+
+45
+00:02:03,775 --> 00:02:07,320
+Para comprobar el estado del entorno usamos docker
+
+46
+00:02:07,320 --> 00:02:08,100
+compose ps.
+
+47
+00:02:08,100 --> 00:02:11,857
+La columna de estado permite distinguir los servicios
+
+48
+00:02:11,857 --> 00:02:15,615
+que están ejecutándose de aquellos que ya pasaron sus
+
+49
+00:02:15,615 --> 00:02:17,317
+comprobaciones de salud.
+
+50
+00:02:17,317 --> 00:02:20,649
+Un entorno listo debería mostrar saludables los
+
+51
+00:02:20,649 --> 00:02:23,839
+servicios que tienen healthcheck configurado.
+
+52
+00:02:23,839 --> 00:02:27,242
+Si un servicio aparece reiniciándose o sin salud
+
+53
+00:02:27,242 --> 00:02:29,866
+confirmada, debemos revisar sus logs.
+
+54
+00:02:29,866 --> 00:02:33,524
+Cuando un servicio no está saludable, el siguiente paso
+
+55
+00:02:33,524 --> 00:02:34,987
+es consultar sus logs.
+
+56
+00:02:34,987 --> 00:02:38,711
+Conviene comenzar por el servicio que aparece detenido o
+
+57
+00:02:38,711 --> 00:02:42,369
+reiniciándose y limitar la salida para concentrarnos en
+
+58
+00:02:42,369 --> 00:02:43,899
+los mensajes recientes.
+
+59
+00:02:43,899 --> 00:02:47,624
+Los errores más comunes están relacionados con variables
+
+60
+00:02:47,624 --> 00:02:51,149
+ausentes, credenciales incorrectas, puertos ocupados,
+
+61
+00:02:51,149 --> 00:02:54,674
+bases de datos no disponibles o claves S2S faltantes.
+
+62
+00:02:54,674 --> 00:02:58,398
+Los logs nunca deben publicarse si contienen información
+
+63
+00:02:58,398 --> 00:02:58,997
+sensible.
+
+64
+00:02:58,997 --> 00:03:02,965
+Cuando los servicios están saludables, podemos comprobar
+
+65
+00:03:02,965 --> 00:03:05,375
+las interfaces desde el navegador.
+
+66
+00:03:05,375 --> 00:03:08,847
+El panel administrativo está disponible en admin.
+
+67
+00:03:08,847 --> 00:03:09,910
+localhost:8088.
+
+68
+00:03:09,910 --> 00:03:13,808
+La comprobación debe comenzar por la página principal y
+
+69
+00:03:13,808 --> 00:03:17,493
+continuar con el inicio de sesión y una operación de
+
+70
+00:03:17,493 --> 00:03:18,556
+lectura segura.
+
+71
+00:03:18,556 --> 00:03:22,312
+Durante la demostración no se muestran contraseñas ni
+
+72
+00:03:22,312 --> 00:03:22,808
+tokens.
+
+73
+00:03:22,808 --> 00:03:26,185
+El portal público se comprueba desde public.
+
+74
+00:03:26,185 --> 00:03:27,336
+localhost:8088.
+
+75
+00:03:27,336 --> 00:03:31,557
+Esta verificación confirma que Traefik puede dirigir la
+
+76
+00:03:31,557 --> 00:03:35,471
+solicitud hacia la interfaz pública y que el portal
+
+77
+00:03:35,471 --> 00:03:39,232
+puede comunicarse con los servicios que necesita.
+
+78
+00:03:39,232 --> 00:03:42,993
+La prueba debe realizarse con datos locales y sin
+
+79
+00:03:42,993 --> 00:03:45,219
+exponer información personal.
+
+80
+00:03:45,219 --> 00:03:48,628
+Levantar FerrePlus localmente consiste en preparar la
+
+81
+00:03:48,628 --> 00:03:51,844
+configuración, construir las imágenes, iniciar los
+
+82
+00:03:51,844 --> 00:03:55,382
+servicios y comprobar que sus healthchecks confirmen un
+
+83
+00:03:55,382 --> 00:03:56,476
+estado saludable.
+
+84
+00:03:56,476 --> 00:03:59,692
+Para detener el entorno usamos el script local sin
+
+85
+00:03:59,692 --> 00:04:01,171
+eliminar los volúmenes.
+
+86
+00:04:01,171 --> 00:04:04,709
+Detener los contenedores no significa borrar los datos.
+
+87
+00:04:04,709 --> 00:04:08,054
+En el siguiente capítulo veremos cómo las interfaces
+
+88
+00:04:08,054 --> 00:04:11,657
+consumen las APIs y cómo funcionan la autenticación, los
+
+89
+00:04:11,657 --> 00:04:14,230
+estados de carga y el manejo de errores.
