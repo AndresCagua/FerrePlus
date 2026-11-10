@@ -25,6 +25,14 @@ Sistema de gestión de inventario para ferreterías y bodegas de repuestos, con 
 
 El portal no depende de datos embebidos en un build para las listas y detalles normales: consulta `public-api` en runtime. Por eso publicar o actualizar una publicación o convocatoria desde Talento no requiere reconstruir el portal.
 
+## 🎬 FerrePlus en video
+
+¿Querés ver el proyecto en acción y conocer su evolución? Pasate por la playlist oficial del proyecto en YouTube:
+
+> ▶️ **[Ver la playlist de FerrePlus en YouTube](https://www.youtube.com/playlist?list=PLD8lK0c3tD7E)**
+>
+> Un recorrido visual por la aplicación, sus funcionalidades y el trabajo detrás del proyecto.
+
 ## Requisitos
 
 - **Docker** (para el backend)
