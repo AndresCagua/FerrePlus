@@ -27,7 +27,7 @@ El portal no depende de datos embebidos en un build para las listas y detalles n
 
 ## 🎬 FerrePlus en video
 
-¿Querés ver el proyecto en acción y conocer su evolución? Pasate por la playlist oficial del proyecto en YouTube:
+¿Quieres ver el proyecto en acción y conocer su evolución? Visita la playlist oficial del proyecto en YouTube:
 
 > ▶️ **[Ver la playlist de FerrePlus en YouTube](https://www.youtube.com/playlist?list=PLD8lK0c3tD7E)**
 >
