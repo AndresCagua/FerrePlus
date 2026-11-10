@@ -98,7 +98,6 @@ public class UsuarioService {
 
         usuario.setNombre(dto.getNombre());
         usuario.setTelefono(dto.getTelefono());
-        usuario.setActivo(true);
 
         if (dto.getEmail() != null && !dto.getEmail().equals(usuario.getEmail())) {
             if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {

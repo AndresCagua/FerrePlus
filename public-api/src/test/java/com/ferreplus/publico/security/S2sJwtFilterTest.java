@@ -53,6 +53,16 @@ class S2sJwtFilterTest {
     }
 
     @Test
+    void scopeDebeCoincidirComoTokenCompleto() throws Exception {
+        assertThat(invoke(token(Instant.now().plusSeconds(60), "ferreplus-public-api", "test-key", "public-api.internal.read")).getStatus())
+                .isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(invoke(token(Instant.now().plusSeconds(60), "ferreplus-public-api", "test-key", "admin-public-api.internal-tools")).getStatus())
+                .isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(invoke(token(Instant.now().plusSeconds(60), "ferreplus-public-api", "test-key", "other public-api.internal read")).getStatus())
+                .isEqualTo(HttpStatus.OK.value());
+    }
+
+    @Test
     void claveAnteriorYActivaSeResuelvenPorKid() throws Exception {
         KeyPairGenerator generator;
         try { generator = KeyPairGenerator.getInstance("RSA"); generator.initialize(2048); }

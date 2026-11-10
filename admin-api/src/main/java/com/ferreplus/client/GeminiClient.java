@@ -64,7 +64,8 @@ public class GeminiClient {
         for (int attempt = 1; attempt <= attempts; attempt++) {
             try {
                 String response = restClient.post()
-                        .uri(uriBuilder -> uriBuilder.path(path).queryParam("key", properties.getApiKey()).build())
+                        .uri(path)
+                        .header("x-goog-api-key", properties.getApiKey())
                         .body(body)
                         .retrieve()
                         .onStatus(HttpStatusCode::isError, (request, clientResponse) -> {

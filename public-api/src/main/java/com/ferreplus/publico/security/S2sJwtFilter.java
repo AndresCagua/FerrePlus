@@ -50,7 +50,8 @@ public class S2sJwtFilter extends OncePerRequestFilter {
             if (!"admin-api".equals(claims.getSubject()) || claims.getExpiration() == null
                     || claims.getExpiration().toInstant().isBefore(Instant.now())) throw new SecurityFailure(HttpStatus.UNAUTHORIZED);
             String scope = claims.get("scope", String.class);
-            if (scope == null || !scope.contains("public-api.internal")) throw new SecurityFailure(HttpStatus.FORBIDDEN);
+            if (scope == null || java.util.Arrays.stream(scope.trim().split("\\s+"))
+                    .noneMatch("public-api.internal"::equals)) throw new SecurityFailure(HttpStatus.FORBIDDEN);
             String actor = claims.get("actor", String.class);
             String authenticatedActor = actor == null || actor.isBlank() ? claims.getSubject() : actor;
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(

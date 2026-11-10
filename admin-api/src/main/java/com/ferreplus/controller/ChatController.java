@@ -27,7 +27,7 @@ public class ChatController {
     private final IndexingService indexingService;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('CHAT_VER')")
     public ResponseEntity<ChatResponse> chat(@Valid @RequestBody ChatRequest request) {
         ChatService.ChatResult result = chatService.answer(request.question());
         List<ChatSource> sources = result.sources().stream()

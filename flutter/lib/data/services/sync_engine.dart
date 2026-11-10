@@ -74,17 +74,73 @@ class DioPendingOperationSender {
   }
 
   static String _endpointFor(PendingOperation operation) {
-    if (operation.endpoint.trim().isNotEmpty) return operation.endpoint;
     return switch (operation.operationType) {
-      OfflineOperationType.sale => '/api/ventas',
-      OfflineOperationType.expense => '/api/gastos',
-      OfflineOperationType.purchase => '/api/compras',
-      OfflineOperationType.movement => '/api/movimientos-stock',
-      OfflineOperationType.saleVoid =>
-        '/api/ventas/${operation.payload['id']}/anular',
-      OfflineOperationType.purchaseVoid =>
-        '/api/compras/${operation.payload['id']}/anular',
+      OfflineOperationType.sale => _validatedCrudEndpoint(
+        operation,
+        '/api/ventas',
+        allowUpdate: true,
+      ),
+      OfflineOperationType.expense => _validatedCrudEndpoint(
+        operation,
+        '/api/gastos',
+        allowUpdate: true,
+      ),
+      OfflineOperationType.purchase => _validatedCrudEndpoint(
+        operation,
+        '/api/compras',
+        allowUpdate: true,
+      ),
+      OfflineOperationType.movement => _validatedCrudEndpoint(
+        operation,
+        '/api/movimientos-stock',
+      ),
+      OfflineOperationType.saleVoid => _validatedVoidEndpoint(
+        operation,
+        '/api/ventas',
+      ),
+      OfflineOperationType.purchaseVoid => _validatedVoidEndpoint(
+        operation,
+        '/api/compras',
+      ),
     };
+  }
+
+  static String _validatedCrudEndpoint(
+    PendingOperation operation,
+    String base, {
+    bool allowUpdate = false,
+  }) {
+    final String endpoint = operation.endpoint.trim();
+    final String method = operation.httpMethod.toUpperCase();
+    if (method == 'POST' && endpoint == base) return endpoint;
+    if (allowUpdate &&
+        method == 'PUT' &&
+        RegExp('^${RegExp.escape(base)}/[1-9][0-9]*\$').hasMatch(endpoint)) {
+      return endpoint;
+    }
+    throw const FormatException(
+      'Persisted offline endpoint is not allowed for this operation type.',
+    );
+  }
+
+  static String _validatedVoidEndpoint(
+    PendingOperation operation,
+    String base,
+  ) {
+    final Object? rawId = operation.payload['id'];
+    final String? id = switch (rawId) {
+      int value when value > 0 => value.toString(),
+      String value when RegExp(r'^[1-9][0-9]*$').hasMatch(value) => value,
+      _ => null,
+    };
+    final String expected = id == null ? '' : '$base/$id/anular';
+    if (operation.httpMethod.toUpperCase() == 'PUT' &&
+        operation.endpoint.trim() == expected) {
+      return expected;
+    }
+    throw const FormatException(
+      'Persisted offline endpoint is not allowed for this operation type.',
+    );
   }
 }
 
@@ -174,6 +230,10 @@ class SyncEngine implements OfflineQueue {
               // FIFO estricto: no se pueden procesar operaciones posteriores.
               break;
             }
+          } on FormatException catch (error) {
+            await _queue.markFailed(operation.id!, sanitizeError(error));
+            failed++;
+            await _notifications.showFailure();
           } on Failure catch (error) {
             if (error is NetworkFailure) {
               await _retry(operation, sanitizeError(error));

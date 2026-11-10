@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -35,6 +36,17 @@ class ChatControllerSecurityTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"question\":\"¿Que hay?\"}"))
                 .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(chatService);
+    }
+
+    @Test
+    @WithMockUser(authorities = "REPORTES_VER")
+    void authenticatedUserWithoutChatPermissionIsRejected() throws Exception {
+        mockMvc.perform(post("/api/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"¿Que hay?\"}"))
+                .andExpect(status().isForbidden());
 
         verifyNoInteractions(chatService);
     }

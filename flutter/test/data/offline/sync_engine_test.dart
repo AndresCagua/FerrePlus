@@ -18,7 +18,7 @@ import 'package:ferreplus/domain/repositories/commercial_repositories.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('sender respeta endpoint persistido para updates y creates', () async {
+  test('sender permite solo endpoints de la operacion persistida', () async {
     final Dio dio = Dio();
     final List<String> paths = <String>[];
     dio.interceptors.add(
@@ -39,20 +39,23 @@ void main() {
     );
     await sender.send(
       PendingOperationEnvelope(
-        _operation(
-          id: 1,
-          userId: 7,
-          endpoint: '/api/compras/42',
-          method: 'PUT',
-        ),
+        _operation(id: 1, userId: 7, endpoint: '/api/ventas/42', method: 'PUT'),
       ),
     );
     await sender.send(
       PendingOperationEnvelope(
-        _operation(id: 2, userId: 7, endpoint: '/api/compras'),
+        _operation(id: 2, userId: 7, endpoint: '/api/ventas'),
       ),
     );
-    expect(paths, <String>['/api/compras/42', '/api/compras']);
+    await expectLater(
+      sender.send(
+        PendingOperationEnvelope(
+          _operation(id: 3, userId: 7, endpoint: 'https://attacker.test'),
+        ),
+      ),
+      throwsA(isA<FormatException>()),
+    );
+    expect(paths, <String>['/api/ventas/42', '/api/ventas']);
   });
 
   test('anulacion sin cache usa usuario activo y se sincroniza', () async {

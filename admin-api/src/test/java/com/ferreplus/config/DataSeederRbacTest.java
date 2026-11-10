@@ -15,6 +15,7 @@ class DataSeederRbacTest {
         matrixField.setAccessible(true);
         Set<String> admin = ((Map<String, Set<String>>) matrixField.get(null)).get("ADMIN");
         assertThat(admin).contains("TALENTO_PUBLICACIONES_VER", "TALENTO_PUBLICACIONES_CREAR", "TALENTO_PUBLICACIONES_EDITAR", "TALENTO_PUBLICACIONES_ELIMINAR");
+        assertThat(admin).contains("CHAT_VER", "CHAT_INDEX_REBUILD");
         assertThat(admin).contains("TALENTO_CONVOCATORIAS_VER", "TALENTO_POSTULACIONES_VER", "TALENTO_DESTINATARIOS_VER", "CONTABILIDAD_CONTACTOS_VER");
     }
 

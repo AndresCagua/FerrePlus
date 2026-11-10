@@ -25,4 +25,18 @@ void main() {
       },
     );
   });
+
+  test('rechaza payloads persistidos en plaintext', () async {
+    final PayloadCodec codec = PayloadCodec();
+    expect(
+      codec.decryptOrDecode('{"id":1}'),
+      throwsA(
+        isA<FormatException>().having(
+          (FormatException error) => error.message,
+          'message',
+          'Persisted offline payload is plaintext; explicit migration is required.',
+        ),
+      ),
+    );
+  });
 }

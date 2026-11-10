@@ -41,13 +41,21 @@ class PayloadCodec {
     );
   }
 
+  /// Lee únicamente el formato persistido cifrado.
+  ///
+  /// Los payloads en texto plano de versiones anteriores se rechazan de forma
+  /// intencional y deben migrarse explícitamente antes de volver a la cola
+  /// offline.
   Future<Map<String, Object?>> decryptOrDecode(String value) async {
     try {
       return await decryptPayload(value);
-    } catch (_) {
-      return Map<String, Object?>.from(
-        jsonDecode(value) as Map<Object?, Object?>,
-      );
+    } on FormatException {
+      if (value.trimLeft().startsWith('{')) {
+        throw const FormatException(
+          'Persisted offline payload is plaintext; explicit migration is required.',
+        );
+      }
+      rethrow;
     }
   }
 

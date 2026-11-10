@@ -2,6 +2,16 @@
 interface Props { title: string; description: string; canonical?: string; type?: string; jsonLd?: Record<string, unknown>; }
 const { title, description, canonical = Astro.url.href, type = 'website', jsonLd } = Astro.props;
 const siteName = 'Ferreplus';
+
+// JSON-LD se incrusta en un contexto de script HTML. Escapamos los caracteres
+// que pueden cerrar el script o iniciar una entidad HTML antes de usar HTML crudo.
+const serializeJsonLd = (value: Record<string, unknown>): string =>
+  JSON.stringify(value)
+    .replaceAll('<', '\\u003C')
+    .replaceAll('>', '\\u003E')
+    .replaceAll('&', '\\u0026')
+    .replaceAll('\u2028', '\\u2028')
+    .replaceAll('\u2029', '\\u2029');
 ---
 <title>{title} | {siteName}</title>
 <meta name="description" content={description} />
@@ -10,4 +20,4 @@ const siteName = 'Ferreplus';
 <meta property="og:type" content={type} /><meta property="og:site_name" content={siteName} />
 <meta property="og:title" content={`${title} | ${siteName}`} /><meta property="og:description" content={description} /><meta property="og:url" content={canonical} />
 <meta name="twitter:card" content="summary" /><meta name="twitter:title" content={`${title} | ${siteName}`} /><meta name="twitter:description" content={description} />
-{jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+{jsonLd && <script is:inline type="application/ld+json" set:html={serializeJsonLd(jsonLd)} />}

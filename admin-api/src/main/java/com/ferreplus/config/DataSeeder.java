@@ -66,7 +66,7 @@ public class DataSeeder implements CommandLineRunner {
         MODULOS.put("ROLES", new int[]{12, 1, 1, 1, 1, 0});
         MODULOS.put("REPORTES", new int[]{13, 1, 0, 0, 0, 0});
         MODULOS.put("LOGS", new int[]{14, 1, 0, 0, 1, 0});
-        MODULOS.put("CHAT", new int[]{15, 0, 0, 0, 0, 1});
+        MODULOS.put("CHAT", new int[]{15, 1, 0, 0, 0, 1});
         MODULOS.put("TALENTO_PUBLICACIONES", new int[]{16, 1, 1, 1, 1, 0});
         MODULOS.put("TALENTO_CONVOCATORIAS", new int[]{17, 1, 1, 1, 1, 0});
         MODULOS.put("TALENTO_POSTULACIONES", new int[]{18, 1, 0, 1, 0, 0});
@@ -111,7 +111,7 @@ public class DataSeeder implements CommandLineRunner {
     static {
         MATRIZ_ROLES.put("ADMIN", Set.of(
                 "DASHBOARD_VER",
-                "CHAT_INDEX_REBUILD",
+                "CHAT_VER", "CHAT_INDEX_REBUILD",
                 "PRODUCTOS_VER", "PRODUCTOS_CREAR", "PRODUCTOS_EDITAR", "PRODUCTOS_ELIMINAR",
                 "CATEGORIAS_VER", "CATEGORIAS_CREAR", "CATEGORIAS_EDITAR", "CATEGORIAS_ELIMINAR",
                 "PROVEEDORES_VER", "PROVEEDORES_CREAR", "PROVEEDORES_EDITAR", "PROVEEDORES_ELIMINAR",
@@ -241,10 +241,13 @@ public class DataSeeder implements CommandLineRunner {
                     Rol admin = rolRepository.findByNombre("ADMIN")
                             .orElseThrow(() -> new IllegalStateException(
                                     "No existe el rol ADMIN para el usuario administrador"));
+                    if (adminPassword == null || adminPassword.isBlank()) {
+                        throw new IllegalStateException("ADMIN_PASSWORD es obligatorio para crear el usuario administrador");
+                    }
                     usuarioRepository.save(Usuario.builder()
                             .nombre("Administrador")
                             .email(ADMIN_EMAIL)
-                             .password(passwordEncoder.encode(adminPassword == null || adminPassword.isBlank() ? "change-me-before-use" : adminPassword))
+                            .password(passwordEncoder.encode(adminPassword))
                             .telefono("0999999999")
                             .rol(admin)
                             .activo(true)

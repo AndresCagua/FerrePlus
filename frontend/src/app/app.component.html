@@ -29,5 +29,5 @@
     </div>
   </div>
 
-  <app-chat *ngIf="isLoggedIn"></app-chat>
+  <app-chat *ngIf="isLoggedIn && authService.hasPermission('CHAT_VER')"></app-chat>
 </div>
