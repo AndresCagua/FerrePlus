@@ -11,8 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @Slf4j
@@ -63,24 +64,44 @@ public class GeminiClient {
         int attempts = Math.max(1, properties.getMaxRetries() + 1);
         for (int attempt = 1; attempt <= attempts; attempt++) {
             try {
-                String response = restClient.post()
+                String bodyText = restClient.post()
                         .uri(path)
                         .header("x-goog-api-key", properties.getApiKey())
                         .body(body)
-                        .retrieve()
-                        .onStatus(HttpStatusCode::isError, (request, clientResponse) -> {
-                            throw new GeminiException("Gemini rechazo la solicitud", clientResponse.getStatusCode().value());
-                        })
-                        .body(String.class);
-                return objectMapper.readTree(response);
+                        .exchange((request, response) -> {
+                            int code = response.getStatusCode().value();
+                            if (code >= 400) {
+                                String errorBody;
+                                try {
+                                    errorBody = readInputStream(response.getBody());
+                                } catch (Exception e) {
+                                    errorBody = "(no se pudo leer el cuerpo)";
+                                }
+                                log.error("Gemini rechazo la solicitud [{}]: {} - {}", code, path, errorBody);
+                                throw new GeminiException("Gemini rechazo la solicitud", code);
+                            }
+                            try {
+                                return readInputStream(response.getBody());
+                            } catch (IOException e) {
+                                throw new GeminiException("No se pudo leer respuesta de Gemini", 502, e);
+                            }
+                        });
+                if (bodyText == null || bodyText.isEmpty()) {
+                    throw new GeminiException("Gemini devolvio respuesta vacia", 502);
+                }
+                return objectMapper.readTree(bodyText);
             } catch (GeminiException exception) {
                 if (attempt == attempts || !isTransient(exception.getStatusCode())) {
+                    log.error("GeminiException tras {} intento(s): {} (code={})", attempt, exception.getMessage(), exception.getStatusCode());
                     throw exception;
                 }
+                log.warn("GeminiException transitorio (intento {}): {}", attempt, exception.getMessage());
             } catch (RestClientException exception) {
                 if (attempt == attempts) {
+                    log.error("RestClientException tras {} intento(s): {}", attempt, exception.getMessage());
                     throw new GeminiException("Gemini no esta disponible", 503, exception);
                 }
+                log.warn("RestClientException transitorio (intento {}): {}", attempt, exception.getMessage());
             } catch (Exception exception) {
                 throw new GeminiException("Respuesta invalida de Gemini", 502, exception);
             }
@@ -106,5 +127,9 @@ public class GeminiClient {
         factory.setConnectTimeout(timeoutMillis);
         factory.setReadTimeout(timeoutMillis);
         return factory;
+    }
+
+    private String readInputStream(InputStream inputStream) throws IOException {
+        return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     }
 }

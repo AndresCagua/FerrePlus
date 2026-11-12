@@ -14,7 +14,7 @@ public class GeminiProperties {
     private String apiKey;
     private String baseUrl = "https://generativelanguage.googleapis.com";
     private String embeddingModel = "gemini-embedding-001";
-    private String chatModel = "gemini-2.0-flash";
+    private String chatModel = "gemini-3.5-flash-lite";
     private int timeoutSeconds = 10;
     private int maxRetries = 1;
 }
